@@ -1,6 +1,6 @@
-package com.prohect.mysql_frontend_server.sqlUtil;
+package com.prohect.sql_frontend_server.sqlUtil;
 
-import com.prohect.mysql_frontend_server.DatabaseAdmin;
+import com.prohect.sql_frontend_server.DatabaseAdmin;
 
 import java.sql.Connection;
 import java.sql.DriverManager;

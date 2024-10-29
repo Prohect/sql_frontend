@@ -1,8 +1,8 @@
-package com.prohect.mysql_frontend.main.insertNewColumn;
+package com.prohect.sql_frontend.main.insertNewColumn;
 
-import com.prohect.mysql_frontend.common.CommonUtil;
-import com.prohect.mysql_frontend.common.packet.CAlterPacket;
-import com.prohect.mysql_frontend.main.Main;
+import com.prohect.sql_frontend.common.CommonUtil;
+import com.prohect.sql_frontend.common.packet.CAlterPacket;
+import com.prohect.sql_frontend.main.Main;
 import javafx.event.ActionEvent;
 import javafx.fxml.FXML;
 import javafx.scene.control.CheckBox;

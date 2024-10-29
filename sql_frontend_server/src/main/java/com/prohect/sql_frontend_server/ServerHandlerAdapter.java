@@ -1,8 +1,8 @@
-package com.prohect.mysql_frontend_server;
+package com.prohect.sql_frontend_server;
 
-import com.prohect.mysql_frontend.common.CommonUtil;
-import com.prohect.mysql_frontend.common.Packet;
-import com.prohect.mysql_frontend.common.PacketDecodeCell;
+import com.prohect.sql_frontend.common.CommonUtil;
+import com.prohect.sql_frontend.common.Packet;
+import com.prohect.sql_frontend.common.PacketDecodeCell;
 import io.netty.buffer.ByteBuf;
 import io.netty.channel.ChannelHandlerContext;
 import io.netty.channel.ChannelInboundHandlerAdapter;
@@ -12,8 +12,8 @@ import io.netty.util.concurrent.ScheduledFuture;
 
 import java.util.concurrent.LinkedBlockingQueue;
 
-import static com.prohect.mysql_frontend_server.Server.ctx2packetReceivedMap;
-import static com.prohect.mysql_frontend_server.Server.ctx2packetToBeSentMap;
+import static com.prohect.sql_frontend_server.Server.ctx2packetReceivedMap;
+import static com.prohect.sql_frontend_server.Server.ctx2packetToBeSentMap;
 
 public class ServerHandlerAdapter extends ChannelInboundHandlerAdapter {
     ScheduledFuture<?> packetsEncoder;

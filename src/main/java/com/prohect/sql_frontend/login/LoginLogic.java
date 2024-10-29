@@ -1,7 +1,7 @@
-package com.prohect.mysql_frontend.login;
+package com.prohect.sql_frontend.login;
 
-import com.prohect.mysql_frontend.NettyClient;
-import com.prohect.mysql_frontend.main.Main;
+import com.prohect.sql_frontend.NettyClient;
+import com.prohect.sql_frontend.main.Main;
 import javafx.fxml.FXML;
 import javafx.scene.control.Button;
 import javafx.scene.control.Label;

@@ -1,12 +1,12 @@
-package com.prohect.mysql_frontend;
+package com.prohect.sql_frontend;
 
-import com.prohect.mysql_frontend.common.*;
-import com.prohect.mysql_frontend.common.packet.*;
-import com.prohect.mysql_frontend.login.ClientConfig;
-import com.prohect.mysql_frontend.login.LoginLogic;
-import com.prohect.mysql_frontend.main.Main;
-import com.prohect.mysql_frontend.main.MainLogic;
-import com.prohect.mysql_frontend.main.UpdateOfCellOfTable;
+import com.prohect.sql_frontend.common.*;
+import com.prohect.sql_frontend.common.packet.*;
+import com.prohect.sql_frontend.login.ClientConfig;
+import com.prohect.sql_frontend.login.LoginLogic;
+import com.prohect.sql_frontend.main.Main;
+import com.prohect.sql_frontend.main.MainLogic;
+import com.prohect.sql_frontend.main.UpdateOfCellOfTable;
 import io.netty.bootstrap.Bootstrap;
 import io.netty.buffer.ByteBuf;
 import io.netty.channel.ChannelFutureListener;

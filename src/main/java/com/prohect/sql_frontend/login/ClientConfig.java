@@ -1,4 +1,4 @@
-package com.prohect.mysql_frontend.login;
+package com.prohect.sql_frontend.login;
 
 import com.alibaba.fastjson2.JSON;
 import com.alibaba.fastjson2.JSONException;

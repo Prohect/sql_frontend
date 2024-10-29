@@ -1,9 +1,9 @@
-package com.prohect.mysql_frontend_server.sqlUtil;
+package com.prohect.sql_frontend_server.sqlUtil;
 
-import com.prohect.mysql_frontend_server.DatabaseAdmin;
-import com.prohect.mysql_frontend_server.ServerConfig;
-import com.prohect.mysql_frontend.common.CommonUtil;
-import com.prohect.mysql_frontend.common.User;
+import com.prohect.sql_frontend_server.DatabaseAdmin;
+import com.prohect.sql_frontend_server.ServerConfig;
+import com.prohect.sql_frontend.common.CommonUtil;
+import com.prohect.sql_frontend.common.User;
 
 import java.sql.*;
 import java.util.HashMap;

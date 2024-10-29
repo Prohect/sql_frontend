@@ -1,12 +1,12 @@
-package com.prohect.mysql_frontend.main;
+package com.prohect.sql_frontend.main;
 
-import com.prohect.mysql_frontend.LoginUi;
-import com.prohect.mysql_frontend.common.ColumnMetaData;
-import com.prohect.mysql_frontend.common.CommonUtil;
-import com.prohect.mysql_frontend.common.packet.CAlterPacket;
-import com.prohect.mysql_frontend.common.packet.CDeletePacket;
-import com.prohect.mysql_frontend.common.packet.CQueryPacket;
-import com.prohect.mysql_frontend.main.insert.InsertLogic;
+import com.prohect.sql_frontend.LoginUi;
+import com.prohect.sql_frontend.common.ColumnMetaData;
+import com.prohect.sql_frontend.common.CommonUtil;
+import com.prohect.sql_frontend.common.packet.CAlterPacket;
+import com.prohect.sql_frontend.common.packet.CDeletePacket;
+import com.prohect.sql_frontend.common.packet.CQueryPacket;
+import com.prohect.sql_frontend.main.insert.InsertLogic;
 import javafx.collections.FXCollections;
 import javafx.collections.ObservableList;
 import javafx.event.ActionEvent;
@@ -23,7 +23,7 @@ import java.util.HashMap;
 import java.util.List;
 import java.util.concurrent.LinkedBlockingQueue;
 
-import static com.prohect.mysql_frontend.common.CommonUtil.permissionColumnNameEncode;
+import static com.prohect.sql_frontend.common.CommonUtil.permissionColumnNameEncode;
 
 public class MainLogic {
 

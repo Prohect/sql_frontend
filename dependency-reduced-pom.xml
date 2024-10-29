@@ -63,7 +63,7 @@
             <manifest>
               <addClasspath>true</addClasspath>
               <classpathPrefix>lib/</classpathPrefix>
-              <mainClass>com.prohect.mysql_frontend.LoginUi</mainClass>
+              <mainClass>com.prohect.sql_frontend.LoginUi</mainClass>
             </manifest>
           </archive>
           <excludes>

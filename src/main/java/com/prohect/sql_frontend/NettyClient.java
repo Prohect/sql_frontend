@@ -1,6 +1,6 @@
-package com.prohect.mysql_frontend;
+package com.prohect.sql_frontend;
 
-import com.prohect.mysql_frontend.main.Main;
+import com.prohect.sql_frontend.main.Main;
 import io.netty.bootstrap.Bootstrap;
 import io.netty.channel.ChannelFuture;
 import io.netty.channel.ChannelInitializer;

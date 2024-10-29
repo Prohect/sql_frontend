@@ -1,10 +1,10 @@
-package com.prohect.mysql_frontend.main.insert;
+package com.prohect.sql_frontend.main.insert;
 
-import com.prohect.mysql_frontend.common.ColumnMetaData;
-import com.prohect.mysql_frontend.common.CommonUtil;
-import com.prohect.mysql_frontend.common.Packet;
-import com.prohect.mysql_frontend.common.packet.CInsertPacket;
-import com.prohect.mysql_frontend.main.Main;
+import com.prohect.sql_frontend.common.ColumnMetaData;
+import com.prohect.sql_frontend.common.CommonUtil;
+import com.prohect.sql_frontend.common.Packet;
+import com.prohect.sql_frontend.common.packet.CInsertPacket;
+import com.prohect.sql_frontend.main.Main;
 import javafx.collections.ObservableList;
 import javafx.event.ActionEvent;
 import javafx.fxml.FXML;

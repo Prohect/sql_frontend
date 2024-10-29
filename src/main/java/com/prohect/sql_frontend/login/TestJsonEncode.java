@@ -1,4 +1,4 @@
-package com.prohect.mysql_frontend.login;
+package com.prohect.sql_frontend.login;
 
 public class TestJsonEncode {
     char aChar;

@@ -41,7 +41,7 @@
 <?import javafx.scene.layout.VBox?>
 <?import javafx.scene.text.Font?>
 
-<VBox prefHeight="375.0" prefWidth="322.0" xmlns="http://javafx.com/javafx/23.0.1" xmlns:fx="http://javafx.com/fxml/1" fx:controller="com.prohect.mysql_frontend.login.LoginLogic">
+<VBox prefHeight="375.0" prefWidth="322.0" xmlns="http://javafx.com/javafx/23.0.1" xmlns:fx="http://javafx.com/fxml/1" fx:controller="com.prohect.sql_frontend.login.LoginLogic">
   <children>
     <AnchorPane maxHeight="-1.0" maxWidth="-1.0" prefHeight="375.0" prefWidth="322.0" VBox.vgrow="ALWAYS">
       <children>

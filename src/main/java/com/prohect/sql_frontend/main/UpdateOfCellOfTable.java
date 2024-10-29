@@ -1,4 +1,4 @@
-package com.prohect.mysql_frontend.main;
+package com.prohect.sql_frontend.main;
 
 public class UpdateOfCellOfTable {
     int targetRowIndex;

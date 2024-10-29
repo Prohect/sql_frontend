@@ -1,6 +1,6 @@
-package com.prohect.mysql_frontend;
+package com.prohect.sql_frontend;
 
-import com.prohect.mysql_frontend.main.Main;
+import com.prohect.sql_frontend.main.Main;
 import javafx.application.Application;
 import javafx.fxml.FXMLLoader;
 import javafx.scene.Scene;

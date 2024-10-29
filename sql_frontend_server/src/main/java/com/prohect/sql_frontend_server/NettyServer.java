@@ -1,4 +1,4 @@
-package com.prohect.mysql_frontend_server;
+package com.prohect.sql_frontend_server;
 
 import io.netty.bootstrap.ServerBootstrap;
 import io.netty.channel.ChannelFuture;
