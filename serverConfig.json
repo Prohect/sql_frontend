@@ -1,0 +1,1 @@
+{"dataBaseAdmin":{"password":"114514","username":"admin114"},"serverPort":19336,"theTargetDatabaseNameBlackList":["sysdiagrams","trace_xe_action_map","trace_xe_event_map"],"theTargetDatabaseNameList":["projectsInfo"],"theUsersDatabaseName":"users","theUsersTableName":"users"}
