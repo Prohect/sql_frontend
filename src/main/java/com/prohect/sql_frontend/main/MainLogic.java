@@ -1,12 +1,13 @@
 package com.prohect.sql_frontend.main;
 
+import com.prohect.sql_frontend.ClientHandlerAdapter;
 import com.prohect.sql_frontend.LoginUi;
-import com.prohect.sql_frontend.common.ColumnMetaData;
-import com.prohect.sql_frontend.common.CommonUtil;
-import com.prohect.sql_frontend.common.packet.CAlterPacket;
-import com.prohect.sql_frontend.common.packet.CDeletePacket;
-import com.prohect.sql_frontend.common.packet.CQueryPacket;
 import com.prohect.sql_frontend.main.insert.InsertLogic;
+import com.prohect.sql_frontend_common.ColumnMetaData;
+import com.prohect.sql_frontend_common.CommonUtil;
+import com.prohect.sql_frontend_common.packet.CAlterPacket;
+import com.prohect.sql_frontend_common.packet.CDeletePacket;
+import com.prohect.sql_frontend_common.packet.CQueryPacket;
 import javafx.collections.FXCollections;
 import javafx.collections.ObservableList;
 import javafx.event.ActionEvent;
@@ -23,7 +24,6 @@ import java.util.HashMap;
 import java.util.List;
 import java.util.concurrent.LinkedBlockingQueue;
 
-import static com.prohect.sql_frontend.common.CommonUtil.permissionColumnNameEncode;
 
 public class MainLogic {
 
@@ -184,12 +184,12 @@ public class MainLogic {
                 ArrayList<ColumnMetaData> columnMetaDataList = Main.db2table2columnMap.get(this.getDatabaseSourceChoiceBox().getValue()).get(this.getTableChoiceBox().getValue());
                 for (int i = 0; i < columnMetaDataList.size(); i++) {
                     String columnName = columnMetaDataList.get(i).getColumnName();
-                    TableColumn<Object[], Object> column = CommonUtil.getTableColumn(columnName, i);
+                    TableColumn<Object[], Object> column = ClientHandlerAdapter.getTableColumn(columnName, i);
                     columnObservableList.add(column);
                     ArrayList<ColumnMetaData> columnMetaData = Main.db2table2columnMap.get(this.getDataBase4tableView()).get(this.getTableName4tableView());
                     ColumnMetaData[] array = columnMetaData.stream().filter((c) -> c.getColumnName().equals(columnName)).toArray(ColumnMetaData[]::new);
                     if (array[0].isAutoIncrement()) continue;
-                    CommonUtil.setCellFactory(column);
+                    ClientHandlerAdapter.setCellFactory(column);
                     column.setOnEditCommit(event1 -> {
                         // 直接更新数据，点击提交按钮时再处理
                         int targetRowIndex = event1.getTablePosition().getRow();
@@ -260,24 +260,24 @@ public class MainLogic {
 
     @FXML
     void setThisColumnCouldInspectCouldChangePermissionAsDefault(ActionEvent event) {
-        String sql1 = String.format("ALTER TABLE " + Main.clientConfig.getTheUsersTableName() + " ADD %s BIT NOT NULL DEFAULT 1", permissionColumnNameEncode(this.getDataBase4tableView(), this.getTableName4tableView(), selectedColumn.getText(), false));
-        String sql2 = String.format("ALTER TABLE " + Main.clientConfig.getTheUsersTableName() + " ADD %s BIT NOT NULL DEFAULT 1", permissionColumnNameEncode(this.getDataBase4tableView(), this.getTableName4tableView(), selectedColumn.getText(), true));
+        String sql1 = String.format("ALTER TABLE " + Main.clientConfig.getTheUsersTableName() + " ADD %s BIT NOT NULL DEFAULT 1", CommonUtil.permissionColumnNameEncode(this.getDataBase4tableView(), this.getTableName4tableView(), selectedColumn.getText(), false));
+        String sql2 = String.format("ALTER TABLE " + Main.clientConfig.getTheUsersTableName() + " ADD %s BIT NOT NULL DEFAULT 1", CommonUtil.permissionColumnNameEncode(this.getDataBase4tableView(), this.getTableName4tableView(), selectedColumn.getText(), true));
         Main.ctx2packetsMap.computeIfAbsent(Main.ctx, c -> new LinkedBlockingQueue<>()).add(new CAlterPacket(Main.user.getUuid(), sql1, Main.clientConfig.getTheUsersDatabaseName()));
         Main.ctx2packetsMap.computeIfAbsent(Main.ctx, c -> new LinkedBlockingQueue<>()).add(new CAlterPacket(Main.user.getUuid(), sql2, Main.clientConfig.getTheUsersDatabaseName()));
     }
 
     @FXML
     void setThisColumnCouldInspectNoChangePermissionAsDefault(ActionEvent event) {
-        String sql1 = String.format("ALTER TABLE " + Main.clientConfig.getTheUsersTableName() + " ADD %s BIT NOT NULL DEFAULT 1", permissionColumnNameEncode(this.getDataBase4tableView(), this.getTableName4tableView(), selectedColumn.getText(), false));
-        String sql2 = String.format("ALTER TABLE " + Main.clientConfig.getTheUsersTableName() + " ADD %s BIT NOT NULL DEFAULT 0", permissionColumnNameEncode(this.getDataBase4tableView(), this.getTableName4tableView(), selectedColumn.getText(), true));
+        String sql1 = String.format("ALTER TABLE " + Main.clientConfig.getTheUsersTableName() + " ADD %s BIT NOT NULL DEFAULT 1", CommonUtil.permissionColumnNameEncode(this.getDataBase4tableView(), this.getTableName4tableView(), selectedColumn.getText(), false));
+        String sql2 = String.format("ALTER TABLE " + Main.clientConfig.getTheUsersTableName() + " ADD %s BIT NOT NULL DEFAULT 0", CommonUtil.permissionColumnNameEncode(this.getDataBase4tableView(), this.getTableName4tableView(), selectedColumn.getText(), true));
         Main.ctx2packetsMap.computeIfAbsent(Main.ctx, c -> new LinkedBlockingQueue<>()).add(new CAlterPacket(Main.user.getUuid(), sql1, Main.clientConfig.getTheUsersDatabaseName()));
         Main.ctx2packetsMap.computeIfAbsent(Main.ctx, c -> new LinkedBlockingQueue<>()).add(new CAlterPacket(Main.user.getUuid(), sql2, Main.clientConfig.getTheUsersDatabaseName()));
     }
 
     @FXML
     void setThisColumnNoInspectNoChangePermissionAsDefault(ActionEvent event) {
-        String sql1 = String.format("ALTER TABLE " + Main.clientConfig.getTheUsersTableName() + " ADD %s BIT NOT NULL DEFAULT 0", permissionColumnNameEncode(this.getDataBase4tableView(), this.getTableName4tableView(), selectedColumn.getText(), false));
-        String sql2 = String.format("ALTER TABLE " + Main.clientConfig.getTheUsersTableName() + " ADD %s BIT NOT NULL DEFAULT 0", permissionColumnNameEncode(this.getDataBase4tableView(), this.getTableName4tableView(), selectedColumn.getText(), true));
+        String sql1 = String.format("ALTER TABLE " + Main.clientConfig.getTheUsersTableName() + " ADD %s BIT NOT NULL DEFAULT 0", CommonUtil.permissionColumnNameEncode(this.getDataBase4tableView(), this.getTableName4tableView(), selectedColumn.getText(), false));
+        String sql2 = String.format("ALTER TABLE " + Main.clientConfig.getTheUsersTableName() + " ADD %s BIT NOT NULL DEFAULT 0", CommonUtil.permissionColumnNameEncode(this.getDataBase4tableView(), this.getTableName4tableView(), selectedColumn.getText(), true));
         Main.ctx2packetsMap.computeIfAbsent(Main.ctx, c -> new LinkedBlockingQueue<>()).add(new CAlterPacket(Main.user.getUuid(), sql1, Main.clientConfig.getTheUsersDatabaseName()));
         Main.ctx2packetsMap.computeIfAbsent(Main.ctx, c -> new LinkedBlockingQueue<>()).add(new CAlterPacket(Main.user.getUuid(), sql2, Main.clientConfig.getTheUsersDatabaseName()));
     }

@@ -1,12 +1,16 @@
 package com.prohect.sql_frontend;
 
-import com.prohect.sql_frontend.common.*;
-import com.prohect.sql_frontend.common.packet.*;
+
 import com.prohect.sql_frontend.login.ClientConfig;
 import com.prohect.sql_frontend.login.LoginLogic;
 import com.prohect.sql_frontend.main.Main;
 import com.prohect.sql_frontend.main.MainLogic;
 import com.prohect.sql_frontend.main.UpdateOfCellOfTable;
+import com.prohect.sql_frontend_common.ColumnMetaData;
+import com.prohect.sql_frontend_common.CommonUtil;
+import com.prohect.sql_frontend_common.Packet;
+import com.prohect.sql_frontend_common.User;
+import com.prohect.sql_frontend_common.packet.*;
 import io.netty.bootstrap.Bootstrap;
 import io.netty.buffer.ByteBuf;
 import io.netty.channel.ChannelFutureListener;
@@ -16,12 +20,15 @@ import io.netty.channel.EventLoopGroup;
 import io.netty.util.concurrent.Future;
 import io.netty.util.concurrent.ScheduledFuture;
 import javafx.application.Platform;
+import javafx.beans.property.SimpleObjectProperty;
 import javafx.collections.FXCollections;
 import javafx.collections.ObservableList;
 import javafx.event.ActionEvent;
 import javafx.scene.control.ChoiceBox;
 import javafx.scene.control.TableColumn;
 import javafx.scene.control.TableView;
+import javafx.scene.control.cell.TextFieldTableCell;
+import javafx.util.StringConverter;
 
 import java.net.SocketException;
 import java.util.ArrayList;
@@ -37,7 +44,7 @@ public class ClientHandlerAdapter extends ChannelInboundHandlerAdapter {
     /**
      * should be final once created, don't replace it with new one
      */
-    PacketDecodeCell packetDecodeCell;
+    ByteBuf in;
     EventLoopGroup workerGroup;
     LinkedBlockingQueue<Packet> packets;
     ScheduledFuture<?> packetsEncoder;
@@ -89,8 +96,8 @@ public class ClientHandlerAdapter extends ChannelInboundHandlerAdapter {
 
     @Override
     public void channelRead(ChannelHandlerContext ctx, Object msg) {
-        if (packetDecodeCell == null) packetDecodeCell = new PacketDecodeCell(ctx.alloc().buffer(1048576));//1MegaBytes
-        packetDecoderFuture = CommonUtil.getPackets(workerGroup, packetDecoderFuture, (ByteBuf) msg, packetDecodeCell, Main.packetReceivedQueue);
+        if (in == null) in = ctx.alloc().buffer(1048576);//1MegaBytes
+        packetDecoderFuture = CommonUtil.getPackets(workerGroup, packetDecoderFuture, (ByteBuf) msg, in, Main.packetReceivedQueue);
     }
 
     public void reconnect() {
@@ -151,9 +158,9 @@ public class ClientHandlerAdapter extends ChannelInboundHandlerAdapter {
                 HashMap<String, HashMap<String, Boolean[]>> permission4thisDatabase = Main.user.getPermissions().get(databaseName);
                 HashMap<String, Boolean[]> permission4thisTable = permission4thisDatabase == null ? null : permission4thisDatabase.get(tableName);
                 for (int columnIndex = 0; columnIndex < columnCount; columnIndex++) {
-                    TableColumn<Object[], Object> column = CommonUtil.getTableColumn(columnNames.get(columnIndex), columnIndex);
+                    TableColumn<Object[], Object> column = ClientHandlerAdapter.getTableColumn(columnNames.get(columnIndex), columnIndex);
                     if (Main.user.isOP() || (permission4thisTable != null && permission4thisTable.getOrDefault(columnNames.get(columnIndex), new Boolean[]{true, false})[1])) {
-                        CommonUtil.setCellFactory(column);
+                        ClientHandlerAdapter.setCellFactory(column);
                         column.setOnEditCommit(event -> {
                             // 更新数据,同步提交到服务器
                             int targetRowIndex = event.getTablePosition().getRow();
@@ -188,6 +195,32 @@ public class ClientHandlerAdapter extends ChannelInboundHandlerAdapter {
                 e.printStackTrace();
             }
         });
+    }
+
+    public static void setCellFactory(TableColumn<Object[], Object> column) {
+        column.setCellFactory(TextFieldTableCell.<Object[], Object>forTableColumn(new StringConverter<Object>() {
+
+            @Override
+            public String toString(Object object) {
+                if (object == null) {
+                    return "";
+                }
+                return object.toString();
+            }
+
+            @Override
+            public Object fromString(String string) {
+                return string;
+            }
+        }));
+    }
+
+    public static TableColumn<Object[], Object> getTableColumn(String columnName, int columnIndex) {
+        TableColumn<Object[], Object> column = new TableColumn<>(columnName);
+        column.setCellValueFactory(cellData -> {
+            return cellData.getValue()[columnIndex] != null ? new SimpleObjectProperty<>(cellData.getValue()[columnIndex]) : new SimpleObjectProperty<>(null);
+        });
+        return column;
     }
 
 

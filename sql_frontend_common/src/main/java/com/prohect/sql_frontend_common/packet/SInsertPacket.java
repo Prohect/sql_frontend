@@ -1,6 +1,6 @@
-package com.prohect.sql_frontend.common.packet;
+package com.prohect.sql_frontend_common.packet;
 
-public class SDeletePacket extends AbstractPacket {
+public class SInsertPacket extends AbstractPacket {
     long theID;
 
     public long getTheID() {
@@ -11,10 +11,10 @@ public class SDeletePacket extends AbstractPacket {
         this.theID = theID;
     }
 
-    public SDeletePacket(long theID) {
+    public SInsertPacket(long theID) {
         this.theID = theID;
     }
 
-    public SDeletePacket() {
+    public SInsertPacket() {
     }
 }

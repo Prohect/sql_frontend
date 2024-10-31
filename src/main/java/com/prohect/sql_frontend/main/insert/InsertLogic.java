@@ -1,9 +1,9 @@
 package com.prohect.sql_frontend.main.insert;
 
-import com.prohect.sql_frontend.common.ColumnMetaData;
-import com.prohect.sql_frontend.common.CommonUtil;
-import com.prohect.sql_frontend.common.Packet;
-import com.prohect.sql_frontend.common.packet.CInsertPacket;
+import com.prohect.sql_frontend_common.ColumnMetaData;
+import com.prohect.sql_frontend_common.CommonUtil;
+import com.prohect.sql_frontend_common.Packet;
+import com.prohect.sql_frontend_common.packet.CInsertPacket;
 import com.prohect.sql_frontend.main.Main;
 import javafx.collections.ObservableList;
 import javafx.event.ActionEvent;

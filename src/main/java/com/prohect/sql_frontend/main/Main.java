@@ -1,9 +1,9 @@
 package com.prohect.sql_frontend.main;
 
 import com.prohect.sql_frontend.NettyClient;
-import com.prohect.sql_frontend.common.ColumnMetaData;
-import com.prohect.sql_frontend.common.Packet;
-import com.prohect.sql_frontend.common.User;
+import com.prohect.sql_frontend_common.ColumnMetaData;
+import com.prohect.sql_frontend_common.Packet;
+import com.prohect.sql_frontend_common.User;
 import com.prohect.sql_frontend.login.ClientConfig;
 import com.prohect.sql_frontend.login.LoginLogic;
 import com.prohect.sql_frontend.main.insert.InsertLogic;

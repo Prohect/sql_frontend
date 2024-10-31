@@ -2,12 +2,12 @@ package com.prohect.sql_frontend_server;
 
 import com.alibaba.fastjson2.JSON;
 import com.alibaba.fastjson2.JSONException;
+import com.prohect.sql_frontend_common.packet.*;
 import com.prohect.sql_frontend_server.sqlUtil.SqlUtil;
 import com.prohect.sql_frontend_server.sqlUtil.SqlUtil4Login;
-import com.prohect.sql_frontend.common.ColumnMetaData;
-import com.prohect.sql_frontend.common.Packet;
-import com.prohect.sql_frontend.common.User;
-import com.prohect.sql_frontend.common.packet.*;
+import com.prohect.sql_frontend_common.ColumnMetaData;
+import com.prohect.sql_frontend_common.Packet;
+import com.prohect.sql_frontend_common.User;
 import io.netty.channel.ChannelHandlerContext;
 
 import java.io.File;

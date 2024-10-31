@@ -1,4 +1,4 @@
-package com.prohect.sql_frontend.common.packet;
+package com.prohect.sql_frontend_common.packet;
 
 public class CDeletePacket extends AbstractPacket {
     long uuid;

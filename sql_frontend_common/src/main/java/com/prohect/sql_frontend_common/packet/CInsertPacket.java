@@ -1,4 +1,4 @@
-package com.prohect.sql_frontend.common.packet;
+package com.prohect.sql_frontend_common.packet;
 
 public class CInsertPacket extends AbstractPacket {
     long uuid;

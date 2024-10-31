@@ -1,7 +1,7 @@
-package com.prohect.sql_frontend.common.packet;
+package com.prohect.sql_frontend_common.packet;
 
-import com.prohect.sql_frontend.common.ColumnMetaData;
-import com.prohect.sql_frontend.common.User;
+import com.prohect.sql_frontend_common.ColumnMetaData;
+import com.prohect.sql_frontend_common.User;
 
 import java.util.ArrayList;
 import java.util.HashMap;

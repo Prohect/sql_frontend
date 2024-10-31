@@ -1,6 +1,6 @@
-package com.prohect.sql_frontend.common.packet;
+package com.prohect.sql_frontend_common.packet;
 
-import com.prohect.sql_frontend.common.User;
+import com.prohect.sql_frontend_common.User;
 
 public class CLoginPacket extends AbstractPacket {
     User user;

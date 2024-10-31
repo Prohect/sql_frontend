@@ -1,8 +1,7 @@
 package com.prohect.sql_frontend_server;
 
-import com.prohect.sql_frontend.common.CommonUtil;
-import com.prohect.sql_frontend.common.Packet;
-import com.prohect.sql_frontend.common.PacketDecodeCell;
+import com.prohect.sql_frontend_common.CommonUtil;
+import com.prohect.sql_frontend_common.Packet;
 import io.netty.buffer.ByteBuf;
 import io.netty.channel.ChannelHandlerContext;
 import io.netty.channel.ChannelInboundHandlerAdapter;
@@ -23,7 +22,7 @@ public class ServerHandlerAdapter extends ChannelInboundHandlerAdapter {
     /**
      * should be final once created, don't replace it with new one
      */
-    PacketDecodeCell packetDecodeCell;
+    ByteBuf in;
 
     public ServerHandlerAdapter(EventLoopGroup workerGroup) {
         this.workerGroup = workerGroup;
@@ -55,8 +54,8 @@ public class ServerHandlerAdapter extends ChannelInboundHandlerAdapter {
 
     @Override
     public void channelRead(ChannelHandlerContext ctx, Object msg) throws Exception {
-        if (packetDecodeCell == null) packetDecodeCell = new PacketDecodeCell(ctx.alloc().buffer(1048576));//1MegaBytes
-        packetDecoderFuture = CommonUtil.getPackets(workerGroup, packetDecoderFuture, (ByteBuf) msg, packetDecodeCell, ctx2packetReceivedMap.computeIfAbsent(ctx, k -> new LinkedBlockingQueue<>()));
+        if (in == null) in = ctx.alloc().buffer(1048576);//1MegaBytes
+        packetDecoderFuture = CommonUtil.getPackets(workerGroup, packetDecoderFuture, (ByteBuf) msg, in, ctx2packetReceivedMap.computeIfAbsent(ctx, k -> new LinkedBlockingQueue<>()));
     }
 
 }

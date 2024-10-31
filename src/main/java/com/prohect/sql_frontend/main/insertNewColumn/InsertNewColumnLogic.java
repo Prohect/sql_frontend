@@ -1,7 +1,7 @@
 package com.prohect.sql_frontend.main.insertNewColumn;
 
-import com.prohect.sql_frontend.common.CommonUtil;
-import com.prohect.sql_frontend.common.packet.CAlterPacket;
+import com.prohect.sql_frontend_common.CommonUtil;
+import com.prohect.sql_frontend_common.packet.CAlterPacket;
 import com.prohect.sql_frontend.main.Main;
 import javafx.event.ActionEvent;
 import javafx.fxml.FXML;

@@ -1,4 +1,4 @@
-package com.prohect.sql_frontend.common;
+package com.prohect.sql_frontend_common;
 
 public class ColumnMetaData {
     String columnName;

@@ -1,4 +1,4 @@
-package com.prohect.sql_frontend.common.packet;
+package com.prohect.sql_frontend_common.packet;
 
 public class CAlterPacket extends AbstractPacket {
     long uuid;
