@@ -1,6 +1,7 @@
 package com.prohect.sql_frontend.main.insert;
 
 import com.prohect.sql_frontend.main.Main;
+import com.prohect.sql_frontend.main.MainLogic;
 import com.prohect.sql_frontend_common.ColumnMetaData;
 import com.prohect.sql_frontend_common.CommonUtil;
 import com.prohect.sql_frontend_common.Packet;
@@ -10,8 +11,14 @@ import javafx.event.ActionEvent;
 import javafx.fxml.FXML;
 import javafx.scene.control.*;
 import javafx.scene.input.MouseEvent;
+import javafx.stage.FileChooser;
 
+import java.io.BufferedReader;
+import java.io.File;
+import java.io.FileNotFoundException;
+import java.io.FileReader;
 import java.util.ArrayList;
+import java.util.HashMap;
 import java.util.List;
 import java.util.concurrent.LinkedBlockingQueue;
 
@@ -181,5 +188,89 @@ public class InsertLogic {
             }
         } catch (Exception ignored) {
         }
+    }
+
+    @FXML
+    void removeAllRow(ActionEvent event) {
+        theInsertTableView.getItems().clear();
+    }
+
+    FileChooser fileChooser;
+
+    @FXML
+    void loadFromCsv2tableViewOnAction(ActionEvent event) {
+        if (fileChooser == null) fileChooser = new FileChooser();
+
+        // 可以设置初始目录（可选）
+        // fileChooser.setInitialDirectory(new File("C:\\"));
+
+        fileChooser.getExtensionFilters().addAll(new FileChooser.ExtensionFilter("选择.csv文件", "*.csv"));
+
+        File selectedFile = fileChooser.showOpenDialog(MainLogic.stage4InsertNewRowsWindow);
+
+        if (selectedFile != null) {
+            try {
+                List<String[]> listFromCsv = loadFromCsv(selectedFile);
+                TableView<Object[]> tableView = theInsertTableView;
+                List<Object[]> formattedItems = getFormattedItems(listFromCsv, tableView);
+                tableView.getItems().addAll(formattedItems);
+            } catch (Exception e) {
+                Main.mainLogic.getInfoLabel().setText(e.getMessage());
+                e.printStackTrace();
+            }
+        } else {
+            System.out.println("No file selected.");
+        }
+    }
+
+    /**
+     * if the first row of listFromCsv is columnNames, format the list to one whose column order is the same as the target tableView.
+     * else, just make a new list which contains all of listFromCsv
+     *
+     * @param listFromCsv the source list
+     * @param tableView   the target table which tells the information of the column order
+     */
+    private static List<Object[]> getFormattedItems(List<String[]> listFromCsv, TableView<Object[]> tableView) {
+        String[] columnsFromCsv = listFromCsv.getFirst();
+        HashMap<Integer, Integer> listFromCsv2columnMap = new HashMap<>();
+        ObservableList<TableColumn<Object[], ?>> columnsFromTableView = tableView.getColumns();
+        for (int i = 0; i < columnsFromTableView.size(); i++) {
+            String columnFromTableView = columnsFromTableView.get(i).getText();
+            for (int i1 = 0; i1 < columnsFromCsv.length; i1++) {
+                String columnFromCsv = columnsFromCsv[i1];
+                if (columnFromCsv.equalsIgnoreCase(columnFromTableView)) {
+                    listFromCsv2columnMap.put(i1, i);
+                    break;
+                }
+            }
+        }
+        List<Object[]> formattedItems = new ArrayList<>();
+        if (!listFromCsv2columnMap.isEmpty()) {
+            listFromCsv.removeFirst();
+            for (Object[] originItem : listFromCsv) {
+                Object[] formattedItem = new Object[columnsFromTableView.size()];
+                listFromCsv2columnMap.forEach((k, v) -> formattedItem[v] = originItem[k]);
+                formattedItems.add(formattedItem);
+            }
+        } else {
+            formattedItems.addAll(listFromCsv);
+        }
+        return formattedItems;
+    }
+
+    private static List<String[]> loadFromCsv(File file) throws Exception {
+        if (!file.getName().toLowerCase().endsWith(".csv")) throw new Exception("文件不已.csv结尾!");
+        List<String[]> objs = new ArrayList<>();
+        if (file.exists()) {
+            BufferedReader br = new BufferedReader(new FileReader(file));
+            while (br.ready()) {
+                String line = br.readLine();
+                String[] values = line.split(",");
+                objs.add(values);
+            }
+        } else {
+            throw new FileNotFoundException(file.getAbsolutePath());
+        }
+        return objs;
     }
 }

@@ -171,7 +171,7 @@ public class MainLogic {
                 stage4InsertNewRowsWindow.setTitle("Insert New Row");
                 stage4InsertNewRowsWindow.setScene(scene4InsertNewRowsScene);
                 Main.insertLogic.getTheInsertTableView().setEditable(true);
-                stage4InsertNewRowsWindow.setAlwaysOnTop(true);
+//                stage4InsertNewRowsWindow.setAlwaysOnTop(true);
             }
             if (this.getMainTable().getColumns().isEmpty()) {
                 this.infoLabel.setText("请先选择表并查询以获取列数据数据");

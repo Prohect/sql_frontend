@@ -52,8 +52,7 @@
       <menus>
         <Menu mnemonicParsing="false" text="文件">
           <items>
-            <MenuItem mnemonicParsing="false" text="从csv文件导入" />
-            <MenuItem mnemonicParsing="false" text="导出为csv" />
+            <MenuItem fx:id="loadFromCsv2tableView" mnemonicParsing="false" onAction="#loadFromCsv2tableViewOnAction" text="从csv文件导入" />
             <SeparatorMenuItem mnemonicParsing="false" />
           </items>
         </Menu>
@@ -70,6 +69,7 @@
                   <ContextMenu>
                     <items>
                       <MenuItem fx:id="removeSelectedRowMeunItem" mnemonicParsing="false" onAction="#removeSelectedRow" text="清除选中行" />
+                        <MenuItem fx:id="removeAllRowsMeunItem" mnemonicParsing="false" onAction="#removeAllRow" text="清除所有行" />
                     </items>
                   </ContextMenu>
                </contextMenu>
