@@ -1,17 +1,14 @@
 package com.prohect.sql_frontend.main.insert;
 
+import com.prohect.sql_frontend.main.Main;
 import com.prohect.sql_frontend_common.ColumnMetaData;
 import com.prohect.sql_frontend_common.CommonUtil;
 import com.prohect.sql_frontend_common.Packet;
 import com.prohect.sql_frontend_common.packet.CInsertPacket;
-import com.prohect.sql_frontend.main.Main;
 import javafx.collections.ObservableList;
 import javafx.event.ActionEvent;
 import javafx.fxml.FXML;
-import javafx.scene.control.CheckBox;
-import javafx.scene.control.Label;
-import javafx.scene.control.TableView;
-import javafx.scene.control.TextField;
+import javafx.scene.control.*;
 import javafx.scene.input.MouseEvent;
 
 import java.util.ArrayList;
@@ -70,6 +67,26 @@ public class InsertLogic {
             }
         }
         this.getTheInsertTableView().getItems().add(objects);
+    }
+
+    private TableColumn selectedColumn;
+
+    private int selectedRowIndex;
+    private int selectedColumnIndex;
+
+    @FXML
+    void tableViewOnMouseClicked(MouseEvent event) {
+        selectedRowIndex = theInsertTableView.getSelectionModel().getSelectedIndex();
+        ObservableList<TablePosition> selectedCells = theInsertTableView.getSelectionModel().getSelectedCells();
+        if (selectedCells.isEmpty()) return;
+        TablePosition position = selectedCells.get(0);
+        selectedColumnIndex = position.getColumn();
+        selectedColumn = position.getTableColumn();
+    }
+
+    @FXML
+    void removeSelectedRow(ActionEvent event) {
+        theInsertTableView.getItems().remove(selectedRowIndex);
     }
 
     @FXML

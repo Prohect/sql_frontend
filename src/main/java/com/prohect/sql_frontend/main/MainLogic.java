@@ -134,12 +134,12 @@ public class MainLogic {
     public static FXMLLoader insertFXMLLoader = new FXMLLoader(LoginUi.class.getResource("insert-view.fxml"));
     public static Stage stage4InsertNewColumnWindow;
     public static Scene scene4InsertNewColumnScene;
-    public static FXMLLoader insertNewRowFXMLLoader = new FXMLLoader(LoginUi.class.getResource("newRow-view.fxml"));
+    public static FXMLLoader insertNewColumnFXMLLoader = new FXMLLoader(LoginUi.class.getResource("newColumn-view.fxml"));
 
     static {
         try {
             scene4InsertNewRowsScene = new Scene(insertFXMLLoader.load(), 640, 400);
-            scene4InsertNewColumnScene = new Scene(insertNewRowFXMLLoader.load(), 359, 127);
+            scene4InsertNewColumnScene = new Scene(insertNewColumnFXMLLoader.load(), 359, 127);
         } catch (IOException e) {
             throw new RuntimeException(e);
         }
