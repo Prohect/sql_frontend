@@ -6,7 +6,7 @@
 
     <groupId>com.prohect</groupId>
     <artifactId>sql_frontend_server</artifactId>
-    <version>1.0-SNAPSHOT</version>
+    <version>0.0.2</version>
 
     <dependencies>
 
@@ -90,7 +90,7 @@
                         <manifest>
                             <addClasspath>true</addClasspath>
                             <classpathPrefix>lib/</classpathPrefix>
-                            <mainClass>com.prohect.sql_frontend.LoginUi</mainClass>
+                            <mainClass>com.prohect.sql_frontend_server.Server</mainClass>
                         </manifest>
                     </archive>
                     <excludes>
@@ -109,7 +109,7 @@
                         <!-- Default configuration for running with: mvn clean javafx:run -->
                         <id>default-cli</id>
                         <configuration>
-                            <mainClass>com.prohect.sql_frontend/com.prohect.sql_frontend.HelloApplication</mainClass>
+                            <mainClass>com.prohect.sql_frontend_server.Server</mainClass>
                             <launcher>app</launcher>
                             <jlinkZipName>app</jlinkZipName>
                             <jlinkImageName>app</jlinkImageName>
