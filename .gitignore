@@ -40,3 +40,4 @@ build/
 ### My custom blacklist ###
 *.csv
 *.xlsx
+*.json
