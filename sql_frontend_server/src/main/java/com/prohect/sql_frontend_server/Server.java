@@ -19,6 +19,7 @@ import java.sql.*;
 import java.util.*;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.LinkedBlockingQueue;
+import java.util.concurrent.TimeUnit;
 
 
 public class Server {
@@ -28,7 +29,6 @@ public class Server {
     private static final File configFile = new File("serverConfig.json");
     private static final HashMap<Long, User> uuid2userMap = new HashMap<>();
     public static ConcurrentHashMap<ChannelHandlerContext, LinkedBlockingQueue<Packet>> ctx2packetReceivedMap = new ConcurrentHashMap<>();
-    public static boolean onClose = false;
     /**
      * note: turn the key lower case when using!!
      */
@@ -53,7 +53,8 @@ public class Server {
 
     private static ServerConfig loadConfig() throws IOException {
         if (configFile.createNewFile()) {
-            return resetConfig();
+            resetConfig();
+            return null;
         } else {
             try {
                 return JSON.parseObject(Files.readAllBytes(configFile.toPath()), ServerConfig.class);
@@ -77,11 +78,15 @@ public class Server {
     }
 
     public void run() throws SQLException, IOException {
-        int serverPort = serverConfig.getServerPort();
-        connection2UsersDB = SqlUtil4Login.getConnection4UsersDB(serverConfig);
-        new Thread(() -> {
-            System.out.println("Packet处理线程上线");
-            while (!onClose) {
+        if (serverConfig == null) {
+            System.out.println("没有设置文件，现在已经自动生成，请配置好设置文件之后再启动！");
+            return;
+        }
+        try {
+            int serverPort = serverConfig.getServerPort();
+            connection2UsersDB = SqlUtil4Login.getConnection4UsersDB(serverConfig);
+            NioEventLoopGroup workerGroup = new NioEventLoopGroup();//workerGroup处理与sqlServer的通信和与client的通信
+            workerGroup.scheduleAtFixedRate(() -> {
                 for (Map.Entry<ChannelHandlerContext, LinkedBlockingQueue<Packet>> entry : ctx2packetReceivedMap.entrySet()) {
                     ChannelHandlerContext ctx = entry.getKey();
                     LinkedBlockingQueue<Packet> packets = entry.getValue();
@@ -104,17 +109,9 @@ public class Server {
                         }
                     }
                 }
-                try {
-                    Thread.sleep(36);
-                } catch (InterruptedException ignored) {
-                }
-            }
-        }).start();
-        try {
-            //本线程处理新连接的接入和packet拆箱
+            }, 0, 20, TimeUnit.MILLISECONDS);
             ServerBootstrap b = new ServerBootstrap();
-            NioEventLoopGroup bossGroup = new NioEventLoopGroup(1);
-            NioEventLoopGroup workerGroup = new NioEventLoopGroup();
+            NioEventLoopGroup bossGroup = new NioEventLoopGroup(1);//bossGroup处理新连接的接入和packet拆箱
             new NettyServer(serverPort, b, workerGroup, bossGroup, new ServerHandlerAdapter(workerGroup)).run();
         } catch (Exception e) {
             throw new RuntimeException(e);

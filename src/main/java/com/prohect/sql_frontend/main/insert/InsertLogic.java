@@ -53,7 +53,7 @@ public class InsertLogic {
      * @param listFromCsv the source list
      * @param tableView   the target table which tells the information of the column order
      */
-    private static List<Object[]> getFormattedItems(List<String[]> listFromCsv, TableView<Object[]> tableView) {
+    private List<Object[]> getFormattedItems(List<String[]> listFromCsv, TableView<Object[]> tableView) {
         String[] columnsFromCsv = listFromCsv.getFirst();
         HashMap<Integer, Integer> listFromCsv2columnMap = new HashMap<>();
         ObservableList<TableColumn<Object[], ?>> columnsFromTableView = tableView.getColumns();
@@ -62,7 +62,7 @@ public class InsertLogic {
             for (int i1 = 0; i1 < columnsFromCsv.length; i1++) {
                 String columnFromCsv = columnsFromCsv[i1];
                 if (columnFromCsv.equalsIgnoreCase(columnFromTableView)) {
-                    listFromCsv2columnMap.put(i1, i);
+                    listFromCsv2columnMap.put(i1, i);//在map中映射两类index
                     break;
                 }
             }
@@ -71,7 +71,7 @@ public class InsertLogic {
         if (!listFromCsv2columnMap.isEmpty()) {
             listFromCsv.removeFirst();
             for (Object[] originItem : listFromCsv) {
-                Object[] formattedItem = new Object[columnsFromTableView.size()];
+                Object[] formattedItem = getNewItem();
                 listFromCsv2columnMap.forEach((k, v) -> formattedItem[v] = originItem[k]);
                 formattedItems.add(formattedItem);
             }
@@ -81,7 +81,7 @@ public class InsertLogic {
         return formattedItems;
     }
 
-    private static List<String[]> loadFromCsv(File file) throws Exception {
+    private List<String[]> loadFromCsv(File file) throws Exception {
         if (!file.getName().toLowerCase().endsWith(".csv")) throw new Exception("文件不已.csv结尾!");
         List<String[]> objs = new ArrayList<>();
         if (file.exists()) {
@@ -97,34 +97,42 @@ public class InsertLogic {
         return objs;
     }
 
+    private String getPromptOfColumn(ColumnMetaData columnMetaData) {
+        if (columnMetaData.isAutoIncrement()) {
+            return "×";//I have no idea why this always false, from the server from the microsoft api, that isAutoIncrement always false
+        } else if (columnMetaData.getColumnType().contains("bit")) {
+            return "true OR false";
+        } else if (columnMetaData.getColumnType().contains("int")) {
+            return "0";
+        } else if (columnMetaData.getColumnType().contains("float") || columnMetaData.getColumnType().contains("decimal") || columnMetaData.getColumnType().contains("numeric") || columnMetaData.getColumnType().contains("real")) {
+            return "0.0";
+        } else if (columnMetaData.getColumnType().contains("char")) {
+            if (columnMetaData.isNullable()) return nullableString;
+            else return normalString;
+        } else if (columnMetaData.isNullable()) {
+            return nullableString;
+        } else {
+            return columnMetaData.getColumnType().toUpperCase();
+        }
+    }
+
     public TableView<Object[]> getTheInsertTableView() {
         return theInsertTableView;
     }
 
     @FXML
     void newRowButtonOnAction(ActionEvent event) {
+        this.getTheInsertTableView().getItems().add(getNewItem());
+    }
+
+    private Object[] getNewItem() {
         Object[] objects = new Object[this.theInsertTableView.getColumns().size()];
         ArrayList<ColumnMetaData> columnMetaDataList = Main.db2table2columnMap.get(Main.mainLogic.getDataBase4tableView()).get(Main.mainLogic.getTableName4tableView());
         for (int i = 0; i < objects.length; i++) {
             ColumnMetaData columnMetaData = columnMetaDataList.get(i);
-            if (columnMetaData.isAutoIncrement()) {
-                objects[i] = "×";//I have no idea why this always false, from the server from the microsoft api, that isAutoIncrement always false
-            } else if (columnMetaData.getColumnType().contains("bit")) {
-                objects[i] = "true OR false";
-            } else if (columnMetaData.getColumnType().contains("int")) {
-                objects[i] = "0";
-            } else if (columnMetaData.getColumnType().contains("float") || columnMetaData.getColumnType().contains("decimal") || columnMetaData.getColumnType().contains("numeric") || columnMetaData.getColumnType().contains("real")) {
-                objects[i] = "0.0";
-            } else if (columnMetaData.getColumnType().contains("char")) {
-                if (columnMetaData.isNullable()) objects[i] = nullableString;
-                else objects[i] = normalString;
-            } else if (columnMetaData.isNullable()) {
-                objects[i] = nullableString;
-            } else {
-                objects[i] = columnMetaData.getColumnType().toUpperCase();
-            }
+            objects[i] = getPromptOfColumn(columnMetaData);
         }
-        this.getTheInsertTableView().getItems().add(objects);
+        return objects;
     }
 
     @FXML

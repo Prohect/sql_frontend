@@ -9,6 +9,7 @@ import java.io.IOException;
 import java.nio.file.Files;
 
 public class ClientConfig {
+    static final File configFile = new File("clientConfig.json");
     private String serverHost = "localhost";
     private int port = 19336;
     private String theUsersTableName;
@@ -22,7 +23,6 @@ public class ClientConfig {
     }
 
     public static ClientConfig readConfig() throws IOException {
-        File configFile = new File("clientConfig.json");
         if (configFile.createNewFile()) {
             return resetConfig(configFile);
         } else {
@@ -46,7 +46,6 @@ public class ClientConfig {
 
     public static void saveConfig(ClientConfig clientConfig) {
         try {
-            File configFile = new File("loginConfig.json");
             configFile.delete();
             configFile.createNewFile();
             FileOutputStream fos = new FileOutputStream(configFile);

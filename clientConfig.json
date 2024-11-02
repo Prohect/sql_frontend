@@ -1,6 +1,1 @@
-{
-  "port": 19336,
-  "serverHost": "127.0.0.1",
-  "theUsersDatabaseName": "users",
-  "theUsersTableName": "users"
-}
+{"port":19336,"serverHost":"127.0.0.1","theUsersDatabaseName":"usersofmysqlfrontend","theUsersTableName":"usersofmysqlfrontend"}
