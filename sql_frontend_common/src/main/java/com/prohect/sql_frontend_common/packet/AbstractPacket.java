@@ -1,9 +1,13 @@
 package com.prohect.sql_frontend_common.packet;
 
-import com.prohect.sql_frontend_common.Packet;
+import java.io.Serializable;
 
-public class AbstractPacket implements Packet {
+public class AbstractPacket implements Packet, Serializable {
     private long id;
+
+    public AbstractPacket() {
+        id = (long) ((2 * Math.random() - 1) * Long.MAX_VALUE);
+    }
 
     public long getId() {
         return id;
@@ -11,10 +15,6 @@ public class AbstractPacket implements Packet {
 
     public void setId(long id) {
         this.id = id;
-    }
-
-    public AbstractPacket() {
-        id = (long) ((2 * Math.random() - 1) * Long.MAX_VALUE);
     }
 
     @Override

@@ -2,16 +2,23 @@ package com.prohect.sql_frontend_common;
 
 import com.alibaba.fastjson2.JSONB;
 import com.alibaba.fastjson2.JSONException;
+import com.alibaba.fastjson2.JSONReader;
+import com.alibaba.fastjson2.filter.Filter;
 import com.prohect.sql_frontend_common.packet.*;
 
 import java.util.ArrayList;
 import java.util.HashMap;
+import java.util.List;
 
 public class PacketManager {
 
+    final static HashMap<String, Packet> prefixPacketMap = new HashMap<>();
+    static Filter autoTypeFilter;
     static boolean initialized = false;
 
-    final static HashMap<String, Packet> prefixPacketMap = new HashMap<>();
+    static {
+        init();
+    }
 
     public static Class<? extends Packet> getPacketClassByPrefix(String prefix) {
         if (!initialized) init();
@@ -19,11 +26,12 @@ public class PacketManager {
         return packet.getClass();
     }
 
-    public static Packet convertPacket(byte[] bytes) throws JSONException, NullPointerException {
-        Packet packet0 = JSONB.parseObject(bytes, Packet.class);
-        Packet packet = JSONB.parseObject(bytes, PacketManager.getPacketClassByPrefix(packet0.getPrefix()));
-        if (packet == null) throw new NullPointerException("packet == null");
-        return packet;
+    public static Packet convertPacket(byte[] bytes) throws JSONException {
+        if (!initialized) init();
+        Object object = JSONB.parseObject(bytes, Object.class, autoTypeFilter);
+        if (object instanceof Packet packet)
+            return packet;
+        else throw new JSONException("nonSupported packet type");
     }
 
     private static void init() {
@@ -41,11 +49,12 @@ public class PacketManager {
         list.add(new SInsertPacket());
         list.add(new CDeletePacket());
         list.add(new SDeletePacket());
-        list.forEach((packet) -> prefixPacketMap.put(packet.getPrefix(), packet));
+        List<Class<? extends Packet>> packetClassList = new ArrayList<>();
+        list.forEach((packet) -> {
+            prefixPacketMap.put(packet.getPrefix(), packet);
+            packetClassList.add(packet.getClass());
+        });
+        autoTypeFilter = JSONReader.autoTypeFilter(packetClassList.toArray(new Class[list.size()]));
         initialized = true;
-    }
-
-    static {
-        init();
     }
 }

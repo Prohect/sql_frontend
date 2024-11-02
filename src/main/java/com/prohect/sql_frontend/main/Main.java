@@ -1,14 +1,13 @@
 package com.prohect.sql_frontend.main;
 
 import com.prohect.sql_frontend.NettyClient;
-import com.prohect.sql_frontend_common.ColumnMetaData;
-import com.prohect.sql_frontend_common.Packet;
-import com.prohect.sql_frontend_common.User;
 import com.prohect.sql_frontend.login.ClientConfig;
 import com.prohect.sql_frontend.login.LoginLogic;
 import com.prohect.sql_frontend.main.insert.InsertLogic;
 import com.prohect.sql_frontend.main.insertNewColumn.InsertNewColumnLogic;
-import io.netty.bootstrap.Bootstrap;
+import com.prohect.sql_frontend_common.ColumnMetaData;
+import com.prohect.sql_frontend_common.User;
+import com.prohect.sql_frontend_common.packet.Packet;
 import io.netty.channel.ChannelFuture;
 import io.netty.channel.ChannelHandlerContext;
 
@@ -18,9 +17,8 @@ import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.LinkedBlockingQueue;
 
 public class Main {
-    public static ClientConfig clientConfig;
-
     public final static ConcurrentHashMap<ChannelHandlerContext, LinkedBlockingQueue<Packet>> ctx2packetsMap = new ConcurrentHashMap<>();
+    public static ClientConfig clientConfig;
     public static LoginLogic loginLogic;
     public static MainLogic mainLogic;
     public static InsertLogic insertLogic;
@@ -39,12 +37,7 @@ public class Main {
             Main.client.close();
         }
         Main.client = client;
-        try {
-            Bootstrap b = new Bootstrap();
-            return Main.client.run(b);
-        } catch (Exception e) {
-            throw e;
-        }
+        return Main.client.run();
     }
 
 }

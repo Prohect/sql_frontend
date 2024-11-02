@@ -3,10 +3,11 @@ package com.prohect.sql_frontend_common.packet;
 import com.prohect.sql_frontend_common.ColumnMetaData;
 import com.prohect.sql_frontend_common.User;
 
+import java.io.Serializable;
 import java.util.ArrayList;
 import java.util.HashMap;
 
-public class SLoginPacket extends AbstractPacket {
+public class SLoginPacket extends AbstractPacket implements Serializable {
     User user;
     HashMap<String, HashMap<String, ArrayList<ColumnMetaData>>> db2table2columnMap = new HashMap<>();
     String info;

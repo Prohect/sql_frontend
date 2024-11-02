@@ -5,7 +5,7 @@ import java.util.HashMap;
 public class User {
     private String username;
     private String password;
-    private Long uuid;
+    private long uuid;
     /**
      * the first k -> databaseName,
      * the second K -> the tableName,
@@ -14,7 +14,7 @@ public class User {
      * the value v[1] -> permission4Write,
      */
     private HashMap<String, HashMap<String, HashMap<String, Boolean[]>>> permissions;
-    private boolean isOP;
+    private boolean op;
 
     public User(String username, String password, Long uuid) {
         this.username = username;
@@ -30,20 +30,20 @@ public class User {
         this.permissions = permissions;
     }
 
-    public User(String username, String password, Long uuid, HashMap<String, HashMap<String, HashMap<String, Boolean[]>>> permissions, boolean isOP) {
+    public User(String username, String password, Long uuid, HashMap<String, HashMap<String, HashMap<String, Boolean[]>>> permissions, boolean op) {
         this.username = username;
         this.password = password;
         this.uuid = uuid;
         this.permissions = permissions;
-        this.isOP = isOP;
+        this.op = op;
     }
 
-    public boolean isOP() {
-        return isOP;
+    public boolean isOp() {
+        return op;
     }
 
-    public void setOP(boolean OP) {
-        isOP = OP;
+    public void setOp(boolean op) {
+        this.op = op;
     }
 
     public String getUsername() {
@@ -70,11 +70,11 @@ public class User {
         this.permissions = permissions;
     }
 
-    public Long getUuid() {
+    public long getUuid() {
         return uuid;
     }
 
-    public void setUuid(Long uuid) {
+    public void setUuid(long uuid) {
         this.uuid = uuid;
     }
 
@@ -83,11 +83,11 @@ public class User {
         if (obj == null) return false;
         if (obj == this) return true;
         if (!(obj instanceof User u)) return false;
-        return u.getUuid().equals(this.getUuid());
+        return u.getUuid() == this.getUuid();
     }
 
     @Override
     public int hashCode() {
-        return uuid.hashCode();
+        return Long.hashCode(this.getUuid());
     }
 }

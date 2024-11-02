@@ -1,6 +1,8 @@
 package com.prohect.sql_frontend_common.packet;
 
-public class CInsertPacket extends AbstractPacket {
+import java.io.Serializable;
+
+public class CInsertPacket extends AbstractPacket implements Serializable {
     long uuid;
     String cmd;
     String dataBaseName;

@@ -27,12 +27,57 @@ import java.util.concurrent.LinkedBlockingQueue;
 
 public class MainLogic {
 
-    public MainLogic() {
-        Main.mainLogic = this;
+    public static Stage stage4InsertNewRowsWindow;
+    public static Scene scene4InsertNewRowsScene;
+    public static FXMLLoader insertFXMLLoader = new FXMLLoader(LoginUi.class.getResource("insert-view.fxml"));
+    public static Stage stage4InsertNewColumnWindow;
+    public static Scene scene4InsertNewColumnScene;
+    public static FXMLLoader insertNewColumnFXMLLoader = new FXMLLoader(LoginUi.class.getResource("newColumn-view.fxml"));
+
+    static {
+        try {
+            scene4InsertNewRowsScene = new Scene(insertFXMLLoader.load(), 640, 400);
+            scene4InsertNewColumnScene = new Scene(insertNewColumnFXMLLoader.load(), 359, 127);
+        } catch (IOException e) {
+            throw new RuntimeException(e);
+        }
     }
 
     String dataBase4tableView;
     String tableName4tableView;
+    @FXML
+    private MenuItem createColumnMenuItem;
+    @FXML
+    private Button customQueryButton;
+    @FXML
+    private TextField customQueryTextField;
+    @FXML
+    private ChoiceBox<String> databaseSourceChoiceBox;
+    @FXML
+    private Label databaseSourceChoiceBoxLabel;
+    @FXML
+    private Label infoLabel;
+    @FXML
+    private Menu inspectFromDBMenu;
+    @FXML
+    private Menu inspectFromLocalMenu;
+    @FXML
+    private TableView<Object[]> mainTable;
+    @FXML
+    private MenuItem setThisColumnCouldInspectCouldChangePermissionAsDefaultMenuItem;
+    @FXML
+    private MenuItem setThisColumnCouldInspectNoChangePermissionAsDefaultMenuItem;
+    @FXML
+    private MenuItem setThisColumnNoInspectNoChangePermissionAsDefaultMenuItem;
+    @FXML
+    private ChoiceBox<String> tableChoiceBox;
+    private TableColumn selectedColumn;
+    private int selectedRowIndex;
+    private int selectedColumnIndex;
+
+    public MainLogic() {
+        Main.mainLogic = this;
+    }
 
     public String getDataBase4tableView() {
         return dataBase4tableView;
@@ -88,61 +133,6 @@ public class MainLogic {
 
     public ChoiceBox<String> getTableChoiceBox() {
         return tableChoiceBox;
-    }
-
-    @FXML
-    private MenuItem createColumnMenuItem;
-
-    @FXML
-    private Button customQueryButton;
-
-    @FXML
-    private TextField customQueryTextField;
-
-    @FXML
-    private ChoiceBox<String> databaseSourceChoiceBox;
-
-    @FXML
-    private Label databaseSourceChoiceBoxLabel;
-
-    @FXML
-    private Label infoLabel;
-
-    @FXML
-    private Menu inspectFromDBMenu;
-
-    @FXML
-    private Menu inspectFromLocalMenu;
-
-    @FXML
-    private TableView<Object[]> mainTable;
-
-    @FXML
-    private MenuItem setThisColumnCouldInspectCouldChangePermissionAsDefaultMenuItem;
-
-    @FXML
-    private MenuItem setThisColumnCouldInspectNoChangePermissionAsDefaultMenuItem;
-
-    @FXML
-    private MenuItem setThisColumnNoInspectNoChangePermissionAsDefaultMenuItem;
-
-    @FXML
-    private ChoiceBox<String> tableChoiceBox;
-
-    public static Stage stage4InsertNewRowsWindow;
-    public static Scene scene4InsertNewRowsScene;
-    public static FXMLLoader insertFXMLLoader = new FXMLLoader(LoginUi.class.getResource("insert-view.fxml"));
-    public static Stage stage4InsertNewColumnWindow;
-    public static Scene scene4InsertNewColumnScene;
-    public static FXMLLoader insertNewColumnFXMLLoader = new FXMLLoader(LoginUi.class.getResource("newColumn-view.fxml"));
-
-    static {
-        try {
-            scene4InsertNewRowsScene = new Scene(insertFXMLLoader.load(), 640, 400);
-            scene4InsertNewColumnScene = new Scene(insertNewColumnFXMLLoader.load(), 359, 127);
-        } catch (IOException e) {
-            throw new RuntimeException(e);
-        }
     }
 
     @FXML
@@ -208,11 +198,6 @@ public class MainLogic {
         }
     }
 
-    private TableColumn selectedColumn;
-
-    private int selectedRowIndex;
-    private int selectedColumnIndex;
-
     @FXML
     void mainTableOnMouseClicked(MouseEvent event) {
         selectedRowIndex = this.getMainTable().getSelectionModel().getSelectedIndex();
@@ -221,7 +206,7 @@ public class MainLogic {
         TablePosition position = selectedCells.get(0);
         selectedColumnIndex = position.getColumn();
         selectedColumn = position.getTableColumn();
-        if (Main.user.isOP()) {
+        if (Main.user.isOp()) {
             setThisColumnNoInspectNoChangePermissionAsDefaultMenuItem.setVisible(true);
             setThisColumnCouldInspectNoChangePermissionAsDefaultMenuItem.setVisible(true);
             setThisColumnCouldInspectCouldChangePermissionAsDefaultMenuItem.setVisible(true);
@@ -230,7 +215,7 @@ public class MainLogic {
 
     @FXML
     void deleteRowMenuItemOnAction(ActionEvent event) {
-        if (!Main.user.isOP()) {
+        if (!Main.user.isOp()) {
             List<ColumnMetaData> columnMetaDataList = Main.db2table2columnMap.get(dataBase4tableView).get(tableName4tableView);
             HashMap<String, Boolean[]> column2permissions = Main.user.getPermissions().get(dataBase4tableView).get(tableName4tableView);
             for (int i = 0; i < columnMetaDataList.size(); i++) {

@@ -1,6 +1,8 @@
 package com.prohect.sql_frontend_common.packet;
 
-public class SInfoPacket extends AbstractPacket {
+import java.io.Serializable;
+
+public class SInfoPacket extends AbstractPacket implements Serializable {
     String info;
 
 

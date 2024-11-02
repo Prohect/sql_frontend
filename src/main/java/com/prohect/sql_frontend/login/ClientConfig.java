@@ -9,45 +9,13 @@ import java.io.IOException;
 import java.nio.file.Files;
 
 public class ClientConfig {
-    private String serverIP = "localhost";
+    private String serverHost = "localhost";
     private int port = 19336;
     private String theUsersTableName;
     private String theUsersDatabaseName;
 
-    public String getServerIP() {
-        return serverIP;
-    }
-
-    public void setServerIP(String serverIP) {
-        this.serverIP = serverIP;
-    }
-
-    public int getPort() {
-        return port;
-    }
-
-    public void setPort(int port) {
-        this.port = port;
-    }
-
-    public String getTheUsersTableName() {
-        return theUsersTableName.toLowerCase();
-    }
-
-    public void setTheUsersTableName(String theUsersTableName) {
-        this.theUsersTableName = theUsersTableName;
-    }
-
-    public String getTheUsersDatabaseName() {
-        return theUsersDatabaseName.toLowerCase();
-    }
-
-    public void setTheUsersDatabaseName(String theUsersDatabaseName) {
-        this.theUsersDatabaseName = theUsersDatabaseName;
-    }
-
-    public ClientConfig(String serverIP, int port, String theUsersTableName, String theUsersDatabaseName) {
-        this.serverIP = serverIP;
+    public ClientConfig(String serverHost, int port, String theUsersTableName, String theUsersDatabaseName) {
+        this.serverHost = serverHost;
         this.port = port;
         this.theUsersTableName = theUsersTableName;
         this.theUsersDatabaseName = theUsersDatabaseName;
@@ -85,5 +53,37 @@ public class ClientConfig {
             fos.write(JSON.toJSONBytes(clientConfig));
         } catch (IOException ignored) {
         }
+    }
+
+    public String getServerHost() {
+        return serverHost;
+    }
+
+    public void setServerHost(String serverHost) {
+        this.serverHost = serverHost;
+    }
+
+    public int getPort() {
+        return port;
+    }
+
+    public void setPort(int port) {
+        this.port = port;
+    }
+
+    public String getTheUsersTableName() {
+        return theUsersTableName.toLowerCase();
+    }
+
+    public void setTheUsersTableName(String theUsersTableName) {
+        this.theUsersTableName = theUsersTableName;
+    }
+
+    public String getTheUsersDatabaseName() {
+        return theUsersDatabaseName.toLowerCase();
+    }
+
+    public void setTheUsersDatabaseName(String theUsersDatabaseName) {
+        this.theUsersDatabaseName = theUsersDatabaseName;
     }
 }

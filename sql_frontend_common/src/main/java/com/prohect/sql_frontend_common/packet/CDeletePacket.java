@@ -1,9 +1,20 @@
 package com.prohect.sql_frontend_common.packet;
 
-public class CDeletePacket extends AbstractPacket {
+import java.io.Serializable;
+
+public class CDeletePacket extends AbstractPacket implements Serializable {
     long uuid;
     String cmd;
     String databaseName;
+
+    public CDeletePacket(long uuid, String cmd, String databaseName) {
+        this.uuid = uuid;
+        this.cmd = cmd;
+        this.databaseName = databaseName;
+    }
+
+    public CDeletePacket() {
+    }
 
     public long getUuid() {
         return uuid;
@@ -27,14 +38,5 @@ public class CDeletePacket extends AbstractPacket {
 
     public void setDatabaseName(String databaseName) {
         this.databaseName = databaseName;
-    }
-
-    public CDeletePacket(long uuid, String cmd, String databaseName) {
-        this.uuid = uuid;
-        this.cmd = cmd;
-        this.databaseName = databaseName;
-    }
-
-    public CDeletePacket() {
     }
 }

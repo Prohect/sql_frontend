@@ -1,6 +1,7 @@
 package com.prohect.sql_frontend_common;
 
-import com.alibaba.fastjson2.JSONB;
+import com.alibaba.fastjson2.JSONException;
+import com.prohect.sql_frontend_common.packet.Packet;
 import io.netty.buffer.ByteBuf;
 import io.netty.buffer.Unpooled;
 import io.netty.channel.ChannelHandlerContext;
@@ -10,64 +11,81 @@ import io.netty.util.concurrent.ScheduledFuture;
 
 import java.util.concurrent.LinkedBlockingQueue;
 import java.util.concurrent.TimeUnit;
+import java.util.concurrent.locks.ReentrantLock;
 
 public class CommonUtil {
 
-    public static ScheduledFuture<?> encoderRegister(final EventLoopGroup workerGroup, final LinkedBlockingQueue<Packet> packets, final ChannelHandlerContext ctx) {
+    /**
+     * @return a future for u to close this infinite run loop
+     * @apiNote this loop do not shut itself down from inside
+     */
+    public static ScheduledFuture<?> encoderRegister(final EventLoopGroup workerGroup, final ChannelHandlerContext ctx, final LinkedBlockingQueue<Packet> packets, final long period) {
         return workerGroup.scheduleAtFixedRate(() -> {
             try {
-                Packet packet = packets.poll();
-                if (packet == null) return;
-                System.out.printf("发送%s", packet);
-                byte[] jsonBytes = JSONB.toBytes(packet);
-                byte[] packetBytes = new byte[jsonBytes.length + 4];
-                byte[] lengthBytes = new byte[4];
-                for (int i = 1; i < 5; i++) {
-                    lengthBytes[i - 1] = (byte) (jsonBytes.length >> i * 8);
+                if (packets.isEmpty()) return;
+                for (; ; ) {
+                    Packet packet = packets.poll();
+                    if (packet == null) break;
+                    System.out.printf("发送%s%n", packet);
+                    byte[] jsonBytes = packet.toBytesWithClassInfo();
+                    byte[] lengthBytes = new byte[4];
+                    for (int i = 1; i < 5; i++) {
+                        lengthBytes[i - 1] = (byte) (jsonBytes.length >> 32 - i * 8);
+                    }
+                    ctx.write(Unpooled.copiedBuffer(lengthBytes));
+                    ctx.write(Unpooled.copiedBuffer(jsonBytes));
                 }
-                System.arraycopy(lengthBytes, 0, packetBytes, 0, 4);
-                System.arraycopy(jsonBytes, 0, packetBytes, 4, jsonBytes.length);
-                ctx.writeAndFlush(Unpooled.copiedBuffer(packetBytes));
-                System.out.println("成功");
+                ctx.flush();
             } catch (Exception e) {
                 e.printStackTrace();
             }
-        }, 0, 125, TimeUnit.MILLISECONDS);
+        }, 0, period, TimeUnit.MILLISECONDS);
     }
 
-    private static void processInIntoPackets2Out(ByteBuf msg, ByteBuf in, LinkedBlockingQueue<Packet> out) {
+    /**
+     * copy the msg to in and submit decode mission to a new thread of the threadGroup.
+     *
+     * @param future the returned future of the last call of this method
+     * @return a future for this method itself to check if last call of this method is already done
+     */
+    public static Future<?> getPackets_concurrent(EventLoopGroup workerGroup, final Future<?> future, ByteBuf msg, ReentrantLock lock, ByteBuf in, LinkedBlockingQueue<Packet> out) {
         in.writeBytes(msg);
         msg.release();
-        if (in.readableBytes() < 4) return;
-        int lastSuccessReaderIndex = in.readerIndex();
-        while (in.readableBytes() >= 4) {
-            int packetLength = 0;
-            for (int i = 1; i < 5; i++) {
-                packetLength |= ((in.readByte() & 0xFF) << i * 8);
-            }
-            byte[] bytes = new byte[packetLength];
-            try {
-                in.readBytes(bytes);
-                out.add(PacketManager.convertPacket(bytes));
-                lastSuccessReaderIndex = in.readerIndex();
-            } catch (IndexOutOfBoundsException e) {
-                break;
-            } catch (Exception e) {
-                e.printStackTrace();
-            }
-        }
-        in.readerIndex(lastSuccessReaderIndex);
-        in.discardReadBytes();
+        return workerGroup.submit(() -> {
+            if (future != null)
+                future.addListener(_ -> processInIntoPackets2Out_concurrent(lock, in, out));
+            else processInIntoPackets2Out_concurrent(lock, in, out);
+        });
     }
 
-    public static Future<?> getPackets(EventLoopGroup workerGroup, Future<?> future, ByteBuf msg, ByteBuf in, LinkedBlockingQueue<Packet> out) {
-        final ByteBuf copiedMsg = msg.copy();
-        msg.release();
-        return workerGroup.submit(() -> {
-            if (future != null && !future.isDone())
-                future.addListener(f -> processInIntoPackets2Out(copiedMsg, in, out));
-            else processInIntoPackets2Out(copiedMsg, in, out);
-        });
+    private static void processInIntoPackets2Out_concurrent(ReentrantLock lock, ByteBuf in, LinkedBlockingQueue<Packet> out) {
+        if (in.readableBytes() < 4) return;
+//        System.out.printf("CommonUtil.processInIntoPackets2Out_concurrent called by\t%s%n", Thread.currentThread().getName());
+        int lastSuccessReaderIndex = in.readerIndex();
+        if (lock.tryLock()) {
+            try {
+                while (in.readableBytes() >= 4) {
+                    int packetLength = 0;
+                    for (int i = 1; i < 5; i++) packetLength |= ((in.readByte() & 0xFF) << 32 - i * 8);
+                    try {
+                        byte[] bytes = new byte[packetLength];
+                        in.readBytes(bytes);
+                        out.offer(PacketManager.convertPacket(bytes));
+                        lastSuccessReaderIndex = in.readerIndex();
+                    } catch (IndexOutOfBoundsException ignored) {
+                        break;
+                    } catch (JSONException e) {
+                        e.printStackTrace();
+                        break;
+                    }
+                }
+                in.readerIndex(lastSuccessReaderIndex);
+                in.discardReadBytes();
+            } finally {
+                lock.unlock();
+            }
+        }
+//        System.out.printf("CommonUtil.processInIntoPackets2Out_concurrent ended by\t%s%n", Thread.currentThread().getName());
     }
 
     private static void debug_nonPacketUnpacked(ByteBuf in, int lastSuccessReaderIndex) {
@@ -93,7 +111,7 @@ public class CommonUtil {
 
     public static String convert2SqlServerContextString(Object o) {
         if (o == null) {
-            return "";
+            return "''";
         }
         return o instanceof String string ? "'" + string + "'" : (o instanceof Boolean b) ? b ? "1" : "0" : o.toString();
     }

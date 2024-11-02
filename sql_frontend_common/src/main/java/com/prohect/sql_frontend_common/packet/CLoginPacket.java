@@ -2,7 +2,9 @@ package com.prohect.sql_frontend_common.packet;
 
 import com.prohect.sql_frontend_common.User;
 
-public class CLoginPacket extends AbstractPacket {
+import java.io.Serializable;
+
+public class CLoginPacket extends AbstractPacket implements Serializable {
     User user;
 
     public CLoginPacket() {

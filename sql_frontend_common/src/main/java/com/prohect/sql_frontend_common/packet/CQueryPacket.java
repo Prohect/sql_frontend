@@ -1,6 +1,8 @@
 package com.prohect.sql_frontend_common.packet;
 
-public class CQueryPacket extends AbstractPacket {
+import java.io.Serializable;
+
+public class CQueryPacket extends AbstractPacket implements Serializable {
     long uuid;
     String query;
     String databaseName;

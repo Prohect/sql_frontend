@@ -1,8 +1,9 @@
 package com.prohect.sql_frontend_common.packet;
 
+import java.io.Serializable;
 import java.util.ArrayList;
 
-public class SQueryReplyPacket extends AbstractPacket {
+public class SQueryReplyPacket extends AbstractPacket implements Serializable {
 
     private String databaseName;
     private String tableName;

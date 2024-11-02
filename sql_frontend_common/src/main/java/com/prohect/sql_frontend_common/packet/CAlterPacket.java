@@ -1,6 +1,8 @@
 package com.prohect.sql_frontend_common.packet;
 
-public class CAlterPacket extends AbstractPacket {
+import java.io.Serializable;
+
+public class CAlterPacket extends AbstractPacket implements Serializable {
     long uuid;
     String cmd;
     String databaseName;

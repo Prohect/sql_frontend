@@ -11,15 +11,11 @@ import java.io.IOException;
 public class LoginUi extends Application {
 
 
-    public static Stage getWindow() {
-        return window;
-    }
-
-    private static Stage window;
     public static FXMLLoader loginFXMLLoader = new FXMLLoader(LoginUi.class.getResource("login-view.fxml"));
     public static FXMLLoader mainFXMLLoader = new FXMLLoader(LoginUi.class.getResource("main-view.fxml"));
     public static Scene loginScene;
     public static Scene mainScene;
+    private static Stage window;
 
     static {
         try {
@@ -30,6 +26,13 @@ public class LoginUi extends Application {
         }
     }
 
+    public static Stage getWindow() {
+        return window;
+    }
+
+    public static void main(String[] args) {
+        Application.launch();
+    }
 
     @Override
     public void start(Stage stage) throws IOException {
@@ -46,9 +49,5 @@ public class LoginUi extends Application {
             if (NettyClient.threadGroups.get(i) != null) NettyClient.threadGroups.get(i).shutdownGracefully();
         }
         super.stop();
-    }
-
-    public static void main(String[] args) {
-        Application.launch();
     }
 }

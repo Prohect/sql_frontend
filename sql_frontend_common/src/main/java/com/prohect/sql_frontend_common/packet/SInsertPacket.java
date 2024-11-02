@@ -1,7 +1,16 @@
 package com.prohect.sql_frontend_common.packet;
 
-public class SInsertPacket extends AbstractPacket {
+import java.io.Serializable;
+
+public class SInsertPacket extends AbstractPacket implements Serializable {
     long theID;
+
+    public SInsertPacket(long theID) {
+        this.theID = theID;
+    }
+
+    public SInsertPacket() {
+    }
 
     public long getTheID() {
         return theID;
@@ -9,12 +18,5 @@ public class SInsertPacket extends AbstractPacket {
 
     public void setTheID(long theID) {
         this.theID = theID;
-    }
-
-    public SInsertPacket(long theID) {
-        this.theID = theID;
-    }
-
-    public SInsertPacket() {
     }
 }

@@ -1,6 +1,8 @@
 package com.prohect.sql_frontend_common.packet;
 
-public class SUpdatePacket extends AbstractPacket {
+import java.io.Serializable;
+
+public class SUpdatePacket extends AbstractPacket implements Serializable {
     long theID;
 
     public SUpdatePacket() {

@@ -1,9 +1,9 @@
 package com.prohect.sql_frontend_server.sqlUtil;
 
-import com.prohect.sql_frontend_server.DatabaseAdmin;
-import com.prohect.sql_frontend_server.ServerConfig;
 import com.prohect.sql_frontend_common.CommonUtil;
 import com.prohect.sql_frontend_common.User;
+import com.prohect.sql_frontend_server.DatabaseAdmin;
+import com.prohect.sql_frontend_server.ServerConfig;
 
 import java.sql.*;
 import java.util.HashMap;
@@ -46,7 +46,7 @@ public class SqlUtil4Login {
                     }
                 }
             }
-            user.setOP(set.getBoolean("op"));
+            user.setOp(set.getBoolean("op"));
 
             return user;
         } else

@@ -1,8 +1,6 @@
 package com.prohect.sql_frontend_common;
 
-import java.io.*;
-import java.util.ArrayList;
-import java.util.List;
+import java.io.IOException;
 
 public class Test {
     public static void main(String[] args) throws IOException {

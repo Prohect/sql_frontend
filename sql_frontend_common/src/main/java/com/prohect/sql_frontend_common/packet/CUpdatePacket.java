@@ -1,6 +1,8 @@
 package com.prohect.sql_frontend_common.packet;
 
-public class CUpdatePacket extends AbstractPacket {
+import java.io.Serializable;
+
+public class CUpdatePacket extends AbstractPacket implements Serializable {
     long uuid;
     String updateCMD;
     String databaseName;
