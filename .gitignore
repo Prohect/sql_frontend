@@ -41,3 +41,4 @@ build/
 *.csv
 *.xlsx
 *.json
+dependency-reduced-pom.xml
