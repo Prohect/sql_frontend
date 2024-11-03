@@ -6,13 +6,13 @@
 
     <groupId>com.prohect</groupId>
     <artifactId>sql_frontend_server</artifactId>
-    <version>0.0.3</version>
+    <version>0.0.4</version>
 
     <dependencies>
         <dependency>
             <groupId>com.prohect</groupId>
             <artifactId>sql_frontend_common</artifactId>
-            <version>0.0.3</version>
+            <version>0.0.4</version>
         </dependency>
         <dependency>
             <groupId>com.microsoft.sqlserver</groupId>
