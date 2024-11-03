@@ -2,7 +2,7 @@ package com.prohect.sql_frontend.main;
 
 import com.prohect.sql_frontend.ClientHandlerAdapter;
 import com.prohect.sql_frontend.LoginUi;
-import com.prohect.sql_frontend.main.insert.InsertLogic;
+import com.prohect.sql_frontend.main.newRow.InsertNewRowLogic;
 import com.prohect.sql_frontend_common.ColumnMetaData;
 import com.prohect.sql_frontend_common.CommonUtil;
 import com.prohect.sql_frontend_common.packet.CAlterPacket;
@@ -160,16 +160,16 @@ public class MainLogic {
                 stage4InsertNewRowsWindow = new Stage();
                 stage4InsertNewRowsWindow.setTitle("Insert New Row");
                 stage4InsertNewRowsWindow.setScene(scene4InsertNewRowsScene);
-                Main.insertLogic.getTheInsertTableView().setEditable(true);
+                Main.insertNewRowLogic.getTheInsertTableView().setEditable(true);
 //                stage4InsertNewRowsWindow.setAlwaysOnTop(true);
             }
             if (this.getMainTable().getColumns().isEmpty()) {
                 this.infoLabel.setText("请先选择表并查询以获取列数据数据");
                 return;
             }
-            if (!(InsertLogic.tableName.equals(this.tableName4tableView) && InsertLogic.databaseName.equals(this.dataBase4tableView))) {
-                Main.insertLogic.getTheInsertTableView().setItems(FXCollections.observableArrayList());
-                ObservableList<TableColumn<Object[], ?>> columnObservableList = Main.insertLogic.getTheInsertTableView().getColumns();
+            if (!(InsertNewRowLogic.tableName.equals(this.tableName4tableView) && InsertNewRowLogic.databaseName.equals(this.dataBase4tableView))) {
+                Main.insertNewRowLogic.getTheInsertTableView().setItems(FXCollections.observableArrayList());
+                ObservableList<TableColumn<Object[], ?>> columnObservableList = Main.insertNewRowLogic.getTheInsertTableView().getColumns();
                 columnObservableList.clear();
                 ArrayList<ColumnMetaData> columnMetaDataList = Main.db2table2columnMap.get(this.getDatabaseSourceChoiceBox().getValue()).get(this.getTableChoiceBox().getValue());
                 for (int i = 0; i < columnMetaDataList.size(); i++) {
@@ -190,8 +190,8 @@ public class MainLogic {
                     });
                 }
             }
-            InsertLogic.databaseName = this.dataBase4tableView;
-            InsertLogic.tableName = this.tableName4tableView;
+            InsertNewRowLogic.databaseName = this.dataBase4tableView;
+            InsertNewRowLogic.tableName = this.tableName4tableView;
             stage4InsertNewRowsWindow.show();
         } catch (RuntimeException e) {
             Main.mainLogic.getInfoLabel().setText("不支持的操作：向本应用的users表手动中添加行");

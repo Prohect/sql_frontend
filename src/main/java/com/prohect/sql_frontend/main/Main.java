@@ -1,10 +1,10 @@
 package com.prohect.sql_frontend.main;
 
 import com.prohect.sql_frontend.NettyClient;
-import com.prohect.sql_frontend.login.ClientConfig;
-import com.prohect.sql_frontend.login.LoginLogic;
-import com.prohect.sql_frontend.main.insert.InsertLogic;
-import com.prohect.sql_frontend.main.insertNewColumn.InsertNewColumnLogic;
+import com.prohect.sql_frontend.main.login.ClientConfig;
+import com.prohect.sql_frontend.main.login.LoginLogic;
+import com.prohect.sql_frontend.main.newRow.InsertNewRowLogic;
+import com.prohect.sql_frontend.main.newColumn.InsertNewColumnLogic;
 import com.prohect.sql_frontend_common.ColumnMetaData;
 import com.prohect.sql_frontend_common.User;
 import com.prohect.sql_frontend_common.packet.Packet;
@@ -21,7 +21,7 @@ public class Main {
     public static ClientConfig clientConfig;
     public static LoginLogic loginLogic;
     public static MainLogic mainLogic;
-    public static InsertLogic insertLogic;
+    public static InsertNewRowLogic insertNewRowLogic;
     public static InsertNewColumnLogic insertNewColumnLogic;
     public static User user;
     public static HashMap<String, HashMap<String, ArrayList<ColumnMetaData>>> db2table2columnMap;

@@ -1,4 +1,4 @@
-package com.prohect.sql_frontend.login;
+package com.prohect.sql_frontend.main.login;
 
 import com.prohect.sql_frontend.ClientHandlerAdapter;
 import com.prohect.sql_frontend.NettyClient;

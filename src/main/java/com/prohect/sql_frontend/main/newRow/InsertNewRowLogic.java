@@ -1,4 +1,4 @@
-package com.prohect.sql_frontend.main.insert;
+package com.prohect.sql_frontend.main.newRow;
 
 import com.prohect.sql_frontend.main.Main;
 import com.prohect.sql_frontend.main.MainLogic;
@@ -22,7 +22,7 @@ import java.util.HashMap;
 import java.util.List;
 import java.util.concurrent.LinkedBlockingQueue;
 
-public class InsertLogic {
+public class InsertNewRowLogic {
 
     public static final String nullableString = "可选·输入";
     public static final String normalString = "请·输·入";
@@ -42,8 +42,8 @@ public class InsertLogic {
     private int selectedRowIndex;
     private int selectedColumnIndex;
 
-    public InsertLogic() {
-        Main.insertLogic = this;
+    public InsertNewRowLogic() {
+        Main.insertNewRowLogic = this;
     }
 
     /**

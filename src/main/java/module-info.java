@@ -9,10 +9,10 @@ module com.prohect.sql_frontend {
 
 
     opens com.prohect.sql_frontend to javafx.fxml;
-    opens com.prohect.sql_frontend.login to javafx.fxml;
+    opens com.prohect.sql_frontend.main.login to javafx.fxml;
     opens com.prohect.sql_frontend.main to javafx.fxml;
-    opens com.prohect.sql_frontend.main.insert to javafx.fxml;
-    opens com.prohect.sql_frontend.main.insertNewColumn to javafx.fxml;
+    opens com.prohect.sql_frontend.main.newRow to javafx.fxml;
+    opens com.prohect.sql_frontend.main.newColumn to javafx.fxml;
     exports com.prohect.sql_frontend;
-    exports com.prohect.sql_frontend.login;
+    exports com.prohect.sql_frontend.main.login;
 }

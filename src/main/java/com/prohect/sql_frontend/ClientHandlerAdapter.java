@@ -1,8 +1,8 @@
 package com.prohect.sql_frontend;
 
 
-import com.prohect.sql_frontend.login.ClientConfig;
-import com.prohect.sql_frontend.login.LoginLogic;
+import com.prohect.sql_frontend.main.login.ClientConfig;
+import com.prohect.sql_frontend.main.login.LoginLogic;
 import com.prohect.sql_frontend.main.Main;
 import com.prohect.sql_frontend.main.MainLogic;
 import com.prohect.sql_frontend.main.UpdateOfCellOfTable;
@@ -158,7 +158,7 @@ public class ClientHandlerAdapter extends ChannelInboundHandlerAdapter {
     private void processInsertPacket(SInsertPacket sInsertPacket) {
         long id = sInsertPacket.getTheID();
         Object[] objects = Main.packetID2insertedValueMap.get(id);
-        Main.insertLogic.getTheInsertTableView().getItems().remove(objects);
+        Main.insertNewRowLogic.getTheInsertTableView().getItems().remove(objects);
     }
 
     private void processDeletePacket(SDeletePacket sDeletePacket) {
