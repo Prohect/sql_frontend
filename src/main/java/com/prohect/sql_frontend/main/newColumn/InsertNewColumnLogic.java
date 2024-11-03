@@ -1,4 +1,4 @@
-package com.prohect.sql_frontend.main.insertNewColumn;
+package com.prohect.sql_frontend.main.newColumn;
 
 import com.prohect.sql_frontend.main.Main;
 import com.prohect.sql_frontend_common.CommonUtil;
@@ -12,6 +12,7 @@ import javafx.scene.control.TextField;
 import java.util.concurrent.LinkedBlockingQueue;
 
 public class InsertNewColumnLogic {
+
     @FXML
     private CheckBox asDefault;
     @FXML
