@@ -157,7 +157,7 @@ public class Server {
         try {
             long uuid = cInsertPacket.getUuid();
             String cmd = cInsertPacket.getCmd();
-            String databaseName = cInsertPacket.getDataBaseName().toLowerCase();
+            String databaseName = cInsertPacket.getDatabaseName().toLowerCase();
             long id = cInsertPacket.getId();
             User user = uuid2userMap.get(uuid);
             String[] split = cmd.substring(11).split("\\(");//"INSERT INTO"->11
@@ -217,6 +217,10 @@ public class Server {
             int i = statement.executeUpdate(cmd);
             ctx2packetToBeSentMap.get(ctx).add(new SInfoPacket("成功, " + i + "行受影响"));
             statement.close();
+
+            loadMetaDataFromConnection();
+            ctx2packetToBeSentMap.get(ctx).add(new SLoginPacket(new User("", "", user.getUuid()), database2Table2ColumnMap, "update metadata", "", ""));
+
         } catch (SQLException e) {
             e.printStackTrace();
             ctx2packetToBeSentMap.get(ctx).add(new SInfoPacket(e.getMessage()));

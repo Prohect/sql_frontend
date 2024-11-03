@@ -2,6 +2,9 @@ package com.prohect.sql_frontend_common.packet;
 
 import java.io.Serializable;
 
+/**
+ * delete a row from a certain table
+ */
 public class CDeletePacket extends AbstractPacket implements Serializable {
     long uuid;
     String cmd;

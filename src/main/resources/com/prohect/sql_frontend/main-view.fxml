@@ -32,65 +32,55 @@
   OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 -->
 
-<?import javafx.scene.control.*?>
+<?import javafx.scene.control.Button?>
+<?import javafx.scene.control.ChoiceBox?>
+<?import javafx.scene.control.ContextMenu?>
+<?import javafx.scene.control.Label?>
+<?import javafx.scene.control.Menu?>
+<?import javafx.scene.control.MenuBar?>
+<?import javafx.scene.control.MenuItem?>
+<?import javafx.scene.control.TableView?>
+<?import javafx.scene.control.TextField?>
 <?import javafx.scene.layout.AnchorPane?>
 <?import javafx.scene.layout.VBox?>
-<VBox xmlns:fx="http://javafx.com/fxml/1" prefHeight="720.0" prefWidth="1280.0" xmlns="http://javafx.com/javafx/23.0.1"
-      fx:controller="com.prohect.sql_frontend.main.MainLogic">
+
+<VBox prefHeight="720.0" prefWidth="1280.0" xmlns="http://javafx.com/javafx/23.0.1" xmlns:fx="http://javafx.com/fxml/1" fx:controller="com.prohect.sql_frontend.main.MainLogic">
     <children>
         <MenuBar VBox.vgrow="NEVER">
             <menus>
                 <Menu fx:id="inspectFromDBMenu" mnemonicParsing="false" text="数据库">
                     <items>
-                        <MenuItem fx:id="createColumnMenuItem" mnemonicParsing="false"
-                                  onAction="#insertNewRowMenuItemOnAction" text="新建行"/>
-                        <MenuItem fx:id="createColumnMenuItem1" mnemonicParsing="false"
-                                  onAction="#insertNewColumnMenuItemOnAction" text="新建列"/>
+                        <MenuItem fx:id="createRowMenuItem" mnemonicParsing="false" onAction="#insertNewRowMenuItemOnAction" text="新建行" />
+                        <MenuItem fx:id="createColumnMenuItem" mnemonicParsing="false" onAction="#insertNewColumnMenuItemOnAction" text="新建列" />
+                  <MenuItem mnemonicParsing="false" onAction="#insertNewTableMenuItemOnAction" text="新建表" />
                     </items>
                 </Menu>
             </menus>
         </MenuBar>
         <AnchorPane maxHeight="-1.0" maxWidth="-1.0" prefHeight="504.0" prefWidth="880.0" VBox.vgrow="ALWAYS">
             <children>
-                <TableView fx:id="mainTable" editable="true" onMouseClicked="#mainTableOnMouseClicked"
-                           prefHeight="624.0" prefWidth="1274.0">
+                <TableView fx:id="mainTable" editable="true" onMouseClicked="#mainTableOnMouseClicked" prefHeight="624.0" prefWidth="1274.0">
                     <contextMenu>
                         <ContextMenu>
                             <items>
-                                <MenuItem mnemonicParsing="false" onAction="#insertNewRowMenuItemOnAction"
-                                          text="插入新行"/>
-                                <MenuItem mnemonicParsing="false" onAction="#insertNewColumnMenuItemOnAction"
-                                          text="插入新列"/>
-                                <MenuItem mnemonicParsing="false" onAction="#deleteRowMenuItemOnAction"
-                                          text="删除选中行"/>
-                                <MenuItem fx:id="setThisColumnNoInspectNoChangePermissionAsDefaultMenuItem"
-                                          mnemonicParsing="false"
-                                          onAction="#setThisColumnNoInspectNoChangePermissionAsDefault"
-                                          text="设该列为默认不可查询不可修改" visible="false"/>
-                                <MenuItem fx:id="setThisColumnCouldInspectNoChangePermissionAsDefaultMenuItem"
-                                          mnemonicParsing="false"
-                                          onAction="#setThisColumnCouldInspectNoChangePermissionAsDefault"
-                                          text="设该列为默认可查询不可修改" visible="false"/>
-                                <MenuItem fx:id="setThisColumnCouldInspectCouldChangePermissionAsDefaultMenuItem"
-                                          mnemonicParsing="false"
-                                          onAction="#setThisColumnCouldInspectCouldChangePermissionAsDefault"
-                                          text="设该列为默认可查询可修改" visible="false"/>
+                                <MenuItem mnemonicParsing="false" onAction="#insertNewRowMenuItemOnAction" text="插入新行" />
+                                <MenuItem mnemonicParsing="false" onAction="#insertNewColumnMenuItemOnAction" text="插入新列" />
+                                <MenuItem mnemonicParsing="false" onAction="#deleteRowMenuItemOnAction" text="删除选中行" />
+                                <MenuItem fx:id="setThisColumnNoInspectNoChangePermissionAsDefaultMenuItem" mnemonicParsing="false" onAction="#setThisColumnNoInspectNoChangePermissionAsDefault" text="设该列为默认不可查询不可修改" visible="false" />
+                                <MenuItem fx:id="setThisColumnCouldInspectNoChangePermissionAsDefaultMenuItem" mnemonicParsing="false" onAction="#setThisColumnCouldInspectNoChangePermissionAsDefault" text="设该列为默认可查询不可修改" visible="false" />
+                                <MenuItem fx:id="setThisColumnCouldInspectCouldChangePermissionAsDefaultMenuItem" mnemonicParsing="false" onAction="#setThisColumnCouldInspectCouldChangePermissionAsDefault" text="设该列为默认可查询可修改" visible="false" />
                             </items>
                         </ContextMenu>
                     </contextMenu>
                 </TableView>
-                <TextField fx:id="customQueryTextField" layoutX="175.0" layoutY="638.0" prefHeight="23.0"
-                           prefWidth="543.0" text="*"/>
-                <Label layoutX="62.0" layoutY="642.0" prefHeight="15.0" prefWidth="101.0" text="查询指令: select"/>
-                <Button fx:id="customQueryButton" layoutX="14.0" layoutY="638.0" mnemonicParsing="false"
-                        onMouseClicked="#onCustomQueryButtonClicked" text="查询"/>
-                <Label fx:id="infoLabel" layoutX="14.0" layoutY="674.0" prefHeight="15.0" prefWidth="464.0"
-                       text="Info:"/>
-                <ChoiceBox fx:id="databaseSourceChoiceBox" layoutX="1116.0" layoutY="638.0"
-                           onMouseClicked="#databaseSourceChoiceBoxOnMouseClicked" prefWidth="150.0"/>
-                <Label fx:id="databaseSourceChoiceBoxLabel" layoutX="1061.0" layoutY="642.0" text="数据库名: "/>
-                <ChoiceBox fx:id="tableChoiceBox" layoutX="900.0" layoutY="638.0" prefWidth="150.0"/>
-                <Label layoutX="818.0" layoutY="642.0" prefHeight="15.0" prefWidth="82.0" text="from 表名: "/>
+                <TextField fx:id="customQueryTextField" layoutX="175.0" layoutY="638.0" prefHeight="23.0" prefWidth="543.0" text="*" />
+                <Label layoutX="62.0" layoutY="642.0" prefHeight="15.0" prefWidth="101.0" text="查询指令: select" />
+                <Button fx:id="customQueryButton" layoutX="14.0" layoutY="638.0" mnemonicParsing="false" onMouseClicked="#onCustomQueryButtonClicked" text="查询" />
+                <Label fx:id="infoLabel" layoutX="14.0" layoutY="674.0" prefHeight="15.0" prefWidth="464.0" text="Info:" />
+                <ChoiceBox fx:id="databaseSourceChoiceBox" layoutX="1116.0" layoutY="638.0" onMouseClicked="#databaseSourceChoiceBoxOnMouseClicked" prefWidth="150.0" />
+                <Label fx:id="databaseSourceChoiceBoxLabel" layoutX="1061.0" layoutY="642.0" text="数据库名: " />
+                <ChoiceBox fx:id="tableChoiceBox" layoutX="900.0" layoutY="638.0" prefWidth="150.0" />
+                <Label layoutX="818.0" layoutY="642.0" prefHeight="15.0" prefWidth="82.0" text="from 表名: " />
             </children>
         </AnchorPane>
     </children>

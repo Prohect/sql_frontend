@@ -2,18 +2,21 @@ package com.prohect.sql_frontend_common.packet;
 
 import java.io.Serializable;
 
+/**
+ * insert a new row for a certain table
+ */
 public class CInsertPacket extends AbstractPacket implements Serializable {
     long uuid;
     String cmd;
-    String dataBaseName;
+    String databaseName;
 
     public CInsertPacket() {
     }
 
-    public CInsertPacket(long uuid, String cmd, String dataBaseName) {
+    public CInsertPacket(long uuid, String cmd, String databaseName) {
         this.uuid = uuid;
         this.cmd = cmd;
-        this.dataBaseName = dataBaseName;
+        this.databaseName = databaseName;
     }
 
     public long getUuid() {
@@ -32,11 +35,11 @@ public class CInsertPacket extends AbstractPacket implements Serializable {
         this.cmd = cmd;
     }
 
-    public String getDataBaseName() {
-        return dataBaseName;
+    public String getDatabaseName() {
+        return databaseName;
     }
 
-    public void setDataBaseName(String dataBaseName) {
-        this.dataBaseName = dataBaseName;
+    public void setDatabaseName(String databaseName) {
+        this.databaseName = databaseName;
     }
 }

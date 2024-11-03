@@ -8,45 +8,41 @@ import com.prohect.sql_frontend_common.CommonUtil;
 import com.prohect.sql_frontend_common.packet.CAlterPacket;
 import com.prohect.sql_frontend_common.packet.CDeletePacket;
 import com.prohect.sql_frontend_common.packet.CQueryPacket;
+import javafx.application.Platform;
 import javafx.collections.FXCollections;
 import javafx.collections.ObservableList;
 import javafx.event.ActionEvent;
 import javafx.fxml.FXML;
 import javafx.fxml.FXMLLoader;
+import javafx.fxml.Initializable;
 import javafx.scene.Scene;
 import javafx.scene.control.*;
 import javafx.scene.input.MouseEvent;
 import javafx.stage.Stage;
 
 import java.io.IOException;
+import java.net.URL;
 import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
+import java.util.ResourceBundle;
 import java.util.concurrent.LinkedBlockingQueue;
 
 
-public class MainLogic {
-
+public class MainLogic implements Initializable {
     public static Stage stage4InsertNewRowsWindow;
     public static Scene scene4InsertNewRowsScene;
     public static FXMLLoader insertFXMLLoader = new FXMLLoader(LoginUi.class.getResource("insert-view.fxml"));
     public static Stage stage4InsertNewColumnWindow;
     public static Scene scene4InsertNewColumnScene;
     public static FXMLLoader insertNewColumnFXMLLoader = new FXMLLoader(LoginUi.class.getResource("newColumn-view.fxml"));
-
-    static {
-        try {
-            scene4InsertNewRowsScene = new Scene(insertFXMLLoader.load(), 640, 400);
-            scene4InsertNewColumnScene = new Scene(insertNewColumnFXMLLoader.load(), 359, 127);
-        } catch (IOException e) {
-            throw new RuntimeException(e);
-        }
-    }
-
     String dataBase4tableView;
     String tableName4tableView;
+    TextInputDialog textInputDialog4newTableName;
     @FXML
     private MenuItem createColumnMenuItem;
+    @FXML
+    private MenuItem createRowMenuItem;
     @FXML
     private Button customQueryButton;
     @FXML
@@ -59,8 +55,6 @@ public class MainLogic {
     private Label infoLabel;
     @FXML
     private Menu inspectFromDBMenu;
-    @FXML
-    private Menu inspectFromLocalMenu;
     @FXML
     private TableView<Object[]> mainTable;
     @FXML
@@ -77,6 +71,41 @@ public class MainLogic {
 
     public MainLogic() {
         Main.mainLogic = this;
+    }
+
+    @Override
+    public void initialize(URL location, ResourceBundle resources) {
+        Platform.runLater(() -> {
+            try {
+                scene4InsertNewRowsScene = new Scene(insertFXMLLoader.load(), 640, 400);
+                scene4InsertNewColumnScene = new Scene(insertNewColumnFXMLLoader.load(), 359, 127);
+
+                stage4InsertNewColumnWindow = new Stage();
+                stage4InsertNewColumnWindow.setTitle("Alter New Column");
+                stage4InsertNewColumnWindow.setScene(scene4InsertNewColumnScene);
+                Main.insertNewColumnLogic.getNotNull().selectedProperty().addListener((observable, oldValue, newValue) -> {
+                    if (newValue) Main.insertNewColumnLogic.getAsDefault().selectedProperty().set(true);
+                });
+                Main.insertNewColumnLogic.getAsDefault().selectedProperty().addListener((observableValue, oldValue, newValue) -> {
+                    if (!newValue) Main.insertNewColumnLogic.getNotNull().selectedProperty().set(false);
+                });
+                ObservableList<String> list = FXCollections.observableArrayList(List.of("int", "bigint", "decimal(38, 15)", "float(8)", "REAL", "nchar(20)", "varchar(50)", "nvarchar(max)", "bit", "money", "date", "time", "datetime2", "datetimeOffset"));
+                Main.insertNewColumnLogic.getColumnTypeChoiceBox().setItems(list);
+
+                stage4InsertNewRowsWindow = new Stage();
+                stage4InsertNewRowsWindow.setTitle("Insert New Row");
+                stage4InsertNewRowsWindow.setScene(scene4InsertNewRowsScene);
+                Main.insertNewRowLogic.getTheInsertTableView().setEditable(true);
+
+                textInputDialog4newTableName = new TextInputDialog("表1");
+                textInputDialog4newTableName.setTitle("创建新表");
+                textInputDialog4newTableName.setHeaderText("请输入要创建的表的名称:");
+
+            } catch (IOException e) {
+                throw new RuntimeException(e);
+            }
+        });
+
     }
 
     public String getDataBase4tableView() {
@@ -123,10 +152,6 @@ public class MainLogic {
         return inspectFromDBMenu;
     }
 
-    public Menu getInspectFromLocalMenu() {
-        return inspectFromLocalMenu;
-    }
-
     public TableView<Object[]> getMainTable() {
         return mainTable;
     }
@@ -137,58 +162,18 @@ public class MainLogic {
 
     @FXML
     void insertNewColumnMenuItemOnAction(ActionEvent event) {
-        if (stage4InsertNewColumnWindow == null) {
-            stage4InsertNewColumnWindow = new Stage();
-            stage4InsertNewColumnWindow.setTitle("Alter New Column");
-            stage4InsertNewColumnWindow.setScene(scene4InsertNewColumnScene);
-            Main.insertNewColumnLogic.getNotNull().selectedProperty().addListener((observable, oldValue, newValue) -> {
-                if (newValue) Main.insertNewColumnLogic.getAsDefault().selectedProperty().set(true);
-            });
-            Main.insertNewColumnLogic.getAsDefault().selectedProperty().addListener((observableValue, oldValue, newValue) -> {
-                if (!newValue) Main.insertNewColumnLogic.getNotNull().selectedProperty().set(false);
-            });
-            ObservableList<String> list = FXCollections.observableArrayList(List.of("int", "bigint", "decimal(38, 15)", "float(8)", "REAL", "nchar(20)", "varchar(50)", "nvarchar(max)", "bit", "money", "date", "time", "datetime2", "datetimeOffset"));
-            Main.insertNewColumnLogic.getColumnTypeChoiceBox().setItems(list);
-        }
         stage4InsertNewColumnWindow.show();
     }
 
     @FXML
     public void insertNewRowMenuItemOnAction(ActionEvent event) {
         try {
-            if (stage4InsertNewRowsWindow == null) {
-                stage4InsertNewRowsWindow = new Stage();
-                stage4InsertNewRowsWindow.setTitle("Insert New Row");
-                stage4InsertNewRowsWindow.setScene(scene4InsertNewRowsScene);
-                Main.insertNewRowLogic.getTheInsertTableView().setEditable(true);
-//                stage4InsertNewRowsWindow.setAlwaysOnTop(true);
-            }
             if (this.getMainTable().getColumns().isEmpty()) {
                 this.infoLabel.setText("请先选择表并查询以获取列数据数据");
                 return;
             }
-            if (!(InsertNewRowLogic.tableName.equals(this.tableName4tableView) && InsertNewRowLogic.databaseName.equals(this.dataBase4tableView))) {
-                Main.insertNewRowLogic.getTheInsertTableView().setItems(FXCollections.observableArrayList());
-                ObservableList<TableColumn<Object[], ?>> columnObservableList = Main.insertNewRowLogic.getTheInsertTableView().getColumns();
-                columnObservableList.clear();
-                ArrayList<ColumnMetaData> columnMetaDataList = Main.db2table2columnMap.get(this.getDatabaseSourceChoiceBox().getValue()).get(this.getTableChoiceBox().getValue());
-                for (int i = 0; i < columnMetaDataList.size(); i++) {
-                    String columnName = columnMetaDataList.get(i).getColumnName();
-                    TableColumn<Object[], Object> column = ClientHandlerAdapter.getTableColumn(columnName, i);
-                    columnObservableList.add(column);
-                    ArrayList<ColumnMetaData> columnMetaData = Main.db2table2columnMap.get(this.getDataBase4tableView()).get(this.getTableName4tableView());
-                    ColumnMetaData[] array = columnMetaData.stream().filter((c) -> c.getColumnName().equals(columnName)).toArray(ColumnMetaData[]::new);
-                    if (array[0].isAutoIncrement()) continue;
-                    ClientHandlerAdapter.setCellFactory(column);
-                    column.setOnEditCommit(event1 -> {
-                        // 直接更新数据，点击提交按钮时再处理
-                        int targetRowIndex = event1.getTablePosition().getRow();
-                        int targetColumnIndex = event1.getTablePosition().getColumn();
-                        Object[] row = event1.getTableView().getItems().get(targetRowIndex);
-                        String newValue = (String) event1.getNewValue();
-                        row[targetColumnIndex] = newValue;
-                    });
-                }
+            if (!(InsertNewRowLogic.tableName.equals(this.tableName4tableView) && InsertNewRowLogic.databaseName.equals(this.dataBase4tableView))) {//当表名和数据库名变化时更新
+                updateColumnMetaDataOfInsertNewRowTable();
             }
             InsertNewRowLogic.databaseName = this.dataBase4tableView;
             InsertNewRowLogic.tableName = this.tableName4tableView;
@@ -196,6 +181,45 @@ public class MainLogic {
         } catch (RuntimeException e) {
             Main.mainLogic.getInfoLabel().setText("不支持的操作：向本应用的users表手动中添加行");
         }
+    }
+
+    public void updateColumnMetaDataOfInsertNewRowTable() {
+        Platform.runLater(() -> {
+            Main.insertNewRowLogic.getTheInsertTableView().setItems(FXCollections.observableArrayList());
+            ObservableList<TableColumn<Object[], ?>> columnObservableList = Main.insertNewRowLogic.getTheInsertTableView().getColumns();
+            columnObservableList.clear();
+            ArrayList<ColumnMetaData> columnMetaDataList = Main.db2table2columnMap.get(this.getDatabaseSourceChoiceBox().getValue()).get(this.getTableChoiceBox().getValue());
+            for (int i = 0; i < columnMetaDataList.size(); i++) {
+                String columnName = columnMetaDataList.get(i).getColumnName();
+                TableColumn<Object[], Object> column = ClientHandlerAdapter.getTableColumn(columnName, i);
+                columnObservableList.add(column);
+                ArrayList<ColumnMetaData> columnMetaData = Main.db2table2columnMap.get(this.getDataBase4tableView()).get(this.getTableName4tableView());
+                ColumnMetaData[] array = columnMetaData.stream().filter((c) -> c.getColumnName().equals(columnName)).toArray(ColumnMetaData[]::new);
+                if (array[0].isAutoIncrement()) continue;
+                ClientHandlerAdapter.setCellFactory(column);
+                column.setOnEditCommit(event1 -> {
+                    // 直接更新数据，点击提交按钮时再处理
+                    int targetRowIndex = event1.getTablePosition().getRow();
+                    int targetColumnIndex = event1.getTablePosition().getColumn();
+                    Object[] row = event1.getTableView().getItems().get(targetRowIndex);
+                    String newValue = (String) event1.getNewValue();
+                    row[targetColumnIndex] = newValue;
+                });
+            }
+        });
+    }
+
+    @FXML
+    void insertNewTableMenuItemOnAction(ActionEvent event) {
+        textInputDialog4newTableName.showAndWait().ifPresent(tableName -> {
+            if (!Main.user.isOp()) {
+                Main.mainLogic.getInfoLabel().setText("您没有足够的权限");
+                return;
+            }
+            String cmd;
+            cmd = "CREATE TABLE " + tableName + " (" + "ID INT IDENTITY(1,1) NOT NULL, " + "PRIMARY KEY (ID))";
+            Main.ctx2packetsMap.computeIfAbsent(Main.ctx, _ -> new LinkedBlockingQueue<>()).add(new CAlterPacket(Main.user.getUuid(), cmd, Main.mainLogic.getDatabaseSourceChoiceBox().getValue()));
+        });
     }
 
     @FXML

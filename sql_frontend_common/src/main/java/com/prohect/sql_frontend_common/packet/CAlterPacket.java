@@ -2,7 +2,12 @@ package com.prohect.sql_frontend_common.packet;
 
 import java.io.Serializable;
 
-public class CAlterPacket extends AbstractPacket implements Serializable {
+/**
+ * create a new column for a certain table
+ * OR
+ * create a new table on a certain database
+ */
+public class CAlterPacket extends AbstractPacket implements Serializable {//new column and new table both require OP, so the server logic is same
     long uuid;
     String cmd;
     String databaseName;

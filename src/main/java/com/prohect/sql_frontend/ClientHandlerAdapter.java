@@ -1,11 +1,11 @@
 package com.prohect.sql_frontend;
 
 
-import com.prohect.sql_frontend.main.login.ClientConfig;
-import com.prohect.sql_frontend.main.login.LoginLogic;
 import com.prohect.sql_frontend.main.Main;
 import com.prohect.sql_frontend.main.MainLogic;
 import com.prohect.sql_frontend.main.UpdateOfCellOfTable;
+import com.prohect.sql_frontend.main.login.ClientConfig;
+import com.prohect.sql_frontend.main.login.LoginLogic;
 import com.prohect.sql_frontend_common.ColumnMetaData;
 import com.prohect.sql_frontend_common.CommonUtil;
 import com.prohect.sql_frontend_common.User;
@@ -86,6 +86,20 @@ public class ClientHandlerAdapter extends ChannelInboundHandlerAdapter {
             return cellData.getValue()[columnIndex] != null ? new SimpleObjectProperty<>(cellData.getValue()[columnIndex]) : new SimpleObjectProperty<>(null);
         });
         return column;
+    }
+
+    private static void updateTableChoiceBox(String oldValue, String newValue) {
+        ObservableList<String> list = FXCollections.observableArrayList();
+        HashMap<String, ArrayList<ColumnMetaData>> table2columnsMap = Main.db2table2columnMap.get(Main.mainLogic.getDatabaseSourceChoiceBox().getValue());
+        if (table2columnsMap != null) table2columnsMap.forEach((tableName, _) -> list.add(tableName));
+        Main.mainLogic.getTableChoiceBox().setItems(list);
+        if (newValue != null && newValue.equals(oldValue)) {
+            Main.mainLogic.getTableChoiceBox().setValue(oldValue);
+            return;
+        }
+        if (Main.clientConfig.getTheUsersDatabaseName().equalsIgnoreCase(newValue))
+            list.add(Main.clientConfig.getTheUsersTableName());
+        if (!list.isEmpty()) Main.mainLogic.getTableChoiceBox().setValue(list.getFirst());
     }
 
     @Override
@@ -246,32 +260,27 @@ public class ClientHandlerAdapter extends ChannelInboundHandlerAdapter {
             Platform.runLater(() -> {
                 ObservableList<String> databaseList = FXCollections.observableArrayList();
                 Main.db2table2columnMap.forEach((db, _) -> databaseList.add(db));
-                String databaseListFirst = databaseList.getFirst();
                 ChoiceBox<String> databaseSourceChoiceBox = Main.mainLogic.getDatabaseSourceChoiceBox();
                 databaseSourceChoiceBox.setItems(databaseList);
-                if (databaseListFirst != null) {
-                    databaseSourceChoiceBox.setValue(databaseListFirst);
+                String databaseListFirst = databaseList.getFirst();
+                String value = databaseSourceChoiceBox.getValue();
+                if (value == null || value.isEmpty()) {
+                    if (databaseListFirst != null) {
+                        databaseSourceChoiceBox.setValue(databaseListFirst);
+                    }
+                    ObservableList<String> tableList = FXCollections.observableArrayList();
+                    if (databaseListFirst != null) {
+                        Main.db2table2columnMap.get(databaseListFirst).forEach((table2column, _) -> tableList.add(table2column));
+                    }
+                    Main.mainLogic.getTableChoiceBox().setItems(tableList);
+                    String tableListFirst = tableList.getFirst();
+                    if (tableListFirst != null) {
+                        Main.mainLogic.getTableChoiceBox().setValue(tableListFirst);
+                    }
+                    databaseSourceChoiceBox.valueProperty().addListener((observable, oldValue, newValue) -> {
+                        updateTableChoiceBox(oldValue, newValue);
+                    });
                 }
-
-                ObservableList<String> tableList = FXCollections.observableArrayList();
-                if (databaseListFirst != null) {
-                    Main.db2table2columnMap.get(databaseListFirst).forEach((table2column, _) -> tableList.add(table2column));
-                }
-                String tableListFirst = tableList.getFirst();
-                Main.mainLogic.getTableChoiceBox().setItems(tableList);
-                if (tableListFirst != null) {
-                    Main.mainLogic.getTableChoiceBox().setValue(tableListFirst);
-                }
-
-                databaseSourceChoiceBox.valueProperty().addListener((_, _, newValue) -> {
-                    ObservableList<String> list = FXCollections.observableArrayList();
-                    HashMap<String, ArrayList<ColumnMetaData>> table2columnsMap = Main.db2table2columnMap.get(databaseSourceChoiceBox.getValue());
-                    if (table2columnsMap != null) table2columnsMap.forEach((k, _) -> list.add(k));
-                    Main.mainLogic.getTableChoiceBox().setItems(list);
-                    if (newValue.equalsIgnoreCase(Main.clientConfig.getTheUsersDatabaseName()))
-                        list.add(Main.clientConfig.getTheUsersTableName());
-                    if (!list.isEmpty()) Main.mainLogic.getTableChoiceBox().setValue(list.getFirst());
-                });
 
                 if (Main.user.isOp())
                     databaseSourceChoiceBox.getItems().add(Main.clientConfig.getTheUsersDatabaseName());
@@ -283,6 +292,11 @@ public class ClientHandlerAdapter extends ChannelInboundHandlerAdapter {
             Main.user.setPermissions(sLoginPacket.getUser().getPermissions());
             Main.db2table2columnMap = db2table2columnMap;
             LoginLogic.logged.set(true);
+        } else if (sLoginPacket.getInfo().equals("update metadata")) {
+            Main.db2table2columnMap = db2table2columnMap;
+            String value = Main.mainLogic.getTableChoiceBox().getValue();
+            Platform.runLater(() -> updateTableChoiceBox(value, value));
+            Main.mainLogic.updateColumnMetaDataOfInsertNewRowTable();
         }
     }
 }

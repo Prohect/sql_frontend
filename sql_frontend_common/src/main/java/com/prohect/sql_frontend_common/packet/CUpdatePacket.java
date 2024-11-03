@@ -2,6 +2,9 @@ package com.prohect.sql_frontend_common.packet;
 
 import java.io.Serializable;
 
+/**
+ * update a certain value for an exist row
+ */
 public class CUpdatePacket extends AbstractPacket implements Serializable {
     long uuid;
     String updateCMD;
