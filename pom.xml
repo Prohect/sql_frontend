@@ -6,7 +6,7 @@
 
     <groupId>com.prohect</groupId>
     <artifactId>sql_frontend</artifactId>
-    <version>0.0.4</version>
+    <version>0.0.5</version>
     <name>sql_frontend</name>
 
     <properties>
@@ -118,7 +118,7 @@
                         <manifest>
                             <addClasspath>true</addClasspath>
                             <classpathPrefix>lib/</classpathPrefix>
-                            <mainClass>com.prohect.sql_frontend.LoginUi</mainClass>
+                            <mainClass>com.prohect.sql_frontend.MainUi</mainClass>
                         </manifest>
                     </archive>
                     <excludes>

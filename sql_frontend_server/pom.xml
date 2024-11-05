@@ -6,7 +6,7 @@
 
     <groupId>com.prohect</groupId>
     <artifactId>sql_frontend_server</artifactId>
-    <version>0.0.4</version>
+    <version>0.0.5</version>
 
     <dependencies>
         <dependency>

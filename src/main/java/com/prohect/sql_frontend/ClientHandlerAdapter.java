@@ -304,9 +304,9 @@ public class ClientHandlerAdapter extends ChannelInboundHandlerAdapter {
                     databaseSourceChoiceBox.getItems().add(Main.clientConfig.getTheUsersDatabaseName());
                 Main.mainLogic.getInfoLabel().setText("连接成功");
                 LoginLogic.logged.set(true);
-                Stage window = LoginUi.getWindow();
+                Stage window = MainUi.getWindow();
                 window.close();
-                window.setScene(LoginUi.mainScene);
+                window.setScene(MainUi.mainScene);
                 window.setMinWidth(800);
                 window.setMinHeight(400);
                 window.setWidth(Main.clientConfig.getSizeOfMainGUI()[0]);

@@ -1,7 +1,7 @@
 package com.prohect.sql_frontend.main;
 
 import com.prohect.sql_frontend.ClientHandlerAdapter;
-import com.prohect.sql_frontend.LoginUi;
+import com.prohect.sql_frontend.MainUi;
 import com.prohect.sql_frontend.main.newRow.InsertNewRowLogic;
 import com.prohect.sql_frontend_common.ColumnMetaData;
 import com.prohect.sql_frontend_common.CommonUtil;
@@ -19,6 +19,7 @@ import javafx.scene.Scene;
 import javafx.scene.control.*;
 import javafx.scene.input.MouseEvent;
 import javafx.scene.layout.AnchorPane;
+import javafx.stage.Modality;
 import javafx.stage.Stage;
 
 import java.io.IOException;
@@ -33,10 +34,10 @@ import java.util.concurrent.LinkedBlockingQueue;
 public class MainLogic implements Initializable {
     public static Stage stage4InsertNewRowsWindow;
     public static Scene scene4InsertNewRowsScene;
-    public static FXMLLoader insertFXMLLoader = new FXMLLoader(LoginUi.class.getResource("insert-view.fxml"));
+    public static FXMLLoader insertFXMLLoader = new FXMLLoader(MainUi.class.getResource("insert-view.fxml"));
     public static Stage stage4InsertNewColumnWindow;
     public static Scene scene4InsertNewColumnScene;
-    public static FXMLLoader insertNewColumnFXMLLoader = new FXMLLoader(LoginUi.class.getResource("newColumn-view.fxml"));
+    public static FXMLLoader insertNewColumnFXMLLoader = new FXMLLoader(MainUi.class.getResource("newColumn-view.fxml"));
     String dataBase4tableView;
     String tableName4tableView;
     TextInputDialog textInputDialog4newTableName;
@@ -98,6 +99,7 @@ public class MainLogic implements Initializable {
                 stage4InsertNewColumnWindow = new Stage();
                 stage4InsertNewColumnWindow.setTitle("Alter New Column");
                 stage4InsertNewColumnWindow.setScene(scene4InsertNewColumnScene);
+                stage4InsertNewColumnWindow.setResizable(false);
                 Main.insertNewColumnLogic.getNotNull().selectedProperty().addListener((observable, oldValue, newValue) -> {
                     if (newValue) Main.insertNewColumnLogic.getAsDefault().selectedProperty().set(true);
                 });
@@ -110,6 +112,14 @@ public class MainLogic implements Initializable {
                 stage4InsertNewRowsWindow = new Stage();
                 stage4InsertNewRowsWindow.setTitle("Insert New Row");
                 stage4InsertNewRowsWindow.setScene(scene4InsertNewRowsScene);
+                stage4InsertNewRowsWindow.setOnCloseRequest(event -> {
+                    stage4InsertNewRowsWindow.close();
+                    this.onCustomQueryButtonClicked();
+                });
+                stage4InsertNewRowsWindow.initOwner(MainUi.getWindow());
+                stage4InsertNewRowsWindow.initModality(Modality.WINDOW_MODAL);
+                stage4InsertNewRowsWindow.setMinWidth(520);
+                stage4InsertNewRowsWindow.setMinHeight(260);
                 Main.insertNewRowLogic.getTheInsertTableView().setEditable(true);
 
                 textInputDialog4newTableName = new TextInputDialog("表1");
@@ -194,6 +204,7 @@ public class MainLogic implements Initializable {
             InsertNewRowLogic.tableName = this.tableName4tableView;
             stage4InsertNewRowsWindow.show();
         } catch (RuntimeException e) {
+            e.printStackTrace();
             Main.mainLogic.getInfoLabel().setText("不支持的操作：向本应用的users表手动中添加行");
         }
     }
@@ -307,7 +318,7 @@ public class MainLogic implements Initializable {
     }
 
     @FXML
-    void onCustomQueryButtonClicked(MouseEvent event) {
+    void onCustomQueryButtonClicked() {//removed args: MouseEvent event
         try {
             ChoiceBox<String> choiceBox = Main.mainLogic.getDatabaseSourceChoiceBox();
             String databaseName = choiceBox.getValue() == null ? choiceBox.getItems().getFirst() : choiceBox.getValue();

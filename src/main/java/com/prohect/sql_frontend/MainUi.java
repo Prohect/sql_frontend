@@ -10,11 +10,11 @@ import javafx.stage.Stage;
 
 import java.io.IOException;
 
-public class LoginUi extends Application {
+public class MainUi extends Application {
 
 
-    public static FXMLLoader loginFXMLLoader = new FXMLLoader(LoginUi.class.getResource("login-view.fxml"));
-    public static FXMLLoader mainFXMLLoader = new FXMLLoader(LoginUi.class.getResource("main-view.fxml"));
+    public static FXMLLoader loginFXMLLoader = new FXMLLoader(MainUi.class.getResource("login-view.fxml"));
+    public static FXMLLoader mainFXMLLoader = new FXMLLoader(MainUi.class.getResource("main-view.fxml"));
     public static Scene loginScene;
     public static Scene mainScene;
     private static Stage window;
