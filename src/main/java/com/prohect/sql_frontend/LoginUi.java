@@ -1,6 +1,7 @@
 package com.prohect.sql_frontend;
 
 import com.prohect.sql_frontend.main.Main;
+import com.prohect.sql_frontend.main.login.ClientConfig;
 import javafx.application.Application;
 import javafx.application.Platform;
 import javafx.fxml.FXMLLoader;
@@ -50,6 +51,7 @@ public class LoginUi extends Application {
         for (int i = 0; i < NettyClient.threadGroups.size(); i++) {
             if (NettyClient.threadGroups.get(i) != null) NettyClient.threadGroups.get(i).shutdownGracefully();
         }
+        ClientConfig.saveConfig(Main.clientConfig);
         Platform.exit();
     }
 

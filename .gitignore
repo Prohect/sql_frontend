@@ -40,5 +40,6 @@ build/
 ### My custom blacklist ###
 *.csv
 *.xlsx
-*.json
+clientConfig.json
+serverConfig.json
 dependency-reduced-pom.xml

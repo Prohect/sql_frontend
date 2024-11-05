@@ -305,16 +305,16 @@ public class ClientHandlerAdapter extends ChannelInboundHandlerAdapter {
                 Main.mainLogic.getInfoLabel().setText("连接成功");
                 LoginLogic.logged.set(true);
                 Stage window = LoginUi.getWindow();
+                window.close();
                 window.setScene(LoginUi.mainScene);
                 window.setMinWidth(800);
                 window.setMinHeight(400);
-//                window.widthProperty().addListener((observable, oldValue, newValue) -> {
-//                    if (newValue.doubleValue() < 800.0) window.setWidth(800);
-//                });
-//                window.heightProperty().addListener((observable, oldValue, newValue) -> {
-//                    if (newValue.doubleValue() < 400.0) window.setHeight(400);
-//                });
+                window.setWidth(Main.clientConfig.getSizeOfMainGUI()[0]);
+                window.setHeight(Main.clientConfig.getSizeOfMainGUI()[1]);
+                window.widthProperty().addListener((observable, oldValue, newValue) -> Main.clientConfig.getSizeOfMainGUI()[0] = newValue.doubleValue());
+                window.heightProperty().addListener((observable, oldValue, newValue) -> Main.clientConfig.getSizeOfMainGUI()[1] = newValue.doubleValue());
                 window.setResizable(true);
+                window.show();
             });
         } else if (sLoginPacket.getInfo().equals("reconnect success")) {
             Main.user.setPermissions(sLoginPacket.getUser().getPermissions());

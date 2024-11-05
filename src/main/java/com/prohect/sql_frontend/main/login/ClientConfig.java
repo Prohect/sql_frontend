@@ -15,11 +15,21 @@ public class ClientConfig {
     private String theUsersTableName;
     private String theUsersDatabaseName;
 
+    private double[] sizeOfMainGUI = new double[]{800, 600};
+
     public ClientConfig(String serverHost, int port, String theUsersTableName, String theUsersDatabaseName) {
         this.serverHost = serverHost;
         this.port = port;
         this.theUsersTableName = theUsersTableName;
         this.theUsersDatabaseName = theUsersDatabaseName;
+    }
+
+    public ClientConfig(String serverHost, int port, String theUsersTableName, String theUsersDatabaseName, double[] sizeOfMainGUI) {
+        this.serverHost = serverHost;
+        this.port = port;
+        this.theUsersTableName = theUsersTableName;
+        this.theUsersDatabaseName = theUsersDatabaseName;
+        this.sizeOfMainGUI = sizeOfMainGUI;
     }
 
     public static ClientConfig readConfig() throws IOException {
@@ -52,6 +62,14 @@ public class ClientConfig {
             fos.write(JSON.toJSONBytes(clientConfig));
         } catch (IOException ignored) {
         }
+    }
+
+    public double[] getSizeOfMainGUI() {
+        return sizeOfMainGUI;
+    }
+
+    public void setSizeOfMainGUI(double[] sizeOfMainGUI) {
+        this.sizeOfMainGUI = sizeOfMainGUI;
     }
 
     public String getServerHost() {
