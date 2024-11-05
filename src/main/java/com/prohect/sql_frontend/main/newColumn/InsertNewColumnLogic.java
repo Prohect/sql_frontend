@@ -72,6 +72,6 @@ public class InsertNewColumnLogic {
         }
         if (isPrimaryKey.isSelected()) cmd.append(" PRIMARY KEY");
         CAlterPacket cAlterPacket = new CAlterPacket(Main.user.getUuid(), cmd.toString(), Main.mainLogic.getDataBase4tableView());
-        Main.ctx2packetsMap.computeIfAbsent(Main.ctx, c -> new LinkedBlockingQueue<>()).add(cAlterPacket);
+        Main.channel2packetsMap.computeIfAbsent(Main.ctx.channel(), c -> new LinkedBlockingQueue<>()).add(cAlterPacket);
     }
 }

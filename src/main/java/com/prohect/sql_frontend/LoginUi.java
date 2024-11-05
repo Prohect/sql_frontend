@@ -2,6 +2,7 @@ package com.prohect.sql_frontend;
 
 import com.prohect.sql_frontend.main.Main;
 import javafx.application.Application;
+import javafx.application.Platform;
 import javafx.fxml.FXMLLoader;
 import javafx.scene.Scene;
 import javafx.stage.Stage;
@@ -39,6 +40,7 @@ public class LoginUi extends Application {
         window = stage;
         stage.setTitle("Hello!");
         stage.setScene(loginScene);
+        stage.setResizable(false);
         stage.show();
     }
 
@@ -48,6 +50,8 @@ public class LoginUi extends Application {
         for (int i = 0; i < NettyClient.threadGroups.size(); i++) {
             if (NettyClient.threadGroups.get(i) != null) NettyClient.threadGroups.get(i).shutdownGracefully();
         }
-        super.stop();
+        Platform.exit();
     }
+
+
 }

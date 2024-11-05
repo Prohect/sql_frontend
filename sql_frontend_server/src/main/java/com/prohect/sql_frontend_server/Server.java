@@ -164,9 +164,13 @@ public class Server {
             String tableName = split[0].toLowerCase();
             List<String> columnNames = Arrays.asList(split[1].split("\\)")[0].split(","));
             if (!user.isOp())
-                for (String columnName : columnNames)
-                    if (!user.getPermissions().get(databaseName).get(tableName).get(columnName)[1])
-                        throw new SQLException("您没有足够的写入权限!");
+                try {
+                    for (String columnName : columnNames)
+                        if (!user.getPermissions().get(databaseName).get(tableName).get(columnName)[1])
+                            throw new SQLException("没有足够的写入权限!");
+                } catch (NullPointerException ignored) {
+                    throw new RuntimeException("没有足够的写入权限!");
+                }
             Statement statement = (user.isOp() && databaseName.equals(serverConfig.getTheUsersDatabaseName()) ? connection2UsersDB : databaseName2connectionMap.get(databaseName)).createStatement();
             int i = statement.executeUpdate(cmd);
             ctx2packetToBeSentMap.get(ctx).add(new SInsertPacket(id));
@@ -304,7 +308,7 @@ public class Server {
             if (user1 != null) {
                 uuid2userMap.put(user1.getUuid(), user1);
                 if (user.getUuid() == user1.getUuid()) {
-                    sLoginPacket = new SLoginPacket(user1, database2Table2ColumnMap, "reconnect success", "", "");
+                    sLoginPacket = new SLoginPacket(user1, new HashMap<>(), "reconnect success", "", "");
                 } else {
                     if (user1.getPassword().equals(user.getPassword())) {
                         sLoginPacket = new SLoginPacket(user1, database2Table2ColumnMap, "success", serverConfig.getTheUsersTableName(), serverConfig.getTheUsersTableName());

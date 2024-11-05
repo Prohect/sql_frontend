@@ -24,25 +24,27 @@ import javafx.scene.control.ChoiceBox;
 import javafx.scene.control.TableColumn;
 import javafx.scene.control.TableView;
 import javafx.scene.control.cell.TextFieldTableCell;
+import javafx.stage.Stage;
 import javafx.util.StringConverter;
 
-import java.net.SocketException;
 import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.Map;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.LinkedBlockingQueue;
 import java.util.concurrent.TimeUnit;
+import java.util.concurrent.atomic.AtomicBoolean;
 import java.util.concurrent.locks.ReentrantLock;
 
 @ChannelHandler.Sharable
 public class ClientHandlerAdapter extends ChannelInboundHandlerAdapter {
 
+    private final AtomicBoolean alreadyOnReconnecting = new AtomicBoolean(false);
+
     String host;
     int port;
     Bootstrap b;
     EventLoopGroup workerGroup;
-
     /**
      * should be final once created, don't replace it with new one
      */
@@ -107,13 +109,14 @@ public class ClientHandlerAdapter extends ChannelInboundHandlerAdapter {
         Main.ctx = ctx;
         LinkedBlockingQueue<Packet> packets = new LinkedBlockingQueue<>();
         channel2packetsEncoder.put(ctx.channel(), CommonUtil.encoderRegister(workerGroup, ctx, packets, 25));
-        Main.ctx2packetsMap.put(ctx, packets);
-        System.out.println("执行登录操作");
+        Main.channel2packetsMap.put(ctx.channel(), packets);
         //Json:8种基本数据类型,只有char用双引号为"a", 数字直接为1.2, Boolean为true | false, 引用类型字符串为"string..."
 //        byte[] bytes = JSON.toJSONBytes(new SInfoPacket("}[]{0}[]{"));//result: stringBuilder = {"id":-212632573705707520,"info":"}[]{0}[]{","prefix":"SInfoPacket\\"}
 //        byte[] bytes = JSON.toJSONBytes(new TestJsonEncode('g'));//result:  stringBuilder = {"aChar":"g"}
 
-        packets.add((new CLoginPacket(Main.user == null ? new User(Main.loginLogic.getUsernameField().getText(), Main.loginLogic.getPasswordField().getText(), 0L) : Main.user)));
+        System.out.println("执行登录操作");
+        packets.add((new CLoginPacket(Main.user == null ? new User(Main.loginLogic.getUsernameField().getText(), Main.loginLogic.getPasswordField().getText(), 0L) : new User(Main.user.getUsername(), Main.user.getPassword(), Main.user.getUuid()))));
+
         workerGroup.scheduleAtFixedRate(() -> {
             try {
                 for (; ; ) {
@@ -143,30 +146,44 @@ public class ClientHandlerAdapter extends ChannelInboundHandlerAdapter {
     }
 
     public void reconnect() {
-        b.connect(host, port).addListener((ChannelFutureListener) future -> {
-            if (!future.isSuccess()) {
-                workerGroup.schedule(this::reconnect, 5, TimeUnit.SECONDS);
-            }
-        });
+        if (alreadyOnReconnecting.get()) {
+            return;
+        }
+        alreadyOnReconnecting.set(true);
+        Future<Void> connect = b.connect(host, port);
+        try {
+            connect.sync();
+        } catch (Exception e) {
+            alreadyOnReconnecting.set(false);
+            workerGroup.schedule(this::reconnect, 5, TimeUnit.SECONDS);
+        }
+    }
+
+    @Override
+    public void channelUnregistered(ChannelHandlerContext ctx) throws Exception {
+        System.out.println("ClientHandlerAdapter.channelUnregistered()");
+        super.channelUnregistered(ctx);
     }
 
     @Override
     public void channelInactive(ChannelHandlerContext ctx) throws Exception {
         channel2packetsEncoder.get(ctx.channel()).cancel(true);
-        Main.ctx2packetsMap.remove(ctx);
+        channel2packetDecoderFuture.get(ctx.channel()).cancel(true);
+        channel2lockOfIn.remove(ctx.channel());
+        channel2in.get(ctx.channel()).release();
+        channel2in.remove(ctx.channel());
+        channel2packetsEncoder.remove(ctx.channel());
+        channel2packetDecoderFuture.remove(ctx.channel());
+        Main.channel2packetsMap.remove(ctx.channel());
+
+        Platform.runLater(() -> Main.mainLogic.getInfoLabel().setText("Connection reset, try reconnect"));
+        alreadyOnReconnecting.set(false);
         reconnect();
     }
 
     @Override
     public void exceptionCaught(ChannelHandlerContext ctx, Throwable cause) {
         cause.printStackTrace();
-        channel2packetsEncoder.get(ctx.channel()).cancel(true);
-        LoginLogic.logged.set(false);
-        if (cause instanceof SocketException) {
-            Platform.runLater(() -> Main.mainLogic.getInfoLabel().setText("Connection reset, try reconnect"));
-        }
-        Main.ctx2packetsMap.remove(ctx);
-        reconnect();
     }
 
     private void processInsertPacket(SInsertPacket sInsertPacket) {
@@ -178,7 +195,7 @@ public class ClientHandlerAdapter extends ChannelInboundHandlerAdapter {
     private void processDeletePacket(SDeletePacket sDeletePacket) {
         long id = sDeletePacket.getTheID();
         Object[] object = Main.packetID2DeletedValueMap.get(id);
-        Main.mainLogic.getMainTable().getItems().remove(object);
+        Main.mainLogic.getTableView().getItems().remove(object);
     }
 
     private void processSQueryReplyPacket(SQueryReplyPacket sQueryReplyPacket) {
@@ -193,7 +210,7 @@ public class ClientHandlerAdapter extends ChannelInboundHandlerAdapter {
                 Main.mainLogic.setTableName4tableView(tableName.toLowerCase());
 
                 int columnCount = columnNames.size();
-                TableView<Object[]> tableView = Main.mainLogic.getMainTable();
+                TableView<Object[]> tableView = Main.mainLogic.getTableView();
                 tableView.getColumns().clear();
                 HashMap<String, HashMap<String, Boolean[]>> permission4thisDatabase = Main.user.getPermissions().get(databaseName);
                 HashMap<String, Boolean[]> permission4thisTable = permission4thisDatabase == null ? null : permission4thisDatabase.get(tableName);
@@ -208,7 +225,7 @@ public class ClientHandlerAdapter extends ChannelInboundHandlerAdapter {
                             Object[] row = event.getTableView().getItems().get(targetRowIndex);
                             String newValue = (String) event.getNewValue();
                             Object o1 = row[(targetColumnIndex == 0) ? 1 : 0];
-                            ObservableList<TableColumn<Object[], ?>> columns = Main.mainLogic.getMainTable().getColumns();
+                            ObservableList<TableColumn<Object[], ?>> columns = Main.mainLogic.getTableView().getColumns();
                             StringBuilder condition = new StringBuilder("UPDATE " + Main.mainLogic.getTableName4tableView() + " SET " + columns.get(targetColumnIndex).getText() + " = " + (CommonUtil.isNumber(newValue) ? newValue : "'" + newValue + "'") + " WHERE " + (columns.get(targetColumnIndex == 0 ? 1 : 0)).getText() + " = " + CommonUtil.convert2SqlServerContextString(o1));
                             for (int i = 1; i < row.length; i++) {
                                 if (i == targetColumnIndex) continue;
@@ -221,7 +238,7 @@ public class ClientHandlerAdapter extends ChannelInboundHandlerAdapter {
                             }
                             CUpdatePacket cUpdatePacket = new CUpdatePacket(Main.user.getUuid(), condition.toString(), Main.mainLogic.getDataBase4tableView());
                             Main.packetID2updatedValueMap.put(cUpdatePacket.getId(), new UpdateOfCellOfTable(targetRowIndex, targetColumnIndex, newValue));
-                            Main.ctx2packetsMap.computeIfAbsent(Main.ctx, _ -> new LinkedBlockingQueue<>()).add(cUpdatePacket);
+                            Main.channel2packetsMap.computeIfAbsent(Main.ctx.channel(), _ -> new LinkedBlockingQueue<>()).add(cUpdatePacket);
                         });
                     }
                     tableView.getColumns().add(column);
@@ -230,6 +247,7 @@ public class ClientHandlerAdapter extends ChannelInboundHandlerAdapter {
                 tableView.setItems(data);
                 if (MainLogic.stage4InsertNewRowsWindow != null && MainLogic.stage4InsertNewRowsWindow.isShowing())
                     Platform.runLater(() -> Main.mainLogic.insertNewRowMenuItemOnAction(new ActionEvent()));
+                Main.mainLogic.getInfoLabel().setText("查询成功");
             } catch (Exception e) {
                 Main.mainLogic.getInfoLabel().setText(e.getMessage());
                 e.printStackTrace();
@@ -244,7 +262,7 @@ public class ClientHandlerAdapter extends ChannelInboundHandlerAdapter {
     private void processSUpdatePacket(SUpdatePacket sUpdatePacket) {
         long id = sUpdatePacket.getTheID();
         UpdateOfCellOfTable update = Main.packetID2updatedValueMap.get(id);
-        Platform.runLater(() -> Main.mainLogic.getMainTable().getItems().get(update.getTargetRowIndex())[update.getTargetColumnIndex()] = update.getNewValue());
+        Platform.runLater(() -> Main.mainLogic.getTableView().getItems().get(update.getTargetRowIndex())[update.getTargetColumnIndex()] = update.getNewValue());
     }
 
     private void processSLoginPacket(SLoginPacket sLoginPacket) {
@@ -286,7 +304,17 @@ public class ClientHandlerAdapter extends ChannelInboundHandlerAdapter {
                     databaseSourceChoiceBox.getItems().add(Main.clientConfig.getTheUsersDatabaseName());
                 Main.mainLogic.getInfoLabel().setText("连接成功");
                 LoginLogic.logged.set(true);
-                LoginUi.getWindow().setScene(LoginUi.mainScene);
+                Stage window = LoginUi.getWindow();
+                window.setScene(LoginUi.mainScene);
+                window.setMinWidth(800);
+                window.setMinHeight(400);
+//                window.widthProperty().addListener((observable, oldValue, newValue) -> {
+//                    if (newValue.doubleValue() < 800.0) window.setWidth(800);
+//                });
+//                window.heightProperty().addListener((observable, oldValue, newValue) -> {
+//                    if (newValue.doubleValue() < 400.0) window.setHeight(400);
+//                });
+                window.setResizable(true);
             });
         } else if (sLoginPacket.getInfo().equals("reconnect success")) {
             Main.user.setPermissions(sLoginPacket.getUser().getPermissions());

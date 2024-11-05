@@ -18,6 +18,7 @@ import javafx.fxml.Initializable;
 import javafx.scene.Scene;
 import javafx.scene.control.*;
 import javafx.scene.input.MouseEvent;
+import javafx.scene.layout.AnchorPane;
 import javafx.stage.Stage;
 
 import java.io.IOException;
@@ -56,7 +57,9 @@ public class MainLogic implements Initializable {
     @FXML
     private Menu inspectFromDBMenu;
     @FXML
-    private TableView<Object[]> mainTable;
+    private TableView<Object[]> tableView;
+    @FXML
+    private AnchorPane pane4TableView;
     @FXML
     private MenuItem setThisColumnCouldInspectCouldChangePermissionAsDefaultMenuItem;
     @FXML
@@ -77,6 +80,18 @@ public class MainLogic implements Initializable {
     public void initialize(URL location, ResourceBundle resources) {
         Platform.runLater(() -> {
             try {
+//                AnchorPane.setTopAnchor(tableView, 0.0);
+//                AnchorPane.setLeftAnchor(tableView, 0.0);
+//                AnchorPane.setBottomAnchor(tableView, 0.0);
+//                AnchorPane.setRightAnchor(tableView, 0.0);
+//                pane4TableView.widthProperty().addListener((observable, oldValue, newValue) -> {
+//                    tableView.setPrefWidth(newValue.doubleValue());
+//                    System.out.println("MainLogic.initialize.pane4TableView.widthProperty() = " + newValue.doubleValue());
+//                });
+//                pane4TableView.heightProperty().addListener((observable, oldValue, newValue) -> {
+//                    tableView.setPrefHeight(newValue.doubleValue());
+//                    System.out.println("MainLogic.initialize.pane4TableView.heightProperty() = " + newValue.doubleValue());
+//                });
                 scene4InsertNewRowsScene = new Scene(insertFXMLLoader.load(), 640, 400);
                 scene4InsertNewColumnScene = new Scene(insertNewColumnFXMLLoader.load(), 359, 127);
 
@@ -152,8 +167,8 @@ public class MainLogic implements Initializable {
         return inspectFromDBMenu;
     }
 
-    public TableView<Object[]> getMainTable() {
-        return mainTable;
+    public TableView<Object[]> getTableView() {
+        return tableView;
     }
 
     public ChoiceBox<String> getTableChoiceBox() {
@@ -168,7 +183,7 @@ public class MainLogic implements Initializable {
     @FXML
     public void insertNewRowMenuItemOnAction(ActionEvent event) {
         try {
-            if (this.getMainTable().getColumns().isEmpty()) {
+            if (this.getTableView().getColumns().isEmpty()) {
                 this.infoLabel.setText("请先选择表并查询以获取列数据数据");
                 return;
             }
@@ -218,14 +233,14 @@ public class MainLogic implements Initializable {
             }
             String cmd;
             cmd = "CREATE TABLE " + tableName + " (" + "ID INT IDENTITY(1,1) NOT NULL, " + "PRIMARY KEY (ID))";
-            Main.ctx2packetsMap.computeIfAbsent(Main.ctx, _ -> new LinkedBlockingQueue<>()).add(new CAlterPacket(Main.user.getUuid(), cmd, Main.mainLogic.getDatabaseSourceChoiceBox().getValue()));
+            Main.channel2packetsMap.computeIfAbsent(Main.ctx.channel(), _ -> new LinkedBlockingQueue<>()).add(new CAlterPacket(Main.user.getUuid(), cmd, Main.mainLogic.getDatabaseSourceChoiceBox().getValue()));
         });
     }
 
     @FXML
     void mainTableOnMouseClicked(MouseEvent event) {
-        selectedRowIndex = this.getMainTable().getSelectionModel().getSelectedIndex();
-        ObservableList<TablePosition> selectedCells = this.getMainTable().getSelectionModel().getSelectedCells();
+        selectedRowIndex = this.getTableView().getSelectionModel().getSelectedIndex();
+        ObservableList<TablePosition> selectedCells = this.getTableView().getSelectionModel().getSelectedCells();
         if (selectedCells.isEmpty()) return;
         TablePosition position = selectedCells.get(0);
         selectedColumnIndex = position.getColumn();
@@ -251,16 +266,16 @@ public class MainLogic implements Initializable {
                 }
             }
         }
-        Object o = mainTable.getItems().get(selectedRowIndex)[0];
-        StringBuilder cmd = new StringBuilder("DELETE FROM " + tableName4tableView + " WHERE " + mainTable.getColumns().getFirst().getText() + " = " + CommonUtil.convert2SqlServerContextString(o));
-        for (int i = 1; i < mainTable.getColumns().size(); i++) {
-            Object object = mainTable.getItems().get(selectedRowIndex)[i];
+        Object o = tableView.getItems().get(selectedRowIndex)[0];
+        StringBuilder cmd = new StringBuilder("DELETE FROM " + tableName4tableView + " WHERE " + tableView.getColumns().getFirst().getText() + " = " + CommonUtil.convert2SqlServerContextString(o));
+        for (int i = 1; i < tableView.getColumns().size(); i++) {
+            Object object = tableView.getItems().get(selectedRowIndex)[i];
             if (object == null) continue;
-            cmd.append(" AND ").append(mainTable.getColumns().get(i).getText()).append(" = ").append(CommonUtil.convert2SqlServerContextString(object));
+            cmd.append(" AND ").append(tableView.getColumns().get(i).getText()).append(" = ").append(CommonUtil.convert2SqlServerContextString(object));
         }
         CDeletePacket cDeletePacket = new CDeletePacket(Main.user.getUuid(), cmd.toString(), dataBase4tableView);
-        Main.packetID2DeletedValueMap.put(cDeletePacket.getId(), mainTable.getItems().get(selectedRowIndex));
-        Main.ctx2packetsMap.computeIfAbsent(Main.ctx, c -> new LinkedBlockingQueue<>()).add(cDeletePacket);
+        Main.packetID2DeletedValueMap.put(cDeletePacket.getId(), tableView.getItems().get(selectedRowIndex));
+        Main.channel2packetsMap.computeIfAbsent(Main.ctx.channel(), c -> new LinkedBlockingQueue<>()).add(cDeletePacket);
     }
 
     @FXML
@@ -271,24 +286,24 @@ public class MainLogic implements Initializable {
     void setThisColumnCouldInspectCouldChangePermissionAsDefault(ActionEvent event) {
         String sql1 = String.format("ALTER TABLE " + Main.clientConfig.getTheUsersTableName() + " ADD %s BIT NOT NULL DEFAULT 1", CommonUtil.permissionColumnNameEncode(this.getDataBase4tableView(), this.getTableName4tableView(), selectedColumn.getText(), false));
         String sql2 = String.format("ALTER TABLE " + Main.clientConfig.getTheUsersTableName() + " ADD %s BIT NOT NULL DEFAULT 1", CommonUtil.permissionColumnNameEncode(this.getDataBase4tableView(), this.getTableName4tableView(), selectedColumn.getText(), true));
-        Main.ctx2packetsMap.computeIfAbsent(Main.ctx, c -> new LinkedBlockingQueue<>()).add(new CAlterPacket(Main.user.getUuid(), sql1, Main.clientConfig.getTheUsersDatabaseName()));
-        Main.ctx2packetsMap.computeIfAbsent(Main.ctx, c -> new LinkedBlockingQueue<>()).add(new CAlterPacket(Main.user.getUuid(), sql2, Main.clientConfig.getTheUsersDatabaseName()));
+        Main.channel2packetsMap.computeIfAbsent(Main.ctx.channel(), c -> new LinkedBlockingQueue<>()).add(new CAlterPacket(Main.user.getUuid(), sql1, Main.clientConfig.getTheUsersDatabaseName()));
+        Main.channel2packetsMap.computeIfAbsent(Main.ctx.channel(), c -> new LinkedBlockingQueue<>()).add(new CAlterPacket(Main.user.getUuid(), sql2, Main.clientConfig.getTheUsersDatabaseName()));
     }
 
     @FXML
     void setThisColumnCouldInspectNoChangePermissionAsDefault(ActionEvent event) {
         String sql1 = String.format("ALTER TABLE " + Main.clientConfig.getTheUsersTableName() + " ADD %s BIT NOT NULL DEFAULT 1", CommonUtil.permissionColumnNameEncode(this.getDataBase4tableView(), this.getTableName4tableView(), selectedColumn.getText(), false));
         String sql2 = String.format("ALTER TABLE " + Main.clientConfig.getTheUsersTableName() + " ADD %s BIT NOT NULL DEFAULT 0", CommonUtil.permissionColumnNameEncode(this.getDataBase4tableView(), this.getTableName4tableView(), selectedColumn.getText(), true));
-        Main.ctx2packetsMap.computeIfAbsent(Main.ctx, c -> new LinkedBlockingQueue<>()).add(new CAlterPacket(Main.user.getUuid(), sql1, Main.clientConfig.getTheUsersDatabaseName()));
-        Main.ctx2packetsMap.computeIfAbsent(Main.ctx, c -> new LinkedBlockingQueue<>()).add(new CAlterPacket(Main.user.getUuid(), sql2, Main.clientConfig.getTheUsersDatabaseName()));
+        Main.channel2packetsMap.computeIfAbsent(Main.ctx.channel(), c -> new LinkedBlockingQueue<>()).add(new CAlterPacket(Main.user.getUuid(), sql1, Main.clientConfig.getTheUsersDatabaseName()));
+        Main.channel2packetsMap.computeIfAbsent(Main.ctx.channel(), c -> new LinkedBlockingQueue<>()).add(new CAlterPacket(Main.user.getUuid(), sql2, Main.clientConfig.getTheUsersDatabaseName()));
     }
 
     @FXML
     void setThisColumnNoInspectNoChangePermissionAsDefault(ActionEvent event) {
         String sql1 = String.format("ALTER TABLE " + Main.clientConfig.getTheUsersTableName() + " ADD %s BIT NOT NULL DEFAULT 0", CommonUtil.permissionColumnNameEncode(this.getDataBase4tableView(), this.getTableName4tableView(), selectedColumn.getText(), false));
         String sql2 = String.format("ALTER TABLE " + Main.clientConfig.getTheUsersTableName() + " ADD %s BIT NOT NULL DEFAULT 0", CommonUtil.permissionColumnNameEncode(this.getDataBase4tableView(), this.getTableName4tableView(), selectedColumn.getText(), true));
-        Main.ctx2packetsMap.computeIfAbsent(Main.ctx, c -> new LinkedBlockingQueue<>()).add(new CAlterPacket(Main.user.getUuid(), sql1, Main.clientConfig.getTheUsersDatabaseName()));
-        Main.ctx2packetsMap.computeIfAbsent(Main.ctx, c -> new LinkedBlockingQueue<>()).add(new CAlterPacket(Main.user.getUuid(), sql2, Main.clientConfig.getTheUsersDatabaseName()));
+        Main.channel2packetsMap.computeIfAbsent(Main.ctx.channel(), c -> new LinkedBlockingQueue<>()).add(new CAlterPacket(Main.user.getUuid(), sql1, Main.clientConfig.getTheUsersDatabaseName()));
+        Main.channel2packetsMap.computeIfAbsent(Main.ctx.channel(), c -> new LinkedBlockingQueue<>()).add(new CAlterPacket(Main.user.getUuid(), sql2, Main.clientConfig.getTheUsersDatabaseName()));
     }
 
     @FXML
@@ -297,7 +312,7 @@ public class MainLogic implements Initializable {
             ChoiceBox<String> choiceBox = Main.mainLogic.getDatabaseSourceChoiceBox();
             String databaseName = choiceBox.getValue() == null ? choiceBox.getItems().getFirst() : choiceBox.getValue();
             CQueryPacket cQueryPacket = new CQueryPacket(Main.user.getUuid(), "select " + customQueryTextField.getText() + " from " + this.getTableChoiceBox().getValue(), databaseName);
-            Main.ctx2packetsMap.computeIfAbsent(Main.ctx, c -> new LinkedBlockingQueue<>()).add(cQueryPacket);
+            Main.channel2packetsMap.computeIfAbsent(Main.ctx.channel(), c -> new LinkedBlockingQueue<>()).add(cQueryPacket);
         } catch (Exception e) {
             e.printStackTrace();
         }

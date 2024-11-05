@@ -8,6 +8,7 @@ import com.prohect.sql_frontend.main.newRow.InsertNewRowLogic;
 import com.prohect.sql_frontend_common.ColumnMetaData;
 import com.prohect.sql_frontend_common.User;
 import com.prohect.sql_frontend_common.packet.Packet;
+import io.netty.channel.Channel;
 import io.netty.channel.ChannelFuture;
 import io.netty.channel.ChannelHandlerContext;
 
@@ -17,7 +18,7 @@ import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.LinkedBlockingQueue;
 
 public class Main {
-    public final static ConcurrentHashMap<ChannelHandlerContext, LinkedBlockingQueue<Packet>> ctx2packetsMap = new ConcurrentHashMap<>();
+    public final static ConcurrentHashMap<Channel, LinkedBlockingQueue<Packet>> channel2packetsMap = new ConcurrentHashMap<>();
     public static ClientConfig clientConfig;
     public static LoginLogic loginLogic;
     public static MainLogic mainLogic;

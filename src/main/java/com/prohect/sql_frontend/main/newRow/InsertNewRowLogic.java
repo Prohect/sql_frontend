@@ -235,7 +235,7 @@ public class InsertNewRowLogic {
                 }
             }
             for (Packet packet : packets) {
-                Main.ctx2packetsMap.computeIfAbsent(Main.ctx, c -> new LinkedBlockingQueue<>()).add(packet);
+                Main.channel2packetsMap.computeIfAbsent(Main.ctx.channel(), c -> new LinkedBlockingQueue<>()).add(packet);
             }
         } catch (Exception ignored) {
             ignored.printStackTrace();
