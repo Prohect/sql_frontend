@@ -29,6 +29,7 @@ public class InsertNewRowLogic {
 
     public static final String nullableString = "可选·输入";
     public static final String normalString = "请·输·入";
+    public static final String hasDefaultString = "有·默认值";
 
     public static String databaseName = "";
     public static String tableName = "";
@@ -108,7 +109,7 @@ public class InsertNewRowLogic {
 
     private String getPromptOfColumn(ColumnMetaData columnMetaData) {
         if (columnMetaData.isAutoIncrement()) {
-            return "×";//I have no idea why this always false, from the server from the microsoft api, that isAutoIncrement always false
+            return "×";
         } else if (columnMetaData.getColumnType().contains("bit")) {
             return "true OR false";
         } else if (columnMetaData.getColumnType().contains("int")) {
@@ -116,6 +117,7 @@ public class InsertNewRowLogic {
         } else if (columnMetaData.getColumnType().contains("float") || columnMetaData.getColumnType().contains("decimal") || columnMetaData.getColumnType().contains("numeric") || columnMetaData.getColumnType().contains("real")) {
             return "0.0";
         } else if (columnMetaData.getColumnType().contains("char")) {
+            if (columnMetaData.isHasDefaultValue()) return hasDefaultString;
             if (columnMetaData.isNullable()) return nullableString;
             else return normalString;
         } else if (columnMetaData.isNullable()) {
@@ -174,9 +176,9 @@ public class InsertNewRowLogic {
             ObservableList<Object[]> items = this.getTheInsertTableView().getItems();
             List<Packet> packets = new ArrayList<>();
             for (Object[] item : items) {
-                boolean flag = true;//发现有非空的文字类的内容，视为内容没有填完整，不进行发送
+                boolean flag = true;//发现有非空的且没有默认值的文字类的内容，视为内容没有填完整，不进行发送
                 for (int i1 = 0; i1 < item.length; i1++) {
-                    if (!columnMetaDataList.get(i1).isNullable() && normalString.equals(item[i1])) {
+                    if (!columnMetaDataList.get(i1).isNullable() && !columnMetaDataList.get(i1).isHasDefaultValue() && normalString.equals(item[i1])) {
                         flag = false;
                         break;
                     }
@@ -193,8 +195,8 @@ public class InsertNewRowLogic {
                 }
                 for (int i1 = 0; i1 < item.length; i1++) {
                     if (i1 == identifierIndex) continue;
-                    if (nullableString.equals(item[i1]) || item[i1] == null) {
-                        nullIndexes[skipCounter] = i1;//找到可null的列，如果值为默认或者空，略过 note:批量导入时可能产生null值
+                    if (nullableString.equals(item[i1]) || hasDefaultString.equals(item[i1]) || item[i1] == null) {
+                        nullIndexes[skipCounter] = i1;//找到可null的列，如果值为本软体默认或者空，略过 note:批量导入时可能产生null值
                         skipCounter++;
                     }
                 }
