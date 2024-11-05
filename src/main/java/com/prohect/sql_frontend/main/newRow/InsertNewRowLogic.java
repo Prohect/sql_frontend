@@ -9,7 +9,10 @@ import com.prohect.sql_frontend_common.packet.Packet;
 import javafx.collections.ObservableList;
 import javafx.event.ActionEvent;
 import javafx.fxml.FXML;
-import javafx.scene.control.*;
+import javafx.scene.control.Label;
+import javafx.scene.control.TableColumn;
+import javafx.scene.control.TablePosition;
+import javafx.scene.control.TableView;
 import javafx.scene.input.MouseEvent;
 import javafx.stage.FileChooser;
 
@@ -30,10 +33,8 @@ public class InsertNewRowLogic {
     public static String databaseName = "";
     public static String tableName = "";
     FileChooser fileChooser;
-    @FXML
-    private CheckBox hasIdentifierCheckBox;
-    @FXML
-    private TextField identifierOfTableTextField;
+    boolean hasIdentifier = false;
+    int identifierIndex = -1;
     @FXML
     private Label infoLabel;
     @FXML
@@ -44,6 +45,14 @@ public class InsertNewRowLogic {
 
     public InsertNewRowLogic() {
         Main.insertNewRowLogic = this;
+    }
+
+    public int getIdentifierIndex() {
+        return identifierIndex;
+    }
+
+    public void setIdentifierIndex(int identifierIndex) {
+        this.identifierIndex = identifierIndex;
     }
 
     /**
@@ -135,6 +144,14 @@ public class InsertNewRowLogic {
         return objects;
     }
 
+    public boolean isHasIdentifier() {
+        return hasIdentifier;
+    }
+
+    public void setHasIdentifier(boolean hasIdentifier) {
+        this.hasIdentifier = hasIdentifier;
+    }
+
     @FXML
     void tableViewOnMouseClicked(MouseEvent event) {
         selectedRowIndex = theInsertTableView.getSelectionModel().getSelectedIndex();
@@ -154,40 +171,30 @@ public class InsertNewRowLogic {
     void submitTheChanges(MouseEvent event) {
         try {
             ArrayList<ColumnMetaData> columnMetaDataList = Main.db2table2columnMap.get(Main.mainLogic.getDataBase4tableView()).get(Main.mainLogic.getTableName4tableView());
-            boolean hasIdentifier = hasIdentifierCheckBox.isSelected();
-            int identifierIndex = -1;
-            if (hasIdentifier) {
-                for (int i = 0; i < columnMetaDataList.size(); i++) {
-                    if (columnMetaDataList.get(i).getColumnName().equals(identifierOfTableTextField.getText().toLowerCase())) {
-                        identifierIndex = i;
-                        break;
-                    }
-                }
-                if (identifierIndex == -1) {
-                    infoLabel.setText("info: 没有该列名" + identifierOfTableTextField.getText() + "!");
-                    return;
-                }
-            }
             ObservableList<Object[]> items = this.getTheInsertTableView().getItems();
             List<Packet> packets = new ArrayList<>();
             for (Object[] item : items) {
                 boolean flag = true;//发现有非空的文字类的内容，视为内容没有填完整，不进行发送
                 for (int i1 = 0; i1 < item.length; i1++) {
-                    if (columnMetaDataList.get(i1).isNullable()) continue;
-                    if (item[i1].equals(normalString)) {
+                    if (!columnMetaDataList.get(i1).isNullable() && normalString.equals(item[i1])) {
                         flag = false;
                         break;
                     }
                 }
+                if (!flag) {
+                    this.infoLabel.setText("存在未填完非空列的行, 请检查！");
+                    return;
+                }
                 int skipCounter = 0;//在VALUES后面要跳过的列的数目
-                int[] nullIndexerAlpha = new int[columnMetaDataList.size()];
+                int[] nullIndexes = new int[columnMetaDataList.size()];
                 if (identifierIndex != -1) {
-                    nullIndexerAlpha[skipCounter] = identifierIndex;//如果有，略过自增长的标识列(ID)
+                    nullIndexes[skipCounter] = identifierIndex;//如果有，略过自增长的标识列(ID)
                     skipCounter++;
                 }
                 for (int i1 = 0; i1 < item.length; i1++) {
+                    if (i1 == identifierIndex) continue;
                     if (nullableString.equals(item[i1]) || item[i1] == null) {
-                        nullIndexerAlpha[skipCounter] = i1;//找到可null的列，如果值为默认或者空，略过 note:批量导入时可能产生null值
+                        nullIndexes[skipCounter] = i1;//找到可null的列，如果值为默认或者空，略过 note:批量导入时可能产生null值
                         skipCounter++;
                     }
                 }
@@ -195,44 +202,42 @@ public class InsertNewRowLogic {
                 Object[] nonNullObjects = new Object[columnMetaDataList.size() - skipCounter];
 
                 boolean first = true;
-                if (flag) {
-                    StringBuilder cmd = null;
-                    for (int i1 = 0; i1 < columnMetaDataList.size(); i1++) {
-                        boolean skip = false;
-                        for (int i2 = 0; i2 < skipCounter; i2++) {
-                            if (nullIndexerAlpha[i2] == i1) {
-                                skip = true;
-                                break;
-                            }
+                StringBuilder cmd = null;
+                for (int i1 = 0; i1 < columnMetaDataList.size(); i1++) {
+                    boolean skip = false;
+                    for (int i2 = 0; i2 < skipCounter; i2++)
+                        if (nullIndexes[i2] == i1) {
+                            skip = true;
+                            break;
                         }
-                        if (skip) continue;
-                        ColumnMetaData cData = columnMetaDataList.get(i1);
-                        Object object = item[i1];
-                        nonNullObjects[nonNullCounter] = object;
-                        nonNullCounter++;
-                        if (first) {
-                            first = false;
-                            cmd = new StringBuilder("INSERT INTO ").append(Main.mainLogic.getTableName4tableView()).append(" (").append(cData.getColumnName());
-                        } else {
-                            cmd.append(",").append(cData.getColumnName());
-                        }
+                    if (skip) continue;
+                    ColumnMetaData cData = columnMetaDataList.get(i1);
+                    Object object = item[i1];
+                    nonNullObjects[nonNullCounter] = object;
+                    nonNullCounter++;
+                    if (first) {
+                        first = false;
+                        cmd = new StringBuilder("INSERT INTO ").append(Main.mainLogic.getTableName4tableView()).append(" (").append(cData.getColumnName());
+                    } else {
+                        cmd.append(",").append(cData.getColumnName());
                     }
-                    first = true;
-                    for (Object object : nonNullObjects) {
-                        if (first) {
-                            first = false;
-                            assert cmd != null;
-                            cmd.append(") VALUES (").append(CommonUtil.isNumber((String) object) ? (String) object : CommonUtil.convert2SqlServerContextString(object));
-                        } else {
-                            cmd.append(",").append(CommonUtil.isNumber((String) object) ? (String) object : CommonUtil.convert2SqlServerContextString(object));
-                        }
-                    }
-                    assert cmd != null;
-                    cmd.append(")");
-                    CInsertPacket cInsertPacket = new CInsertPacket(Main.user.getUuid(), cmd.toString(), Main.mainLogic.getDataBase4tableView());
-                    Main.packetID2insertedValueMap.put(cInsertPacket.getId(), item);
-                    packets.add(cInsertPacket);
                 }
+                first = true;
+                for (Object object : nonNullObjects) {
+                    if (first) {
+                        first = false;
+                        assert cmd != null;
+                        cmd.append(") VALUES (").append(CommonUtil.isNumber((String) object) ? (String) object : CommonUtil.convert2SqlServerContextString(object));
+                    } else {
+                        cmd.append(",").append(CommonUtil.isNumber((String) object) ? (String) object : CommonUtil.convert2SqlServerContextString(object));
+                    }
+                }
+                assert cmd != null;
+                cmd.append(")");
+                CInsertPacket cInsertPacket = new CInsertPacket(Main.user.getUuid(), cmd.toString(), Main.mainLogic.getDataBase4tableView());
+                Main.packetID2insertedValueMap.put(cInsertPacket.getId(), item);
+                packets.add(cInsertPacket);
+
             }
             for (Packet packet : packets) {
                 Main.channel2packetsMap.computeIfAbsent(Main.ctx.channel(), c -> new LinkedBlockingQueue<>()).add(packet);
@@ -262,11 +267,29 @@ public class InsertNewRowLogic {
             try {
                 List<String[]> listFromCsv0 = loadFromCsv(selectedFile);
                 TableView<Object[]> tableView = theInsertTableView;
-                int columns = tableView.getColumns().size();
+                ObservableList<TableColumn<Object[], ?>> tableColumns = tableView.getColumns();
+                int columns = tableColumns.size();
+                int skip = -1;
+                ArrayList<ColumnMetaData> columnMetaDataArrayList = Main.db2table2columnMap.get(databaseName).get(tableName);
+                for (int i = 0; i < tableColumns.size(); i++) {
+                    if (skip != -1) break;
+                    TableColumn<Object[], ?> tableColumn = tableColumns.get(i);
+                    for (ColumnMetaData columnMetaData : columnMetaDataArrayList)
+                        if (columnMetaData.getColumnName().equals(tableColumn.getText()))
+                            if (columnMetaData.isAutoIncrement()) {
+                                skip = i;
+                                break;
+                            }
+                }
                 List<String[]> listFromCsv = new ArrayList<>();
                 for (String[] strings : listFromCsv0) {
+                    int copied = 0;
                     String[] newRow = new String[columns];
-                    System.arraycopy(strings, 0, newRow, 0, strings.length);
+                    for (int i = 0; i < columns; i++) {
+                        if (i == skip || copied >= strings.length) continue;
+                        newRow[i] = strings[copied];
+                        copied++;
+                    }
                     listFromCsv.add(newRow);
                 }
                 List<Object[]> formattedItems = getFormattedItems(listFromCsv, tableView);

@@ -346,11 +346,10 @@ public class Server {
                     while (columns.next()) {
                         String columnName = columns.getString("COLUMN_NAME").toLowerCase();
                         String columnType = columns.getString("TYPE_NAME").toLowerCase();
-                        boolean isAutoIncrement = columns.getBoolean("IS_AUTOINCREMENT");
-                        boolean isNullable = "YES".equalsIgnoreCase(columns.getString("IS_NULLABLE"));
-                        boolean autoIncrement = columns.getMetaData().isAutoIncrement(i);
-                        if (autoIncrement) System.out.println(columnName + " is autoIncrement");
-                        columnList.add(new ColumnMetaData(columnName, columnType, primaryKeyList.contains(columnName), isAutoIncrement, isNullable));
+                        boolean isPrimaryKey = primaryKeyList.contains(columnName);
+                        boolean isAutoIncrement = columns.getString("IS_AUTOINCREMENT").equals("YES");
+                        boolean isNullable = columns.getString("IS_NULLABLE").equals("YES");
+                        columnList.add(new ColumnMetaData(columnName, columnType, isPrimaryKey, isAutoIncrement, isNullable));
                         ++i;
                     }
                 }

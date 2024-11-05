@@ -215,20 +215,25 @@ public class MainLogic implements Initializable {
             ObservableList<TableColumn<Object[], ?>> columnObservableList = Main.insertNewRowLogic.getTheInsertTableView().getColumns();
             columnObservableList.clear();
             ArrayList<ColumnMetaData> columnMetaDataList = Main.db2table2columnMap.get(this.getDatabaseSourceChoiceBox().getValue()).get(this.getTableChoiceBox().getValue());
+            Main.insertNewRowLogic.setHasIdentifier(false);
+            Main.insertNewRowLogic.setIdentifierIndex(-1);
             for (int i = 0; i < columnMetaDataList.size(); i++) {
-                String columnName = columnMetaDataList.get(i).getColumnName();
-                TableColumn<Object[], Object> column = ClientHandlerAdapter.getTableColumn(columnName, i);
-                columnObservableList.add(column);
-                ArrayList<ColumnMetaData> columnMetaData = Main.db2table2columnMap.get(this.getDataBase4tableView()).get(this.getTableName4tableView());
-                ColumnMetaData[] array = columnMetaData.stream().filter((c) -> c.getColumnName().equals(columnName)).toArray(ColumnMetaData[]::new);
-                if (array[0].isAutoIncrement()) continue;
-                ClientHandlerAdapter.setCellFactory(column);
-                column.setOnEditCommit(event1 -> {
+                ColumnMetaData columnMetaData = columnMetaDataList.get(i);
+                String columnName = columnMetaData.getColumnName();
+                TableColumn<Object[], Object> tableColumn = ClientHandlerAdapter.getTableColumn(columnName, i);
+                columnObservableList.add(tableColumn);
+                if (columnMetaData.isAutoIncrement()) {
+                    Main.insertNewRowLogic.setHasIdentifier(true);
+                    Main.insertNewRowLogic.setIdentifierIndex(i);
+                    continue;
+                }
+                ClientHandlerAdapter.setCellFactory(tableColumn);
+                tableColumn.setOnEditCommit(event -> {
                     // 直接更新数据，点击提交按钮时再处理
-                    int targetRowIndex = event1.getTablePosition().getRow();
-                    int targetColumnIndex = event1.getTablePosition().getColumn();
-                    Object[] row = event1.getTableView().getItems().get(targetRowIndex);
-                    String newValue = (String) event1.getNewValue();
+                    int targetRowIndex = event.getTablePosition().getRow();
+                    int targetColumnIndex = event.getTablePosition().getColumn();
+                    Object[] row = event.getTableView().getItems().get(targetRowIndex);
+                    String newValue = (String) event.getNewValue();
                     row[targetColumnIndex] = newValue;
                 });
             }
@@ -242,7 +247,7 @@ public class MainLogic implements Initializable {
                 Main.mainLogic.getInfoLabel().setText("您没有足够的权限");
                 return;
             }
-            if (tableName.contains("_")){
+            if (tableName.contains("_")) {
                 Main.mainLogic.getInfoLabel().setText("表名不能包含下划线_!");
                 return;
             }
