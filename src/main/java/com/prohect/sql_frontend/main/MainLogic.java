@@ -242,6 +242,10 @@ public class MainLogic implements Initializable {
                 Main.mainLogic.getInfoLabel().setText("您没有足够的权限");
                 return;
             }
+            if (tableName.contains("_")){
+                Main.mainLogic.getInfoLabel().setText("表名不能包含下划线_!");
+                return;
+            }
             String cmd;
             cmd = "CREATE TABLE " + tableName + " (" + "ID INT IDENTITY(1,1) NOT NULL, " + "PRIMARY KEY (ID))";
             Main.channel2packetsMap.computeIfAbsent(Main.ctx.channel(), _ -> new LinkedBlockingQueue<>()).add(new CAlterPacket(Main.user.getUuid(), cmd, Main.mainLogic.getDatabaseSourceChoiceBox().getValue()));
