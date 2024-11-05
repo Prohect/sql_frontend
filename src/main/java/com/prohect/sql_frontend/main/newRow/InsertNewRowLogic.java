@@ -61,7 +61,7 @@ public class InsertNewRowLogic {
             String columnFromTableView = columnsFromTableView.get(i).getText();
             for (int i1 = 0; i1 < columnsFromCsv.length; i1++) {
                 String columnFromCsv = columnsFromCsv[i1];
-                if (columnFromCsv.equalsIgnoreCase(columnFromTableView)) {
+                if (columnFromTableView.equalsIgnoreCase(columnFromCsv)) {
                     listFromCsv2columnMap.put(i1, i);//在map中映射两类index
                     break;
                 }
@@ -260,8 +260,15 @@ public class InsertNewRowLogic {
 
         if (selectedFile != null) {
             try {
-                List<String[]> listFromCsv = loadFromCsv(selectedFile);
+                List<String[]> listFromCsv0 = loadFromCsv(selectedFile);
                 TableView<Object[]> tableView = theInsertTableView;
+                int columns = tableView.getColumns().size();
+                List<String[]> listFromCsv = new ArrayList<>();
+                for (String[] strings : listFromCsv0) {
+                    String[] newRow = new String[columns];
+                    System.arraycopy(strings, 0, newRow, 0, strings.length);
+                    listFromCsv.add(newRow);
+                }
                 List<Object[]> formattedItems = getFormattedItems(listFromCsv, tableView);
                 tableView.getItems().addAll(formattedItems);
             } catch (Exception e) {
