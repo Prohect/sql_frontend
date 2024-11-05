@@ -278,6 +278,7 @@ public class MainLogic implements Initializable {
             }
         }
         Object o = tableView.getItems().get(selectedRowIndex)[0];
+        assert o != null;//第一个一般是主键，断言不为null
         StringBuilder cmd = new StringBuilder("DELETE FROM " + tableName4tableView + " WHERE " + tableView.getColumns().getFirst().getText() + " = " + CommonUtil.convert2SqlServerContextString(o));
         for (int i = 1; i < tableView.getColumns().size(); i++) {
             Object object = tableView.getItems().get(selectedRowIndex)[i];

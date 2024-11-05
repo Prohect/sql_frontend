@@ -229,6 +229,7 @@ public class ClientHandlerAdapter extends ChannelInboundHandlerAdapter {
                             StringBuilder condition = new StringBuilder("UPDATE " + Main.mainLogic.getTableName4tableView() + " SET " + columns.get(targetColumnIndex).getText() + " = " + (CommonUtil.isNumber(newValue) ? newValue : "'" + newValue + "'") + " WHERE " + (columns.get(targetColumnIndex == 0 ? 1 : 0)).getText() + " = " + CommonUtil.convert2SqlServerContextString(o1));
                             for (int i = 1; i < row.length; i++) {
                                 if (i == targetColumnIndex) continue;
+                                if (row[i] == null) continue;
                                 String convert2SqlServerContextString = CommonUtil.convert2SqlServerContextString(row[i]);
                                 String columnName = columns.get(i).getText();
                                 if (convert2SqlServerContextString == null || convert2SqlServerContextString.isEmpty()) {

@@ -111,7 +111,7 @@ public class CommonUtil {
 
     public static String convert2SqlServerContextString(Object o) {
         if (o == null) {
-            return "''";
+            throw new NullPointerException("o is null");
         }
         return o instanceof String string ? "'" + string + "'" : (o instanceof Boolean b) ? b ? "1" : "0" : o.toString();
     }
