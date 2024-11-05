@@ -215,33 +215,37 @@ public class ClientHandlerAdapter extends ChannelInboundHandlerAdapter {
                 HashMap<String, HashMap<String, Boolean[]>> permission4thisDatabase = Main.user.getPermissions().get(databaseName);
                 HashMap<String, Boolean[]> permission4thisTable = permission4thisDatabase == null ? null : permission4thisDatabase.get(tableName);
                 for (int columnIndex = 0; columnIndex < columnCount; columnIndex++) {
-                    TableColumn<Object[], Object> column = ClientHandlerAdapter.getTableColumn(columnNames.get(columnIndex), columnIndex);
-                    if (Main.user.isOp() || (permission4thisTable != null && permission4thisTable.getOrDefault(columnNames.get(columnIndex), new Boolean[]{true, false})[1])) {
-                        ClientHandlerAdapter.setCellFactory(column);
-                        column.setOnEditCommit(event -> {
-                            // 更新数据,同步提交到服务器
-                            int targetRowIndex = event.getTablePosition().getRow();
-                            int targetColumnIndex = event.getTablePosition().getColumn();
-                            Object[] row = event.getTableView().getItems().get(targetRowIndex);
-                            String newValue = (String) event.getNewValue();
-                            Object o1 = row[(targetColumnIndex == 0) ? 1 : 0];
-                            ObservableList<TableColumn<Object[], ?>> columns = Main.mainLogic.getTableView().getColumns();
-                            StringBuilder condition = new StringBuilder("UPDATE " + Main.mainLogic.getTableName4tableView() + " SET " + columns.get(targetColumnIndex).getText() + " = " + (CommonUtil.isNumber(newValue) ? newValue : "'" + newValue + "'") + " WHERE " + (columns.get(targetColumnIndex == 0 ? 1 : 0)).getText() + " = " + CommonUtil.convert2SqlServerContextString(o1));
-                            for (int i = 1; i < row.length; i++) {
-                                if (i == targetColumnIndex) continue;
-                                if (row[i] == null) continue;
-                                String convert2SqlServerContextString = CommonUtil.convert2SqlServerContextString(row[i]);
-                                String columnName = columns.get(i).getText();
-                                if (convert2SqlServerContextString == null || convert2SqlServerContextString.isEmpty()) {
-                                    continue;
+                    String name = columnNames.get(columnIndex);
+                    TableColumn<Object[], Object> column = ClientHandlerAdapter.getTableColumn(name, columnIndex);
+                    AtomicBoolean isAutoIncrement = new AtomicBoolean(false);
+                    Main.db2table2columnMap.get(databaseName).get(tableName).stream().filter(c -> c.getColumnName().equalsIgnoreCase(name)).findFirst().ifPresent(c -> isAutoIncrement.set(c.isAutoIncrement()));
+                    if (!isAutoIncrement.get())
+                        if (Main.user.isOp() || (permission4thisTable != null && permission4thisTable.getOrDefault(name, new Boolean[]{true, false})[1])) {
+                            ClientHandlerAdapter.setCellFactory(column);
+                            column.setOnEditCommit(event -> {
+                                // 更新数据,同步提交到服务器
+                                int targetRowIndex = event.getTablePosition().getRow();
+                                int targetColumnIndex = event.getTablePosition().getColumn();
+                                Object[] row = event.getTableView().getItems().get(targetRowIndex);
+                                String newValue = (String) event.getNewValue();
+                                Object o1 = row[(targetColumnIndex == 0) ? 1 : 0];
+                                ObservableList<TableColumn<Object[], ?>> columns = Main.mainLogic.getTableView().getColumns();
+                                StringBuilder condition = new StringBuilder("UPDATE " + Main.mainLogic.getTableName4tableView() + " SET " + columns.get(targetColumnIndex).getText() + " = " + (CommonUtil.isNumber(newValue) ? newValue : "'" + newValue + "'") + " WHERE " + (columns.get(targetColumnIndex == 0 ? 1 : 0)).getText() + " = " + CommonUtil.convert2SqlServerContextString(o1));
+                                for (int i = 1; i < row.length; i++) {
+                                    if (i == targetColumnIndex) continue;
+                                    if (row[i] == null) continue;
+                                    String convert2SqlServerContextString = CommonUtil.convert2SqlServerContextString(row[i]);
+                                    String columnName = columns.get(i).getText();
+                                    if (convert2SqlServerContextString == null || convert2SqlServerContextString.isEmpty()) {
+                                        continue;
+                                    }
+                                    condition.append(" AND ").append(columnName).append(" = ").append(convert2SqlServerContextString);
                                 }
-                                condition.append(" AND ").append(columnName).append(" = ").append(convert2SqlServerContextString);
-                            }
-                            CUpdatePacket cUpdatePacket = new CUpdatePacket(Main.user.getUuid(), condition.toString(), Main.mainLogic.getDataBase4tableView());
-                            Main.packetID2updatedValueMap.put(cUpdatePacket.getId(), new UpdateOfCellOfTable(targetRowIndex, targetColumnIndex, newValue));
-                            Main.channel2packetsMap.computeIfAbsent(Main.ctx.channel(), _ -> new LinkedBlockingQueue<>()).add(cUpdatePacket);
-                        });
-                    }
+                                CUpdatePacket cUpdatePacket = new CUpdatePacket(Main.user.getUuid(), condition.toString(), Main.mainLogic.getDataBase4tableView());
+                                Main.packetID2updatedValueMap.put(cUpdatePacket.getId(), new UpdateOfCellOfTable(targetRowIndex, targetColumnIndex, newValue));
+                                Main.channel2packetsMap.computeIfAbsent(Main.ctx.channel(), _ -> new LinkedBlockingQueue<>()).add(cUpdatePacket);
+                            });
+                        }
                     tableView.getColumns().add(column);
                 }
                 tableView.setEditable(true);
