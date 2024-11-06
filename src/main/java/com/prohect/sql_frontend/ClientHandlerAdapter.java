@@ -230,7 +230,7 @@ public class ClientHandlerAdapter extends ChannelInboundHandlerAdapter {
                                 String newValue = (String) event.getNewValue();
                                 Object o1 = row[(targetColumnIndex == 0) ? 1 : 0];
                                 ObservableList<TableColumn<Object[], ?>> columns = Main.mainLogic.getTableView().getColumns();
-                                StringBuilder condition = new StringBuilder("UPDATE " + Main.mainLogic.getTableName4tableView() + " SET " + columns.get(targetColumnIndex).getText() + " = " + (CommonUtil.isNumber(newValue) ? newValue : "'" + newValue + "'") + " WHERE " + (columns.get(targetColumnIndex == 0 ? 1 : 0)).getText() + " = " + CommonUtil.convert2SqlServerContextString(o1));
+                                StringBuilder condition = new StringBuilder("UPDATE " + Main.mainLogic.getTableName4tableView() + " SET [" + columns.get(targetColumnIndex).getText() + "] = " + (CommonUtil.isNumber(newValue) ? newValue : "'" + newValue + "'") + " WHERE [" + (columns.get(targetColumnIndex == 0 ? 1 : 0)).getText() + "] = " + CommonUtil.convert2SqlServerContextString(o1));
                                 for (int i = 1; i < row.length; i++) {
                                     if (i == targetColumnIndex) continue;
                                     if (row[i] == null) continue;
@@ -239,7 +239,7 @@ public class ClientHandlerAdapter extends ChannelInboundHandlerAdapter {
                                     if (convert2SqlServerContextString == null || convert2SqlServerContextString.isEmpty()) {
                                         continue;
                                     }
-                                    condition.append(" AND ").append(columnName).append(" = ").append(convert2SqlServerContextString);
+                                    condition.append(" AND [").append(columnName).append("] = ").append(convert2SqlServerContextString);
                                 }
                                 CUpdatePacket cUpdatePacket = new CUpdatePacket(Main.user.getUuid(), condition.toString(), Main.mainLogic.getDataBase4tableView());
                                 Main.packetID2updatedValueMap.put(cUpdatePacket.getId(), new UpdateOfCellOfTable(targetRowIndex, targetColumnIndex, newValue));
@@ -278,28 +278,30 @@ public class ClientHandlerAdapter extends ChannelInboundHandlerAdapter {
             Object[] objects = items.get(targetRowIndex);
             Object oldValue = objects[targetColumnIndex];
             Object newValue = update.getNewValue();
-            String clazzName = oldValue.getClass().getSimpleName();
-            System.out.printf("oldValue.getClass().getSimpleName() = %s%n", clazzName);
-            switch (clazzName) {
-                case "Integer":
-                    if (CommonUtil.isNumber((String) newValue)) newValue = Integer.parseInt((String) newValue);
-                    else newValue = (int) Double.parseDouble((String) newValue);
-                    break;
-                case "Long":
-                    if (CommonUtil.isNumber((String) newValue)) newValue = Long.parseLong((String) newValue);
-                    else newValue = (long) Double.parseDouble((String) newValue);
-                    break;
-                case "Double":
-                    newValue = Double.parseDouble((String) newValue);
-                    break;
-                case "Float":
-                    newValue = (float) Double.parseDouble((String) newValue);
-                    break;
-                case "Boolean":
-                    newValue = "true".equalsIgnoreCase((String) newValue) || "1".equals(newValue);
-                    break;
-                default:
-                    break;
+            if (oldValue != null) {
+                String clazzName = oldValue.getClass().getSimpleName();
+                System.out.printf("oldValue.getClass().getSimpleName() = %s%n", clazzName);
+                switch (clazzName) {
+                    case "Integer":
+                        if (CommonUtil.isNumber((String) newValue)) newValue = Integer.parseInt((String) newValue);
+                        else newValue = (int) Double.parseDouble((String) newValue);
+                        break;
+                    case "Long":
+                        if (CommonUtil.isNumber((String) newValue)) newValue = Long.parseLong((String) newValue);
+                        else newValue = (long) Double.parseDouble((String) newValue);
+                        break;
+                    case "Double":
+                        newValue = Double.parseDouble((String) newValue);
+                        break;
+                    case "Float":
+                        newValue = (float) Double.parseDouble((String) newValue);
+                        break;
+                    case "Boolean":
+                        newValue = "true".equalsIgnoreCase((String) newValue) || "1".equals(newValue);
+                        break;
+                    default:
+                        break;
+                }
             }
             Object[] clone = objects.clone();
             clone[targetColumnIndex] = newValue;
@@ -360,7 +362,6 @@ public class ClientHandlerAdapter extends ChannelInboundHandlerAdapter {
             });
         } else if (sLoginPacket.getInfo().equals("reconnect success")) {
             Main.user.setPermissions(sLoginPacket.getUser().getPermissions());
-            Main.db2table2columnMap = db2table2columnMap;
             LoginLogic.logged.set(true);
         } else if (sLoginPacket.getInfo().equals("update metadata")) {
             Main.db2table2columnMap = db2table2columnMap;

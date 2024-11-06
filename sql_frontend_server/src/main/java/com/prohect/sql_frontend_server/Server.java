@@ -16,7 +16,10 @@ import java.io.FileOutputStream;
 import java.io.IOException;
 import java.nio.file.Files;
 import java.sql.*;
-import java.util.*;
+import java.util.ArrayList;
+import java.util.HashMap;
+import java.util.List;
+import java.util.Map;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.LinkedBlockingQueue;
 import java.util.concurrent.TimeUnit;
@@ -77,257 +80,79 @@ public class Server {
         return serverConfig;
     }
 
-    public void run() throws SQLException, IOException {
-        if (serverConfig == null) {
-            System.out.println("没有设置文件，现在已经自动生成，请配置好设置文件之后再启动！");
-            return;
-        }
-        try {
-            int serverPort = serverConfig.getServerPort();
-            connection2UsersDB = SqlUtil4Login.getConnection4UsersDB(serverConfig);
-            NioEventLoopGroup workerGroup = new NioEventLoopGroup();//workerGroup处理与sqlServer的通信和与client的通信
-            workerGroup.scheduleAtFixedRate(() -> {
-                for (Map.Entry<ChannelHandlerContext, LinkedBlockingQueue<Packet>> entry : ctx2packetReceivedMap.entrySet()) {
-                    ChannelHandlerContext ctx = entry.getKey();
-                    LinkedBlockingQueue<Packet> packets = entry.getValue();
-                    for (; ; ) {
-                        try {
-                            Packet packet = packets.poll();
-                            if (packet == null) break;
-                            checkConnection();
-                            switch (packet) {
-                                case CLoginPacket loginPacket -> processLoginPacket(ctx, loginPacket);
-                                case CQueryPacket cQueryPacket -> processQueryPacket(ctx, cQueryPacket);
-                                case CAlterPacket cAlterPacket -> processAlterPacket(ctx, cAlterPacket);
-                                case CUpdatePacket cUpdatePacket -> processUpdatePacket(ctx, cUpdatePacket);
-                                case CInsertPacket cInsertPacket -> processInsertPacket(ctx, cInsertPacket);
-                                case CDeletePacket cDeletePacket -> processDeletePacket(ctx, cDeletePacket);
-                                default -> {
-                                }
-                            }
-                        } catch (SQLException ignored) {
-                        }
-                    }
-                }
-            }, 0, 20, TimeUnit.MILLISECONDS);
-            ServerBootstrap b = new ServerBootstrap();
-            NioEventLoopGroup bossGroup = new NioEventLoopGroup(1);//bossGroup处理新连接的接入和packet拆箱
-            new NettyServer(serverPort, b, workerGroup, bossGroup, new ServerHandlerAdapter(workerGroup)).run();
-        } catch (Exception e) {
-            throw new RuntimeException(e);
-        }
-    }
-
-    private void checkConnection() throws SQLException {
-        if (!connection2UsersDB.isValid(1))
-            connection2UsersDB = SqlUtil4Login.getConnection4UsersDB(serverConfig);
-        for (String databaseName0 : serverConfig.getTheTargetDatabaseNameList()) {
-            String databaseName = databaseName0.toLowerCase();
-            if (!(databaseName2connectionMap.containsKey(databaseName) && databaseName2connectionMap.get(databaseName).isValid(1)))
-                databaseName2connectionMap.put(databaseName, SqlUtil.getConnection4TargetDB(serverConfig.getDataBaseAdmin(), databaseName));
-        }
-    }
-
-    private void processDeletePacket(ChannelHandlerContext ctx, CDeletePacket cDeletePacket) {
-        try {
-            User user = uuid2userMap.get(cDeletePacket.getUuid());
-            String cmd = cDeletePacket.getCmd();
-            String databaseName = cDeletePacket.getDatabaseName().toLowerCase();
-            long id = cDeletePacket.getId();
-
-            String tableName = cmd.substring(12).split(" ")[0].toLowerCase();//"DELETE FROM "->12
-
-
-            if (!user.isOp())
-                for (ColumnMetaData columnMetaData : database2Table2ColumnMap.get(databaseName).get(tableName))
-                    if (!user.getPermissions().get(databaseName).get(tableName).get(columnMetaData.getColumnName())[1])
-                        throw new SQLException("您没有足够的写入权限!");
-
-            Statement statement = (user.isOp() && databaseName.equals(serverConfig.getTheUsersDatabaseName()) ? connection2UsersDB : databaseName2connectionMap.get(databaseName)).createStatement();
-            int i = statement.executeUpdate(cmd);
-            ctx2packetToBeSentMap.get(ctx).add(new SDeletePacket(id));
-            ctx2packetToBeSentMap.get(ctx).add(new SInfoPacket("删除行成功, " + i + "行受影响"));
-        } catch (Exception e) {
-            e.printStackTrace();
-            ctx2packetToBeSentMap.get(ctx).add(new SInfoPacket(e.getMessage()));
-        }
-    }
-
-    private void processInsertPacket(ChannelHandlerContext ctx, CInsertPacket cInsertPacket) {
-        try {
-            long uuid = cInsertPacket.getUuid();
-            String cmd = cInsertPacket.getCmd();
-            String databaseName = cInsertPacket.getDatabaseName().toLowerCase();
-            long id = cInsertPacket.getId();
-            User user = uuid2userMap.get(uuid);
-            String[] split = cmd.substring(11).split("\\(");//"INSERT INTO"->11
-            String tableName = split[0].toLowerCase();
-            List<String> columnNames = Arrays.asList(split[1].split("\\)")[0].split(","));
-            if (!user.isOp())
-                try {
-                    for (String columnName : columnNames)
-                        if (!user.getPermissions().get(databaseName).get(tableName).get(columnName)[1])
-                            throw new SQLException("没有足够的写入权限!");
-                } catch (NullPointerException ignored) {
-                    throw new RuntimeException("没有足够的写入权限!");
-                }
-            Statement statement = (user.isOp() && databaseName.equals(serverConfig.getTheUsersDatabaseName()) ? connection2UsersDB : databaseName2connectionMap.get(databaseName)).createStatement();
-            int i = statement.executeUpdate(cmd);
-            ctx2packetToBeSentMap.get(ctx).add(new SInsertPacket(id));
-            ctx2packetToBeSentMap.get(ctx).add((new SInfoPacket("插入行成功! " + i + "行受影响")));
-            statement.close();
-        } catch (Exception e) {
-            e.printStackTrace();
-            ctx2packetToBeSentMap.get(ctx).add(new SInfoPacket(e.getMessage()));
-        }
-    }
-
-    private void processUpdatePacket(ChannelHandlerContext ctx, CUpdatePacket cUpdatePacket) {
-        try {
-            long id = cUpdatePacket.getId();
-            User user = uuid2userMap.get(cUpdatePacket.getUuid());
-            String databaseName = cUpdatePacket.getDatabaseName();
-            String updateCMD = cUpdatePacket.getUpdateCMD();
-            String[] split = updateCMD.substring(7).split(" ");
-            String tableName = split[0];//7->"UPDATE "
-            String columnName = split[2];
-            if (user.isOp() || user.getPermissions().get(databaseName).get(tableName).get(columnName)[1]) {
-                Statement statement = (user.isOp() && databaseName.equals(serverConfig.getTheUsersDatabaseName()) ? connection2UsersDB : databaseName2connectionMap.get(databaseName)).createStatement();
-                int i = statement.executeUpdate(updateCMD);
-                if (i > 0) {
-                    ctx2packetToBeSentMap.get(ctx).add(new SUpdatePacket(id));
-                    ctx2packetToBeSentMap.get(ctx).add(new SInfoPacket("修改成功," + i + "行受影响"));
-                }
-                statement.close();
-            } else {
-                ctx2packetToBeSentMap.get(ctx).add(new SInfoPacket("你无权进行这个操作"));
-            }
-        } catch (SQLException e) {
-            e.printStackTrace();
-            ctx2packetToBeSentMap.get(ctx).add(new SInfoPacket(e.getMessage()));
-        }
-    }
-
-    private void processAlterPacket(ChannelHandlerContext ctx, CAlterPacket cAlterPacket) {
-        String cmd = cAlterPacket.getCmd();
-        String databaseName = cAlterPacket.getDatabaseName();
-        User user = uuid2userMap.get(cAlterPacket.getUuid());
-        if (!user.isOp()) {
-            ctx2packetToBeSentMap.get(ctx).add(new SInfoPacket("你无权进行这个操作"));
-            return;
-        }
-        try {
-            Statement statement = (user.isOp() && databaseName.equals(serverConfig.getTheUsersDatabaseName()) ? connection2UsersDB : databaseName2connectionMap.get(databaseName)).createStatement();
-            int i = statement.executeUpdate(cmd);
-            ctx2packetToBeSentMap.get(ctx).add(new SInfoPacket("成功, " + i + "行受影响"));
-            statement.close();
-
-            loadMetaDataFromConnection();
-            ctx2packetToBeSentMap.get(ctx).add(new SLoginPacket(new User("", "", user.getUuid()), database2Table2ColumnMap, "update metadata", "", ""));
-
-        } catch (SQLException e) {
-            e.printStackTrace();
-            ctx2packetToBeSentMap.get(ctx).add(new SInfoPacket(e.getMessage()));
-        }
-    }
-
-    private void processQueryPacket(ChannelHandlerContext ctx, CQueryPacket cQueryPacket) {
-        try {
-            m1(ctx, cQueryPacket);
-        } catch (SQLException e) {
-            loadMetaDataFromConnection();
-            try {
-                m1(ctx, cQueryPacket);
-            } catch (Exception e1) {
-                ctx2packetToBeSentMap.get(ctx).add(new SInfoPacket("SQLException = " + e1.getMessage()));
-                e1.printStackTrace();
-            }
-        } catch (Exception e) {
-            ctx2packetToBeSentMap.get(ctx).add(new SInfoPacket("Exception = " + e.getMessage()));
-            e.printStackTrace();
-        }
-    }
-
-    protected void m1(ChannelHandlerContext ctx, CQueryPacket cQueryPacket) throws SQLException {
-        String databaseName = cQueryPacket.getDatabaseName().toLowerCase();
-        StringBuilder query = new StringBuilder(cQueryPacket.getQuery().toLowerCase());
-        User user = uuid2userMap.get(cQueryPacket.getUuid());
-
-        Statement finalStatement = (user.isOp() && databaseName.equals(serverConfig.getTheUsersDatabaseName()) ? connection2UsersDB : databaseName2connectionMap.get(databaseName)).createStatement();
-        String[] querySplitByFrom = query.toString().split("from");
-        String tableName;
-        List<String> selectedColumnList;
-        if (querySplitByFrom.length > 1) {
-            selectedColumnList = new ArrayList<>(List.of(querySplitByFrom[0].replaceFirst("select ", "").split(",")));
-            String[] split1 = querySplitByFrom[1].split(" ");
-            tableName = split1[1];
-        } else throw new SQLException("语法错误");//no "from", bad sql query
-
-        HashMap<String, HashMap<String, Boolean[]>> permissions4ThisDatabase = user.getPermissions().get(databaseName);
-        if (permissions4ThisDatabase != null && !user.isOp()) {//do no limit if there's no permission about this table or this user is OP
-            if (querySplitByFrom[0].contains("*")) {
-                selectedColumnList.clear();
-                database2Table2ColumnMap.get(databaseName).get(tableName).forEach(columnMetaData -> selectedColumnList.add(columnMetaData.getColumnName()));
-            }
-            List<String> columnNamesWithNoPermission =
-                    selectedColumnList.stream().filter(columnName0 -> !permissions4ThisDatabase.getOrDefault(tableName, new HashMap<>()).getOrDefault(columnName0, new Boolean[]{true, false})[0]).toList();
-            selectedColumnList.removeAll(columnNamesWithNoPermission);
-        }
-        query = new StringBuilder("select ");//produce the query command to be performed
-        if (!selectedColumnList.isEmpty()) query.append(selectedColumnList.get(0));
-        for (int i = 1; i < selectedColumnList.size(); i++) {
-            query.append(",").append(selectedColumnList.get(i));
-        }
-        query.append(" from ").append(querySplitByFrom[1]);
-        ResultSet resultSet = finalStatement.executeQuery(query.toString());//do query from database
-        ArrayList<String> columnNames = new ArrayList<>();
-        ArrayList<Object[]> rows = new ArrayList<>();
-        ResultSetMetaData metaData = resultSet.getMetaData();
-        int columnCount = metaData.getColumnCount();
-        for (int i = 1; i <= columnCount; i++) {
-            columnNames.add(metaData.getColumnName(i));
-        }
-        while (resultSet.next()) {
-            Object[] row = new Object[columnCount];
-            for (int i = 1; i <= columnCount; i++) {
-                row[i - 1] = resultSet.getObject(i);
-            }
-            rows.add(row);
-        }
-        ctx2packetToBeSentMap.get(ctx).add(new SQueryReplyPacket(databaseName, tableName, columnNames, rows));
-        finalStatement.close();
-    }
-
-    private void processLoginPacket(ChannelHandlerContext ctx, CLoginPacket loginPacket) {
-        try {
-            loadMetaDataFromConnection();
-            User user = loginPacket.getUser();
-            final Statement finalStatement = connection2UsersDB.createStatement();
-            SLoginPacket sLoginPacket;
-            User user1 = SqlUtil4Login.getUserByUsername(serverConfig.getTheUsersTableName(), user.getUsername(), finalStatement);
-            if (user1 != null) {
-                uuid2userMap.put(user1.getUuid(), user1);
-                if (user.getUuid() == user1.getUuid()) {
-                    sLoginPacket = new SLoginPacket(user1, new HashMap<>(), "reconnect success", "", "");
+    /**
+     * map0 should be larger than map1, and is somehow created by adding something to map1.
+     * then we find what's been changed
+     */
+    @SuppressWarnings("unchecked")
+    public static <K, V, K1, V1, L> HashMap<K, V> diffMap(HashMap<K, V> map0, HashMap<K, V> map1) {
+        HashMap<K, V> diffMap = mapDeepClone(map0);
+        for (Map.Entry<K, V> entry1 : map1.entrySet()) {
+            K k1 = entry1.getKey();
+            V v1 = entry1.getValue();
+            if (map0.containsKey(k1)) {
+                V v = map0.get(k1);
+                if (v instanceof HashMap<?, ?> hashMap0 && v1 instanceof HashMap<?, ?> hashMap1) {
+                    HashMap<K1, V1> tempMap0 = (HashMap<K1, V1>) hashMap0;
+                    HashMap<K1, V1> tempMap1 = (HashMap<K1, V1>) hashMap1;
+                    V subDiffMap = (V) (diffMap(tempMap0, tempMap1));
+                    diffMap.put(k1, subDiffMap);
+                } else if (v instanceof List<?> list0 && v1 instanceof List<?> list1) {
+                    List<L> tempList0 = (List<L>) list0;
+                    List<L> tempList1 = (List<L>) list1;
+                    V diffList = (V) diffList(tempList0, tempList1);
+                    diffMap.put(k1, diffList);
                 } else {
-                    if (user1.getPassword().equals(user.getPassword())) {
-                        sLoginPacket = new SLoginPacket(user1, database2Table2ColumnMap, "success", serverConfig.getTheUsersTableName(), serverConfig.getTheUsersTableName());
-                    } else sLoginPacket = new SLoginPacket(user, new HashMap<>(), "wrong password", "", "");
+                    if (v == null || v.equals(v1))
+                        diffMap.remove(k1, v);
                 }
-            } else sLoginPacket = new SLoginPacket(user, new HashMap<>(), "no such user", "", "");
-
-
-            SLoginPacket finalSLoginPacket = sLoginPacket;
-            ctx2packetToBeSentMap.get(ctx).add(finalSLoginPacket);
-            System.out.println("登录请求处理完毕");
-
-            finalStatement.close();
-        } catch (SQLException e) {
-            e.printStackTrace();
+            }
         }
+        return diffMap;
     }
 
-    private void loadMetaDataFromConnection() {
+    /**
+     * list0 could be gotten by somehow adding something to list1, so it's always lager than list1, and has everything that list1 have.
+     * then we find what's been changed
+     */
+    @SuppressWarnings("unchecked")
+    private static <L0, L1, K, V> List<L0> diffList(List<L0> list0, List<L0> list1) {
+        List<L0> diffList;
+        if (list0 instanceof ArrayList<?>) diffList = (List<L0>) new ArrayList<>(list0).clone();
+        else diffList = new ArrayList<>(list0);
+        for (int i = 0; i < list1.size(); i++) {
+            L0 v1 = list1.get(i);
+            L0 v0 = list0.get(i);
+            if (v0 instanceof List<?> l0 && v1 instanceof List<?> l1) {
+                List<L1> tempList0 = (List<L1>) l0;
+                List<L1> tempList1 = (List<L1>) l1;
+                L0 subDiffList = (L0) (diffList(tempList0, tempList1));
+                diffList.set(i, subDiffList);
+            } else if (v0 instanceof Map<?, ?> map0 && v1 instanceof Map<?, ?> map1) {
+                HashMap<K, V> tempMap0 = (HashMap<K, V>) map0;
+                HashMap<K, V> tempMap1 = (HashMap<K, V>) map1;
+                L0 diffMap = (L0) diffMap(tempMap0, tempMap1);
+                diffList.set(i, diffMap);
+            } else if (v0 == null || v0.equals(v1)) diffList.remove(v0);
+        }
+        return diffList;
+    }
+
+    @SuppressWarnings("unchecked")
+    public static <K, V, K1, V1> HashMap<K, V> mapDeepClone(HashMap<K, V> map) {
+        HashMap<K, V> clone = new HashMap<>(map);//this would clone the map, not way just share a same entrySet
+        for (Map.Entry<K, V> entry : map.entrySet()) {
+            K key = entry.getKey();
+            V value = entry.getValue();
+            if (value instanceof HashMap<?, ?> hashMap) {
+                V clonedValue = (V) mapDeepClone((HashMap<K1, V1>) hashMap);
+                clone.put(key, clonedValue);
+            }
+        }
+        return clone;
+    }
+
+    private HashMap<String, HashMap<String, ArrayList<ColumnMetaData>>> loadMetaDataFromConnection(HashMap<String, Connection> databaseName2connectionMap) {
         HashMap<String, HashMap<String, ArrayList<ColumnMetaData>>> tempDatabase2Table2ColumnMap = new HashMap<>();
         databaseName2connectionMap.forEach((databaseName, connection) -> {
             try {
@@ -357,6 +182,217 @@ public class Server {
                 throw new RuntimeException(e);
             }
         });
-        database2Table2ColumnMap = tempDatabase2Table2ColumnMap;
+        return tempDatabase2Table2ColumnMap;
+    }
+
+    public void run() throws SQLException, IOException {
+        if (serverConfig == null) {
+            System.out.println("没有设置文件，现在已经自动生成，请配置好设置文件之后再启动！");
+            return;
+        }
+        try {
+            int serverPort = serverConfig.getServerPort();
+            connection2UsersDB = SqlUtil4Login.getConnection4UsersDB(serverConfig);
+            NioEventLoopGroup workerGroup = new NioEventLoopGroup();//workerGroup处理与sqlServer的通信和与client的通信
+            checkConnection();
+            database2Table2ColumnMap = loadMetaDataFromConnection(databaseName2connectionMap);
+            workerGroup.scheduleAtFixedRate(() -> {
+                for (Map.Entry<ChannelHandlerContext, LinkedBlockingQueue<Packet>> entry : ctx2packetReceivedMap.entrySet()) {
+                    ChannelHandlerContext ctx = entry.getKey();
+                    LinkedBlockingQueue<Packet> packets = entry.getValue();
+                    for (; ; ) {
+                        try {
+                            Packet packet = packets.poll();
+                            if (packet == null) break;
+                            checkConnection();
+                            switch (packet) {
+                                case CLoginPacket loginPacket -> processLoginPacket(ctx, loginPacket);
+                                case CQueryPacket cQueryPacket -> processQueryPacket(ctx, cQueryPacket);
+                                case CAlterPacket cAlterPacket -> processAlterPacket(ctx, cAlterPacket);
+                                case CUpdatePacket cUpdatePacket -> processUpdatePacket(ctx, cUpdatePacket);
+                                case CInsertPacket cInsertPacket -> processInsertPacket(ctx, cInsertPacket);
+                                case CDeletePacket cDeletePacket -> processDeletePacket(ctx, cDeletePacket);
+                                default -> {
+                                }
+                            }
+                        } catch (Exception e) {
+                            e.printStackTrace();
+                            ctx2packetToBeSentMap.get(ctx).add(new SInfoPacket(e.getMessage()));
+                        }
+                    }
+                }
+            }, 0, 20, TimeUnit.MILLISECONDS);
+            ServerBootstrap b = new ServerBootstrap();
+            NioEventLoopGroup bossGroup = new NioEventLoopGroup(1);//bossGroup处理新连接的接入和packet拆箱
+            new NettyServer(serverPort, b, workerGroup, bossGroup, new ServerHandlerAdapter(workerGroup)).run();
+        } catch (Exception e) {
+            throw new RuntimeException(e);
+        }
+    }
+
+    /**
+     * load connections from server's config
+     */
+    private void checkConnection() throws SQLException {
+        if (!connection2UsersDB.isValid(2)) connection2UsersDB = SqlUtil4Login.getConnection4UsersDB(serverConfig);
+        for (String databaseName0 : serverConfig.getTheTargetDatabaseNameList()) {
+            String databaseName = databaseName0.toLowerCase();
+            if (!(databaseName2connectionMap.containsKey(databaseName) && databaseName2connectionMap.get(databaseName).isValid(1)))
+                databaseName2connectionMap.put(databaseName, SqlUtil.getConnection4TargetDB(serverConfig.getDataBaseAdmin(), databaseName));
+        }
+    }
+
+    private void processDeletePacket(ChannelHandlerContext ctx, CDeletePacket cDeletePacket) throws SQLException {
+        User user = uuid2userMap.get(cDeletePacket.getUuid());
+        String cmd = cDeletePacket.getCmd();
+        String databaseName = cDeletePacket.getDatabaseName().toLowerCase();
+        long id = cDeletePacket.getId();
+        String tableName = cmd.substring(12).split(" ")[0].toLowerCase();//"DELETE FROM "->12
+        if (!user.isOp())
+            for (ColumnMetaData columnMetaData : database2Table2ColumnMap.get(databaseName).get(tableName))
+                if (!user.getPermissions().get(databaseName).get(tableName).get(columnMetaData.getColumnName())[1])
+                    throw new SQLException("您没有足够的写入权限!");
+
+        Statement statement = (user.isOp() && databaseName.equals(serverConfig.getTheUsersDatabaseName()) ? connection2UsersDB : databaseName2connectionMap.get(databaseName)).createStatement();
+        int i = statement.executeUpdate(cmd);
+        ctx2packetToBeSentMap.get(ctx).add(new SDeletePacket(id));
+        ctx2packetToBeSentMap.get(ctx).add(new SInfoPacket("删除行成功, " + i + "行受影响"));
+    }
+
+    private void processInsertPacket(ChannelHandlerContext ctx, CInsertPacket cInsertPacket) throws SQLException {
+        long uuid = cInsertPacket.getUuid();
+        String cmd = cInsertPacket.getCmd();
+        String databaseName = cInsertPacket.getDatabaseName().toLowerCase();
+        long id = cInsertPacket.getId();
+        User user = uuid2userMap.get(uuid);
+        String[] split = cmd.substring(11).split("\\(");//"INSERT INTO"->11
+        String tableName = split[0].toLowerCase();
+        String[] columnNames = split[1].split("\\)")[0].split(",");
+        if (!user.isOp()) try {
+            for (String columnName : columnNames)
+                if (!user.getPermissions().get(databaseName).get(tableName).get(columnName)[1])
+                    throw new SQLException("没有足够的写入权限!");
+        } catch (NullPointerException ignored) {
+            throw new SQLException("没有足够的写入权限!");
+        }
+        Statement statement = (user.isOp() && databaseName.equals(serverConfig.getTheUsersDatabaseName()) ? connection2UsersDB : databaseName2connectionMap.get(databaseName)).createStatement();
+        int i = statement.executeUpdate(cmd);
+        ctx2packetToBeSentMap.get(ctx).add(new SInsertPacket(id));
+        ctx2packetToBeSentMap.get(ctx).add((new SInfoPacket("插入行成功! " + i + "行受影响")));
+        statement.close();
+    }
+
+    private void processUpdatePacket(ChannelHandlerContext ctx, CUpdatePacket cUpdatePacket) throws SQLException {
+        long id = cUpdatePacket.getId();
+        User user = uuid2userMap.get(cUpdatePacket.getUuid());
+        String databaseName = cUpdatePacket.getDatabaseName();
+        String updateCMD = cUpdatePacket.getUpdateCMD();
+        String[] split = updateCMD.substring(7).split(" ");
+        String tableName = split[0];//7->"UPDATE "
+        String columnName = split[2];
+        if (user.isOp() || user.getPermissions().get(databaseName).get(tableName).get(columnName)[1]) {
+            Statement statement = (user.isOp() && databaseName.equals(serverConfig.getTheUsersDatabaseName()) ? connection2UsersDB : databaseName2connectionMap.get(databaseName)).createStatement();
+            int i = statement.executeUpdate(updateCMD);
+            if (i > 0) {
+                ctx2packetToBeSentMap.get(ctx).add(new SUpdatePacket(id));
+                ctx2packetToBeSentMap.get(ctx).add(new SInfoPacket("修改成功," + i + "行受影响"));
+            }
+            statement.close();
+        } else throw new SQLException("你无权进行这个操作");
+    }
+
+    private void processAlterPacket(ChannelHandlerContext ctx, CAlterPacket cAlterPacket) throws SQLException {
+        String cmd = cAlterPacket.getCmd();
+        String databaseName = cAlterPacket.getDatabaseName();
+        User user = uuid2userMap.get(cAlterPacket.getUuid());
+        if (!user.isOp()) throw new SQLException("你无权进行这个操作");
+        Statement statement = (user.isOp() && databaseName.equals(serverConfig.getTheUsersDatabaseName()) ? connection2UsersDB : databaseName2connectionMap.get(databaseName)).createStatement();
+        int i = statement.executeUpdate(cmd);
+        ctx2packetToBeSentMap.get(ctx).add(new SInfoPacket("成功, " + i + "行受影响"));
+        statement.close();
+        HashMap<String, HashMap<String, ArrayList<ColumnMetaData>>> map = loadMetaDataFromConnection(databaseName2connectionMap);
+        HashMap<String, HashMap<String, ArrayList<ColumnMetaData>>> diffMap = diffMap(map, database2Table2ColumnMap);
+        System.out.println("diffMap = " + diffMap);
+
+        ctx2packetToBeSentMap.get(ctx).add(new SLoginPacket(new User("", "", user.getUuid()), database2Table2ColumnMap, "update metadata", "", ""));
+    }
+
+    private void processQueryPacket(ChannelHandlerContext ctx, CQueryPacket cQueryPacket) throws SQLException {
+        try {
+            m1(ctx, cQueryPacket);
+        } catch (SQLException e) {
+            database2Table2ColumnMap = loadMetaDataFromConnection(databaseName2connectionMap);
+            m1(ctx, cQueryPacket);
+        }
+    }
+
+    protected void m1(ChannelHandlerContext ctx, CQueryPacket cQueryPacket) throws SQLException {
+        String databaseName = cQueryPacket.getDatabaseName().toLowerCase();
+        StringBuilder query = new StringBuilder(cQueryPacket.getQuery().toLowerCase());
+        User user = uuid2userMap.get(cQueryPacket.getUuid());
+
+        Statement finalStatement = (user.isOp() && databaseName.equals(serverConfig.getTheUsersDatabaseName()) ? connection2UsersDB : databaseName2connectionMap.get(databaseName)).createStatement();
+        String[] querySplitByFrom = query.toString().split("from");
+        String tableName;
+        List<String> selectedColumnList;
+        if (querySplitByFrom.length > 1) {
+            selectedColumnList = new ArrayList<>(List.of(querySplitByFrom[0].replaceFirst("select ", "").split(",")));
+            String[] split1 = querySplitByFrom[1].split(" ");
+            tableName = split1[1];
+        } else throw new SQLException("语法错误");//no "from", bad sql query
+
+        HashMap<String, HashMap<String, Boolean[]>> permissions4ThisDatabase = user.getPermissions().get(databaseName);
+        if (permissions4ThisDatabase != null && !user.isOp()) {//do no limit if there's no permission about this table or this user is OP
+            if (querySplitByFrom[0].contains("*")) {
+                selectedColumnList.clear();
+                database2Table2ColumnMap.get(databaseName).get(tableName).forEach(columnMetaData -> selectedColumnList.add(columnMetaData.getColumnName()));
+            }
+            List<String> columnNamesWithNoPermission = selectedColumnList.stream().filter(columnName0 -> !permissions4ThisDatabase.getOrDefault(tableName, new HashMap<>()).getOrDefault(columnName0, new Boolean[]{true, false})[0]).toList();
+            selectedColumnList.removeAll(columnNamesWithNoPermission);
+        }
+        query = new StringBuilder("select ");//produce the query command to be performed
+        if (!selectedColumnList.isEmpty()) query.append(selectedColumnList.get(0));
+        for (int i = 1; i < selectedColumnList.size(); i++) {
+            query.append(",").append(selectedColumnList.get(i));
+        }
+        query.append(" from ").append(querySplitByFrom[1]);
+        ResultSet resultSet = finalStatement.executeQuery(query.toString());//do query from database
+        ArrayList<String> columnNames = new ArrayList<>();
+        ArrayList<Object[]> rows = new ArrayList<>();
+        ResultSetMetaData metaData = resultSet.getMetaData();
+        int columnCount = metaData.getColumnCount();
+        for (int i = 1; i <= columnCount; i++) {
+            columnNames.add(metaData.getColumnName(i));
+        }
+        while (resultSet.next()) {
+            Object[] row = new Object[columnCount];
+            for (int i = 1; i <= columnCount; i++) {
+                row[i - 1] = resultSet.getObject(i);
+            }
+            rows.add(row);
+        }
+        ctx2packetToBeSentMap.get(ctx).add(new SQueryReplyPacket(databaseName, tableName, columnNames, rows));
+        finalStatement.close();
+    }
+
+    private void processLoginPacket(ChannelHandlerContext ctx, CLoginPacket loginPacket) throws SQLException {
+        User user = loginPacket.getUser();
+        final Statement finalStatement = connection2UsersDB.createStatement();
+        SLoginPacket sLoginPacket;
+        User user1 = SqlUtil4Login.getUserByUsername(serverConfig.getTheUsersTableName(), user.getUsername(), finalStatement);
+        if (user1 != null) {
+            uuid2userMap.put(user1.getUuid(), user1);
+            if (user.getUuid() == user1.getUuid()) {
+                sLoginPacket = new SLoginPacket(user1, new HashMap<>(), "reconnect success", "", "");
+            } else {
+                if (user1.getPassword().equals(user.getPassword())) {
+                    sLoginPacket = new SLoginPacket(user1, database2Table2ColumnMap, "success", serverConfig.getTheUsersTableName(), serverConfig.getTheUsersTableName());
+                } else sLoginPacket = new SLoginPacket(user, new HashMap<>(), "wrong password", "", "");
+            }
+        } else sLoginPacket = new SLoginPacket(user, new HashMap<>(), "no such user", "", "");
+        SLoginPacket finalSLoginPacket = sLoginPacket;
+        ctx2packetToBeSentMap.get(ctx).add(finalSLoginPacket);
+        System.out.println("登录请求处理完毕");
+        finalStatement.close();
     }
 }

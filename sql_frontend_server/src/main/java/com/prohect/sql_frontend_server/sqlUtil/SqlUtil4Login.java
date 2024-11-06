@@ -23,7 +23,7 @@ public class SqlUtil4Login {
     }
 
     private static String getSelectQueryByUsername(String theUsersTableName, String username) {
-        return "SELECT * from " + theUsersTableName + " where username = '" + username + "'";
+        return "SELECT * from " + theUsersTableName + " where [username] = '" + username + "'";
     }
 
     public static User getUserByUsername(String theUsersTableName, String username, Statement statement) throws SQLException {

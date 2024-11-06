@@ -60,13 +60,12 @@ public class InsertNewColumnLogic {
             Main.mainLogic.getInfoLabel().setText("请至少提供列名和类型! ");
             return;
         }
-        StringBuilder cmd = new StringBuilder("ALTER TABLE " + Main.mainLogic.getTableName4tableView() + " ADD " + columnNameTextField.getText() + " " + columnTypeChoiceBox.getValue());
+        StringBuilder cmd = new StringBuilder("ALTER TABLE " + Main.mainLogic.getTableName4tableView() + " ADD [" + columnNameTextField.getText() + "] " + columnTypeChoiceBox.getValue());
         if (isAutoIncrement.isSelected()) {
             cmd.append(" IDENTITY(").append(autoIncrementHome.getText()).append(",").append(autoIncrementDelta.getText()).append(")");
         } else {
-            if (notNull.isSelected())
-                cmd.append(" NOT NULL ").append("DEFAULT ").append(CommonUtil.convert2SqlServerContextString(defaultTextField.getText()));
-            else if (asDefault.isSelected())
+            if (notNull.isSelected()) cmd.append(" NOT NULL ");
+            if (asDefault.isSelected())
                 cmd.append(" DEFAULT ").append(CommonUtil.convert2SqlServerContextString(defaultTextField.getText()));
             if (isUnique.isSelected()) cmd.append(" UNIQUE");
         }

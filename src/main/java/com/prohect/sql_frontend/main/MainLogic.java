@@ -288,11 +288,11 @@ public class MainLogic implements Initializable {
         }
         Object o = tableView.getItems().get(selectedRowIndex)[0];
         assert o != null;//第一个一般是主键，断言不为null
-        StringBuilder cmd = new StringBuilder("DELETE FROM " + tableName4tableView + " WHERE " + tableView.getColumns().getFirst().getText() + " = " + CommonUtil.convert2SqlServerContextString(o));
+        StringBuilder cmd = new StringBuilder("DELETE FROM " + tableName4tableView + " WHERE [" + tableView.getColumns().getFirst().getText() + "] = " + CommonUtil.convert2SqlServerContextString(o));
         for (int i = 1; i < tableView.getColumns().size(); i++) {
             Object object = tableView.getItems().get(selectedRowIndex)[i];
             if (object == null) continue;
-            cmd.append(" AND ").append(tableView.getColumns().get(i).getText()).append(" = ").append(CommonUtil.convert2SqlServerContextString(object));
+            cmd.append(" AND [").append(tableView.getColumns().get(i).getText()).append("] = ").append(CommonUtil.convert2SqlServerContextString(object));
         }
         CDeletePacket cDeletePacket = new CDeletePacket(Main.user.getUuid(), cmd.toString(), dataBase4tableView);
         Main.packetID2DeletedValueMap.put(cDeletePacket.getId(), tableView.getItems().get(selectedRowIndex));

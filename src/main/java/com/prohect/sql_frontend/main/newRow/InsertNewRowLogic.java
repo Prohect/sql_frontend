@@ -220,9 +220,9 @@ public class InsertNewRowLogic {
                     nonNullCounter++;
                     if (first) {
                         first = false;
-                        cmd = new StringBuilder("INSERT INTO ").append(Main.mainLogic.getTableName4tableView()).append(" (").append(cData.getColumnName());
+                        cmd = new StringBuilder("INSERT INTO ").append(Main.mainLogic.getTableName4tableView()).append(" ([").append(cData.getColumnName()).append("]");
                     } else {
-                        cmd.append(",").append(cData.getColumnName());
+                        cmd.append(",[").append(cData.getColumnName()).append("]");
                     }
                 }
                 first = true;
@@ -232,7 +232,7 @@ public class InsertNewRowLogic {
                         assert cmd != null;
                         cmd.append(") VALUES (").append(CommonUtil.isNumber((String) object) ? (String) object : CommonUtil.convert2SqlServerContextString(object));
                     } else {
-                        if (bitString.equals((String) object)) object = "0";
+                        if (bitString.equals(object)) object = "0";
                         cmd.append(",").append(CommonUtil.isNumber((String) object) ? (String) object : CommonUtil.convert2SqlServerContextString(object));
                     }
                 }
