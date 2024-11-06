@@ -30,6 +30,7 @@ public class InsertNewRowLogic {
     public static final String nullableString = "可选·输入";
     public static final String normalString = "请·输·入";
     public static final String hasDefaultString = "有·默认值";
+    public static final String bitString = "true·OR·false";
 
     public static String databaseName = "";
     public static String tableName = "";
@@ -111,7 +112,7 @@ public class InsertNewRowLogic {
         if (columnMetaData.isAutoIncrement()) {
             return "×";
         } else if (columnMetaData.getColumnType().contains("bit")) {
-            return "true OR false";
+            return bitString;
         } else if (columnMetaData.getColumnType().contains("int")) {
             return "0";
         } else if (columnMetaData.getColumnType().contains("float") || columnMetaData.getColumnType().contains("decimal") || columnMetaData.getColumnType().contains("numeric") || columnMetaData.getColumnType().contains("real")) {
@@ -231,6 +232,7 @@ public class InsertNewRowLogic {
                         assert cmd != null;
                         cmd.append(") VALUES (").append(CommonUtil.isNumber((String) object) ? (String) object : CommonUtil.convert2SqlServerContextString(object));
                     } else {
+                        if (bitString.equals((String) object)) object = "0";
                         cmd.append(",").append(CommonUtil.isNumber((String) object) ? (String) object : CommonUtil.convert2SqlServerContextString(object));
                     }
                 }

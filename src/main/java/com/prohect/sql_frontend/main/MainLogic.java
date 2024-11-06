@@ -101,10 +101,10 @@ public class MainLogic implements Initializable {
                 stage4InsertNewColumnWindow.setScene(scene4InsertNewColumnScene);
                 stage4InsertNewColumnWindow.setResizable(false);
                 Main.insertNewColumnLogic.getNotNull().selectedProperty().addListener((observable, oldValue, newValue) -> {
-                    if (newValue) Main.insertNewColumnLogic.getAsDefault().selectedProperty().set(true);
+                    if (!newValue) Main.insertNewColumnLogic.getAsDefault().selectedProperty().set(false);
                 });
                 Main.insertNewColumnLogic.getAsDefault().selectedProperty().addListener((observableValue, oldValue, newValue) -> {
-                    if (!newValue) Main.insertNewColumnLogic.getNotNull().selectedProperty().set(false);
+                    if (newValue) Main.insertNewColumnLogic.getNotNull().selectedProperty().set(true);
                 });
                 ObservableList<String> list = FXCollections.observableArrayList(List.of("int", "bigint", "decimal(38, 15)", "float(8)", "REAL", "nchar(20)", "varchar(50)", "nvarchar(max)", "bit", "money", "date", "time", "datetime2", "datetimeOffset"));
                 Main.insertNewColumnLogic.getColumnTypeChoiceBox().setItems(list);
