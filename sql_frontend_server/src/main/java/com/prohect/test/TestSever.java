@@ -18,6 +18,17 @@ import java.util.concurrent.locks.ReentrantLock;
 
 public class TestSever {
     public static void main(String[] args) throws Exception {
+/*        String num = "1.23335e2";
+        try {
+            System.out.println("Integer.parseInt(num) = " + Integer.parseInt(num));
+        } catch (Exception e) {
+            e.printStackTrace();
+        }
+        try {
+            System.out.println("(int)Double.parseDouble(num) = " + (int)Double.parseDouble(num));
+        } catch (NumberFormatException e) {
+            e.printStackTrace();
+        }*/
         NioEventLoopGroup workerGroup = new NioEventLoopGroup(12);
         LinkedBlockingQueue<Packet> packetReceivedQueue = new LinkedBlockingQueue<>();
         final ByteBuf[] in = new ByteBuf[1];

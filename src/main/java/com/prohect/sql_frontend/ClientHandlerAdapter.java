@@ -267,7 +267,44 @@ public class ClientHandlerAdapter extends ChannelInboundHandlerAdapter {
     private void processSUpdatePacket(SUpdatePacket sUpdatePacket) {
         long id = sUpdatePacket.getTheID();
         UpdateOfCellOfTable update = Main.packetID2updatedValueMap.get(id);
-        Platform.runLater(() -> Main.mainLogic.getTableView().getItems().get(update.getTargetRowIndex())[update.getTargetColumnIndex()] = update.getNewValue());
+        int targetRowIndex = update.getTargetRowIndex();
+        int targetColumnIndex = update.getTargetColumnIndex();
+
+        TableView<Object[]> tableView = Main.mainLogic.getTableView();
+        String columnName = tableView.getColumns().get(targetColumnIndex).getText();
+        ArrayList<ColumnMetaData> columnMetaDataArrayList = Main.db2table2columnMap.get(Main.mainLogic.getDataBase4tableView()).get(Main.mainLogic.getTableName4tableView());
+        Platform.runLater(() -> {
+            ObservableList<Object[]> items = tableView.getItems();
+            Object[] objects = items.get(targetRowIndex);
+            Object oldValue = objects[targetColumnIndex];
+            Object newValue = update.getNewValue();
+            String clazzName = oldValue.getClass().getSimpleName();
+            System.out.printf("oldValue.getClass().getSimpleName() = %s%n", clazzName);
+            switch (clazzName) {
+                case "Integer":
+                    if (CommonUtil.isNumber((String) newValue)) newValue = Integer.parseInt((String) newValue);
+                    else newValue = (int) Double.parseDouble((String) newValue);
+                    break;
+                case "Long":
+                    if (CommonUtil.isNumber((String) newValue)) newValue = Long.parseLong((String) newValue);
+                    else newValue = (long) Double.parseDouble((String) newValue);
+                    break;
+                case "Double":
+                    newValue = Double.parseDouble((String) newValue);
+                    break;
+                case "Float":
+                    newValue = (float) Double.parseDouble((String) newValue);
+                    break;
+                case "Boolean":
+                    newValue = "true".equalsIgnoreCase((String) newValue) || "1".equals(newValue);
+                    break;
+                default:
+                    break;
+            }
+            Object[] clone = objects.clone();
+            clone[targetColumnIndex] = newValue;
+            items.set(targetRowIndex, clone);
+        });
     }
 
     private void processSLoginPacket(SLoginPacket sLoginPacket) {
