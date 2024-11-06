@@ -84,17 +84,17 @@ public class Server {
      * map0 should be larger than map1, and is somehow created by adding something to map1.
      * then we find what's been changed
      */
-    public static <K, V, K1, V1, L> HashMap<K, V> diffMap(HashMap<K, V> map0, HashMap<K, V> map1) {
-        HashMap<K, V> diffMap = mapDeepClone(map0);
+    public static <K, V, K1, V1, L> Map<K, V> diffMap(Map<K, V> map0, Map<K, V> map1) {
+        Map<K, V> diffMap = mapDeepClone(map0);
         for (Map.Entry<K, V> entry1 : map1.entrySet()) {
             K k1 = entry1.getKey();
             V v1 = entry1.getValue();
             if (map0.containsKey(k1)) {
                 V v = map0.get(k1);
-                if (v instanceof HashMap<?, ?> hashMap0 && v1 instanceof HashMap<?, ?> hashMap1) {
-                    HashMap<K1, V1> tempMap0 = (HashMap<K1, V1>) hashMap0;
-                    HashMap<K1, V1> tempMap1 = (HashMap<K1, V1>) hashMap1;
-                    HashMap<K1, V1> diffMap1 = diffMap(tempMap0, tempMap1);
+                if (v instanceof Map<?, ?> innerMap0 && v1 instanceof Map<?, ?> innerMap1) {
+                    Map<K1, V1> tempMap0 = (Map<K1, V1>) innerMap0;
+                    Map<K1, V1> tempMap1 = (Map<K1, V1>) innerMap1;
+                    Map<K1, V1> diffMap1 = diffMap(tempMap0, tempMap1);
                     V subDiffMap = (V) diffMap1;
                     if (diffMap1.isEmpty()) diffMap.remove(k1);
                     else diffMap.put(k1, subDiffMap);
@@ -133,9 +133,9 @@ public class Server {
                 if (diffList1.isEmpty()) removed.add(v0);
                 else diffList.set(i, subDiffList);
             } else if (v0 instanceof Map<?, ?> map0 && v1 instanceof Map<?, ?> map1) {
-                HashMap<K, V> tempMap0 = (HashMap<K, V>) map0;
-                HashMap<K, V> tempMap1 = (HashMap<K, V>) map1;
-                HashMap<K, V> diffMap1 = diffMap(tempMap0, tempMap1);
+                Map<K, V> tempMap0 = (Map<K, V>) map0;
+                Map<K, V> tempMap1 = (Map<K, V>) map1;
+                Map<K, V> diffMap1 = diffMap(tempMap0, tempMap1);
                 L0 diffMap = (L0) diffMap1;
                 if (diffMap1.isEmpty()) removed.add(v0);
                 else diffList.set(i, diffMap);
@@ -145,14 +145,19 @@ public class Server {
         return diffList;
     }
 
-    public static <K, V, K1, V1> HashMap<K, V> mapDeepClone(HashMap<K, V> map) {
-        HashMap<K, V> clone = new HashMap<>(map);//this would clone the map, not way just share a same entrySet
+    public static <K, V, K1, V1, L> Map<K, V> mapDeepClone(Map<K, V> map) {
+        Map<K, V> clone = new HashMap<>(map);//this would clone the map, not way just share a same entrySet
         for (Map.Entry<K, V> entry : map.entrySet()) {
             K key = entry.getKey();
             V value = entry.getValue();
-            if (value instanceof HashMap<?, ?> hashMap) {
-                V clonedValue = (V) mapDeepClone((HashMap<K1, V1>) hashMap);
-                clone.put(key, clonedValue);
+            if (value instanceof Map<?, ?> innerMap) {
+                V clonedMap = (V) mapDeepClone((Map<K1, V1>) innerMap);
+                clone.put(key, clonedMap);
+            }
+            if (value instanceof List<?> list) {
+                List<L> innerList = (List<L>) list;
+                List<L> clonedList = innerList instanceof ArrayList<?> ? (List<L>) new ArrayList<>(innerList).clone() : new ArrayList<>(innerList);
+                clone.put(key, (V) clonedList);
             }
         }
         return clone;
