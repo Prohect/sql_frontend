@@ -84,7 +84,6 @@ public class Server {
      * map0 should be larger than map1, and is somehow created by adding something to map1.
      * then we find what's been changed
      */
-    @SuppressWarnings("unchecked")
     public static <K, V, K1, V1, L> HashMap<K, V> diffMap(HashMap<K, V> map0, HashMap<K, V> map1) {
         HashMap<K, V> diffMap = mapDeepClone(map0);
         for (Map.Entry<K, V> entry1 : map1.entrySet()) {
@@ -95,16 +94,19 @@ public class Server {
                 if (v instanceof HashMap<?, ?> hashMap0 && v1 instanceof HashMap<?, ?> hashMap1) {
                     HashMap<K1, V1> tempMap0 = (HashMap<K1, V1>) hashMap0;
                     HashMap<K1, V1> tempMap1 = (HashMap<K1, V1>) hashMap1;
-                    V subDiffMap = (V) (diffMap(tempMap0, tempMap1));
-                    diffMap.put(k1, subDiffMap);
+                    HashMap<K1, V1> diffMap1 = diffMap(tempMap0, tempMap1);
+                    V subDiffMap = (V) diffMap1;
+                    if (diffMap1.isEmpty()) diffMap.remove(k1);
+                    else diffMap.put(k1, subDiffMap);
                 } else if (v instanceof List<?> list0 && v1 instanceof List<?> list1) {
                     List<L> tempList0 = (List<L>) list0;
                     List<L> tempList1 = (List<L>) list1;
-                    V diffList = (V) diffList(tempList0, tempList1);
-                    diffMap.put(k1, diffList);
+                    List<L> diffList1 = diffList(tempList0, tempList1);
+                    V diffList = (V) diffList1;
+                    if (diffList1.isEmpty()) diffMap.remove(k1);
+                    else diffMap.put(k1, diffList);
                 } else {
-                    if (v == null || v.equals(v1))
-                        diffMap.remove(k1, v);
+                    if (v == null || v.equals(v1)) diffMap.remove(k1, v);
                 }
             }
         }
@@ -115,30 +117,34 @@ public class Server {
      * list0 could be gotten by somehow adding something to list1, so it's always lager than list1, and has everything that list1 have.
      * then we find what's been changed
      */
-    @SuppressWarnings("unchecked")
     private static <L0, L1, K, V> List<L0> diffList(List<L0> list0, List<L0> list1) {
         List<L0> diffList;
         if (list0 instanceof ArrayList<?>) diffList = (List<L0>) new ArrayList<>(list0).clone();
         else diffList = new ArrayList<>(list0);
+        List<L0> removed = new ArrayList<>();
         for (int i = 0; i < list1.size(); i++) {
             L0 v1 = list1.get(i);
             L0 v0 = list0.get(i);
             if (v0 instanceof List<?> l0 && v1 instanceof List<?> l1) {
                 List<L1> tempList0 = (List<L1>) l0;
                 List<L1> tempList1 = (List<L1>) l1;
-                L0 subDiffList = (L0) (diffList(tempList0, tempList1));
-                diffList.set(i, subDiffList);
+                List<L1> diffList1 = diffList(tempList0, tempList1);
+                L0 subDiffList = (L0) diffList1;
+                if (diffList1.isEmpty()) removed.add(v0);
+                else diffList.set(i, subDiffList);
             } else if (v0 instanceof Map<?, ?> map0 && v1 instanceof Map<?, ?> map1) {
                 HashMap<K, V> tempMap0 = (HashMap<K, V>) map0;
                 HashMap<K, V> tempMap1 = (HashMap<K, V>) map1;
-                L0 diffMap = (L0) diffMap(tempMap0, tempMap1);
-                diffList.set(i, diffMap);
+                HashMap<K, V> diffMap1 = diffMap(tempMap0, tempMap1);
+                L0 diffMap = (L0) diffMap1;
+                if (diffMap1.isEmpty()) removed.add(v0);
+                else diffList.set(i, diffMap);
             } else if (v0 == null || v0.equals(v1)) diffList.remove(v0);
         }
+        diffList.removeAll(removed);
         return diffList;
     }
 
-    @SuppressWarnings("unchecked")
     public static <K, V, K1, V1> HashMap<K, V> mapDeepClone(HashMap<K, V> map) {
         HashMap<K, V> clone = new HashMap<>(map);//this would clone the map, not way just share a same entrySet
         for (Map.Entry<K, V> entry : map.entrySet()) {
@@ -312,9 +318,8 @@ public class Server {
         statement.close();
         HashMap<String, HashMap<String, ArrayList<ColumnMetaData>>> map = loadMetaDataFromConnection(databaseName2connectionMap);
         HashMap<String, HashMap<String, ArrayList<ColumnMetaData>>> diffMap = diffMap(map, database2Table2ColumnMap);
-        System.out.println("diffMap = " + diffMap);
-
-        ctx2packetToBeSentMap.get(ctx).add(new SLoginPacket(new User("", "", user.getUuid()), database2Table2ColumnMap, "update metadata", "", ""));
+        database2Table2ColumnMap = map;
+        ctx2packetToBeSentMap.get(ctx).add(new SLoginPacket(new User("", "", user.getUuid()), diffMap, "update metadata", "", ""));
     }
 
     private void processQueryPacket(ChannelHandlerContext ctx, CQueryPacket cQueryPacket) throws SQLException {

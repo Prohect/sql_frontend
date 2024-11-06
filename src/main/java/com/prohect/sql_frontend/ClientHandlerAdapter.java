@@ -364,8 +364,12 @@ public class ClientHandlerAdapter extends ChannelInboundHandlerAdapter {
             Main.user.setPermissions(sLoginPacket.getUser().getPermissions());
             LoginLogic.logged.set(true);
         } else if (sLoginPacket.getInfo().equals("update metadata")) {
-            Main.db2table2columnMap = db2table2columnMap;
             String value = Main.mainLogic.getTableChoiceBox().getValue();
+            for (Map.Entry<String, HashMap<String, ArrayList<ColumnMetaData>>> db2table2columnEntry : db2table2columnMap.entrySet()) {
+                HashMap<String, ArrayList<ColumnMetaData>> localTable2Column = Main.db2table2columnMap.computeIfAbsent(db2table2columnEntry.getKey(), _ -> new HashMap<>());
+                for (Map.Entry<String, ArrayList<ColumnMetaData>> table2columnEntry : db2table2columnEntry.getValue().entrySet())
+                    localTable2Column.computeIfAbsent(table2columnEntry.getKey(), _ -> new ArrayList<>()).addAll(table2columnEntry.getValue());
+            }
             Platform.runLater(() -> updateTableChoiceBox(value, value));
             Main.mainLogic.updateColumnMetaDataOfInsertNewRowTable();
         }

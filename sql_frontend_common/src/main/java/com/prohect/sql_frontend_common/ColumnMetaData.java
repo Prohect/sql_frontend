@@ -115,6 +115,13 @@ public class ColumnMetaData {
         this.unique = unique;
     }
 
+    @Override
+    public boolean equals(Object obj) {
+        if (obj == this) return true;
+        if (obj == null) return false;
+        return obj instanceof ColumnMetaData columnMetaData1 && columnMetaData1.getColumnName().equals(this.columnName);
+    }
+
     public boolean isHasDefaultValue() {
         return hasDefaultValue;
     }

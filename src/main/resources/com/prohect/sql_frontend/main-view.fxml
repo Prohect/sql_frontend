@@ -108,8 +108,11 @@
       </HBox>
       <HBox>
          <children>
-            <Label text="info:" />
-                <Label fx:id="infoLabel" prefHeight="15.0" prefWidth="464.0" text="informations here">
+            <Label prefHeight="15.0" text="info:">
+               <HBox.margin>
+                  <Insets left="5.0" />
+               </HBox.margin></Label>
+                <Label fx:id="infoLabel" prefHeight="15.0" text="informations here">
                <padding>
                   <Insets left="10.0" />
                </padding></Label>
