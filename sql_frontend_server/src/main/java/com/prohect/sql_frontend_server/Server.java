@@ -319,7 +319,9 @@ public class Server {
         HashMap<String, HashMap<String, ArrayList<ColumnMetaData>>> map = loadMetaDataFromConnection(databaseName2connectionMap);
         HashMap<String, HashMap<String, ArrayList<ColumnMetaData>>> diffMap = diffMap(map, database2Table2ColumnMap);
         database2Table2ColumnMap = map;
-        ctx2packetToBeSentMap.get(ctx).add(new SLoginPacket(new User("", "", user.getUuid()), diffMap, "update metadata", "", ""));
+        SLoginPacket updateMetadataPacket = new SLoginPacket(new User("", "", user.getUuid()), diffMap, "update metadata", "", "");
+        for (Map.Entry<ChannelHandlerContext, LinkedBlockingQueue<Packet>> entry : ctx2packetToBeSentMap.entrySet())
+            entry.getValue().add(updateMetadataPacket);
     }
 
     private void processQueryPacket(ChannelHandlerContext ctx, CQueryPacket cQueryPacket) throws SQLException {
