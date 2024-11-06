@@ -37,7 +37,8 @@ public class ClientConfig {
             return resetConfig(configFile);
         } else {
             try {
-                return JSON.parseObject(Files.readAllBytes(configFile.toPath()), ClientConfig.class);
+                ClientConfig clientConfig = JSON.parseObject(Files.readAllBytes(configFile.toPath()), ClientConfig.class);
+                return clientConfig == null ? resetConfig(configFile) : clientConfig;
             } catch (JSONException e) {
                 return resetConfig(configFile);
             }
