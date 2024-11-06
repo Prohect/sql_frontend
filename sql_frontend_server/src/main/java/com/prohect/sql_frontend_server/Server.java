@@ -84,8 +84,8 @@ public class Server {
      * map0 should be larger than map1, and is somehow created by adding something to map1.
      * then we find what's been changed
      */
-    public static <K, V, K1, V1, L> Map<K, V> diffMap(Map<K, V> map0, Map<K, V> map1) {
-        Map<K, V> diffMap = mapDeepClone(map0);
+    public static <M extends Map<K, V>, K, V, K1, V1, L> M diffMap(M map0, M map1) {
+        M diffMap = mapDeepClone(map0);
         for (Map.Entry<K, V> entry1 : map1.entrySet()) {
             K k1 = entry1.getKey();
             V v1 = entry1.getValue();
@@ -117,10 +117,10 @@ public class Server {
      * list0 could be gotten by somehow adding something to list1, so it's always lager than list1, and has everything that list1 have.
      * then we find what's been changed
      */
-    private static <L0, L1, K, V> List<L0> diffList(List<L0> list0, List<L0> list1) {
-        List<L0> diffList;
-        if (list0 instanceof ArrayList<?>) diffList = (List<L0>) new ArrayList<>(list0).clone();
-        else diffList = new ArrayList<>(list0);
+    private static <L extends List<L0>, L0, L1, K, V> L diffList(L list0, L list1) {
+        L diffList;
+        if (list0 instanceof ArrayList<?>) diffList = (L) new ArrayList<>(list0).clone();
+        else diffList = (L) new ArrayList<>(list0);
         List<L0> removed = new ArrayList<>();
         for (int i = 0; i < list1.size(); i++) {
             L0 v1 = list1.get(i);
@@ -145,8 +145,8 @@ public class Server {
         return diffList;
     }
 
-    public static <K, V, K1, V1, L> Map<K, V> mapDeepClone(Map<K, V> map) {
-        Map<K, V> clone = new HashMap<>(map);//this would clone the map, not way just share a same entrySet
+    public static <M extends Map<K, V>, K, V, K1, V1, L> M mapDeepClone(M map) {
+        M clone = (M) new HashMap<>(map);//this would clone the map, not way just share a same entrySet
         for (Map.Entry<K, V> entry : map.entrySet()) {
             K key = entry.getKey();
             V value = entry.getValue();
