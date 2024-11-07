@@ -10,19 +10,31 @@ import java.util.HashMap;
 public class SLoginPacket extends AbstractPacket implements Serializable {
     User user;
     HashMap<String, HashMap<String, ArrayList<ColumnMetaData>>> db2table2columnMap = new HashMap<>();
-    String info;
+    Info info;
     String theUsersTableName;
     String theUsersDatabaseName;
+
 
     public SLoginPacket() {
     }
 
-    public SLoginPacket(User user, HashMap<String, HashMap<String, ArrayList<ColumnMetaData>>> db2table2columnMap, String info, String theUsersTableName, String theUsersDatabaseName) {
+    public SLoginPacket(User user, HashMap<String, HashMap<String, ArrayList<ColumnMetaData>>> db2table2columnMap, Info info, String theUsersTableName, String theUsersDatabaseName) {
         this.user = user;
         this.db2table2columnMap = db2table2columnMap;
         this.info = info;
         this.theUsersTableName = theUsersTableName;
         this.theUsersDatabaseName = theUsersDatabaseName;
+    }
+
+    public static String toString(Info info) {
+        return switch (info) {
+            case RS -> "reconnect success, permissions updated";
+            case S -> "success";
+            case W -> "wrong password";
+            case N -> "no such user";
+            case UM -> "metadata updated";
+            case UP -> "permissions updated";
+        };
     }
 
     public User getUser() {
@@ -41,11 +53,11 @@ public class SLoginPacket extends AbstractPacket implements Serializable {
         this.db2table2columnMap = db2table2columnMap;
     }
 
-    public String getInfo() {
+    public Info getInfo() {
         return info;
     }
 
-    public void setInfo(String info) {
+    public void setInfo(Info info) {
         this.info = info;
     }
 
@@ -63,5 +75,14 @@ public class SLoginPacket extends AbstractPacket implements Serializable {
 
     public void setTheUsersDatabaseName(String theUsersDatabaseName) {
         this.theUsersDatabaseName = theUsersDatabaseName;
+    }
+
+    public enum Info {
+        RS,//reconnect success
+        S,//login success
+        W,//wrong password
+        N,//no such one
+        UM,//update metadata
+        UP,
     }
 }

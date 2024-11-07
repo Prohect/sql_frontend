@@ -24,10 +24,7 @@ import javafx.stage.Stage;
 
 import java.io.IOException;
 import java.net.URL;
-import java.util.ArrayList;
-import java.util.HashMap;
-import java.util.List;
-import java.util.ResourceBundle;
+import java.util.*;
 import java.util.concurrent.LinkedBlockingQueue;
 
 
@@ -303,26 +300,50 @@ public class MainLogic implements Initializable {
     void databaseSourceChoiceBoxOnMouseClicked(MouseEvent event) {
     }
 
+    private boolean cantModifyPermission(String columnName) {
+        if (getDataBase4tableView().equals(Main.clientConfig.getTheUsersDatabaseName())) {
+            if (getTableName4tableView().equals(Main.clientConfig.getTheUsersTableName())) {
+                getInfoLabel().setText("不能为本软件的用户表设定权限,因为它只对OP可见");
+                return true;
+            }
+        } else {
+            Optional<ColumnMetaData> columnMetaData = Main.db2table2columnMap.get(getDataBase4tableView()).get(tableName4tableView).stream().filter(c -> c.getColumnName().equals(columnName)).findFirst();
+            if (columnMetaData.isPresent()) {
+                if (columnMetaData.get().isAutoIncrement()) {
+                    getInfoLabel().setText("不能为标识列设定权限, 因为它由sqlServer自动生成管理");
+                    return true;
+                }
+            }
+        }
+        return false;
+    }
+
     @FXML
     void setThisColumnCouldInspectCouldChangePermissionAsDefault(ActionEvent event) {
-        String sql1 = String.format("ALTER TABLE " + Main.clientConfig.getTheUsersTableName() + " ADD %s BIT NOT NULL DEFAULT 1", CommonUtil.permissionColumnNameEncode(this.getDataBase4tableView(), this.getTableName4tableView(), selectedColumn.getText(), false));
-        String sql2 = String.format("ALTER TABLE " + Main.clientConfig.getTheUsersTableName() + " ADD %s BIT NOT NULL DEFAULT 1", CommonUtil.permissionColumnNameEncode(this.getDataBase4tableView(), this.getTableName4tableView(), selectedColumn.getText(), true));
+        String columnName = selectedColumn.getText().toLowerCase();
+        if (cantModifyPermission(columnName)) return;
+        String sql1 = String.format("ALTER TABLE " + Main.clientConfig.getTheUsersTableName() + " ADD %s BIT NOT NULL DEFAULT 1", CommonUtil.permissionColumnNameEncode(this.getDataBase4tableView(), this.getTableName4tableView(), columnName, false));
+        String sql2 = String.format("ALTER TABLE " + Main.clientConfig.getTheUsersTableName() + " ADD %s BIT NOT NULL DEFAULT 1", CommonUtil.permissionColumnNameEncode(this.getDataBase4tableView(), this.getTableName4tableView(), columnName, true));
         Main.channel2packetsMap.computeIfAbsent(Main.ctx.channel(), c -> new LinkedBlockingQueue<>()).add(new CAlterPacket(Main.user.getUuid(), sql1, Main.clientConfig.getTheUsersDatabaseName()));
         Main.channel2packetsMap.computeIfAbsent(Main.ctx.channel(), c -> new LinkedBlockingQueue<>()).add(new CAlterPacket(Main.user.getUuid(), sql2, Main.clientConfig.getTheUsersDatabaseName()));
     }
 
     @FXML
     void setThisColumnCouldInspectNoChangePermissionAsDefault(ActionEvent event) {
-        String sql1 = String.format("ALTER TABLE " + Main.clientConfig.getTheUsersTableName() + " ADD %s BIT NOT NULL DEFAULT 1", CommonUtil.permissionColumnNameEncode(this.getDataBase4tableView(), this.getTableName4tableView(), selectedColumn.getText(), false));
-        String sql2 = String.format("ALTER TABLE " + Main.clientConfig.getTheUsersTableName() + " ADD %s BIT NOT NULL DEFAULT 0", CommonUtil.permissionColumnNameEncode(this.getDataBase4tableView(), this.getTableName4tableView(), selectedColumn.getText(), true));
+        String columnName = selectedColumn.getText().toLowerCase();
+        if (cantModifyPermission(columnName)) return;
+        String sql1 = String.format("ALTER TABLE " + Main.clientConfig.getTheUsersTableName() + " ADD %s BIT NOT NULL DEFAULT 1", CommonUtil.permissionColumnNameEncode(this.getDataBase4tableView(), this.getTableName4tableView(), columnName, false));
+        String sql2 = String.format("ALTER TABLE " + Main.clientConfig.getTheUsersTableName() + " ADD %s BIT NOT NULL DEFAULT 0", CommonUtil.permissionColumnNameEncode(this.getDataBase4tableView(), this.getTableName4tableView(), columnName, true));
         Main.channel2packetsMap.computeIfAbsent(Main.ctx.channel(), c -> new LinkedBlockingQueue<>()).add(new CAlterPacket(Main.user.getUuid(), sql1, Main.clientConfig.getTheUsersDatabaseName()));
         Main.channel2packetsMap.computeIfAbsent(Main.ctx.channel(), c -> new LinkedBlockingQueue<>()).add(new CAlterPacket(Main.user.getUuid(), sql2, Main.clientConfig.getTheUsersDatabaseName()));
     }
 
     @FXML
     void setThisColumnNoInspectNoChangePermissionAsDefault(ActionEvent event) {
-        String sql1 = String.format("ALTER TABLE " + Main.clientConfig.getTheUsersTableName() + " ADD %s BIT NOT NULL DEFAULT 0", CommonUtil.permissionColumnNameEncode(this.getDataBase4tableView(), this.getTableName4tableView(), selectedColumn.getText(), false));
-        String sql2 = String.format("ALTER TABLE " + Main.clientConfig.getTheUsersTableName() + " ADD %s BIT NOT NULL DEFAULT 0", CommonUtil.permissionColumnNameEncode(this.getDataBase4tableView(), this.getTableName4tableView(), selectedColumn.getText(), true));
+        String columnName = selectedColumn.getText().toLowerCase();
+        if (cantModifyPermission(columnName)) return;
+        String sql1 = String.format("ALTER TABLE " + Main.clientConfig.getTheUsersTableName() + " ADD %s BIT NOT NULL DEFAULT 0", CommonUtil.permissionColumnNameEncode(this.getDataBase4tableView(), this.getTableName4tableView(), columnName, false));
+        String sql2 = String.format("ALTER TABLE " + Main.clientConfig.getTheUsersTableName() + " ADD %s BIT NOT NULL DEFAULT 0", CommonUtil.permissionColumnNameEncode(this.getDataBase4tableView(), this.getTableName4tableView(), columnName, true));
         Main.channel2packetsMap.computeIfAbsent(Main.ctx.channel(), c -> new LinkedBlockingQueue<>()).add(new CAlterPacket(Main.user.getUuid(), sql1, Main.clientConfig.getTheUsersDatabaseName()));
         Main.channel2packetsMap.computeIfAbsent(Main.ctx.channel(), c -> new LinkedBlockingQueue<>()).add(new CAlterPacket(Main.user.getUuid(), sql2, Main.clientConfig.getTheUsersDatabaseName()));
     }

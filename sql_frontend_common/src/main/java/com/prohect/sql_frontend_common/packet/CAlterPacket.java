@@ -44,4 +44,10 @@ public class CAlterPacket extends AbstractPacket implements Serializable {//new 
     public void setDatabaseName(String databaseName) {
         this.databaseName = databaseName;
     }
+
+    public enum Type {
+        P,//permissions update
+        T,//table add
+        C,//column add
+    }
 }

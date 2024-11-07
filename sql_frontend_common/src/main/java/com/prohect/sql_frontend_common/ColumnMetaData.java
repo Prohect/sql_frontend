@@ -10,7 +10,7 @@ public class ColumnMetaData implements Serializable, Comparable<ColumnMetaData> 
     boolean isNullable;
 
     boolean hasDefaultValue;
-    String defaultValue;
+    String defaultValue = "";
     /**
      * the every first value of a column with isAutoIncrement
      */

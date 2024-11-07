@@ -136,12 +136,12 @@ public class Server {
                             if (packet == null) break;
                             checkConnection();
                             switch (packet) {
+                                case CAlterPacket cAlterPacket -> processAlterPacket(ctx, cAlterPacket);
+                                case CDeletePacket cDeletePacket -> processDeletePacket(ctx, cDeletePacket);
+                                case CInsertPacket cInsertPacket -> processInsertPacket(ctx, cInsertPacket);
                                 case CLoginPacket loginPacket -> processLoginPacket(ctx, loginPacket);
                                 case CQueryPacket cQueryPacket -> processQueryPacket(ctx, cQueryPacket);
-                                case CAlterPacket cAlterPacket -> processAlterPacket(ctx, cAlterPacket);
                                 case CUpdatePacket cUpdatePacket -> processUpdatePacket(ctx, cUpdatePacket);
-                                case CInsertPacket cInsertPacket -> processInsertPacket(ctx, cInsertPacket);
-                                case CDeletePacket cDeletePacket -> processDeletePacket(ctx, cDeletePacket);
                                 default -> {
                                 }
                             }
@@ -160,16 +160,21 @@ public class Server {
         }
     }
 
-    /**
-     * load connections from server's config
-     */
-    private void checkConnection() throws SQLException {
-        if (!connection2UsersDB.isValid(2)) connection2UsersDB = SqlUtil4Login.getConnection4UsersDB(serverConfig);
-        for (String databaseName0 : serverConfig.getTheTargetDatabaseNameList()) {
-            String databaseName = databaseName0.toLowerCase();
-            if (!(databaseName2connectionMap.containsKey(databaseName) && databaseName2connectionMap.get(databaseName).isValid(1)))
-                databaseName2connectionMap.put(databaseName, SqlUtil.getConnection4TargetDB(serverConfig.getDataBaseAdmin(), databaseName));
-        }
+    private void processAlterPacket(ChannelHandlerContext ctx, CAlterPacket cAlterPacket) throws SQLException {
+        String cmd = cAlterPacket.getCmd();
+        String databaseName = cAlterPacket.getDatabaseName();
+        User user = uuid2userMap.get(cAlterPacket.getUuid());
+        if (!user.isOp()) throw new SQLException("你无权进行这个操作");
+        Statement statement = (user.isOp() && databaseName.equals(serverConfig.getTheUsersDatabaseName()) ? connection2UsersDB : databaseName2connectionMap.get(databaseName)).createStatement();
+        int i = statement.executeUpdate(cmd);
+        ctx2packetToBeSentMap.get(ctx).add(new SInfoPacket("成功, " + i + "行受影响"));
+        statement.close();
+        HashMap<String, HashMap<String, ArrayList<ColumnMetaData>>> map = loadMetaDataFromConnection(databaseName2connectionMap);
+        HashMap<String, HashMap<String, ArrayList<ColumnMetaData>>> diffMap = CommonUtil.diffMap(map, database2Table2ColumnMap);
+        database2Table2ColumnMap = map;
+        SLoginPacket updateMetadataPacket = new SLoginPacket(new User("", "", user.getUuid()), diffMap, SLoginPacket.Info.UM, "", "");
+        for (Map.Entry<ChannelHandlerContext, LinkedBlockingQueue<Packet>> entry : ctx2packetToBeSentMap.entrySet())
+            entry.getValue().add(updateMetadataPacket);
     }
 
     private void processDeletePacket(ChannelHandlerContext ctx, CDeletePacket cDeletePacket) throws SQLException {
@@ -212,6 +217,38 @@ public class Server {
         statement.close();
     }
 
+    private void processLoginPacket(ChannelHandlerContext ctx, CLoginPacket loginPacket) throws SQLException, IllegalAccessException {
+        User user = loginPacket.getUser();
+        final Statement finalStatement = connection2UsersDB.createStatement();
+        SLoginPacket sLoginPacket;
+        User userFromDB = SqlUtil4Login.getUserByUsername(serverConfig.getTheUsersTableName(), user.getUsername(), finalStatement);
+        if (userFromDB != null) {
+            if (user.getUuid() == userFromDB.getUuid()) {//consider this as reconnect
+                if (uuid2userMap.getOrDefault(user.getUuid(), new User()).getIp() == user.getIp()) {
+                    sLoginPacket = new SLoginPacket(userFromDB.setIp(user.getIp()), new HashMap<>(), SLoginPacket.Info.RS, "", "");
+                } else if (user.getPassword().equals(userFromDB.getPassword())) {
+                    sLoginPacket = new SLoginPacket(userFromDB.setIp(user.getIp()), new HashMap<>(), SLoginPacket.Info.RS, "", "");
+                } else throw new IllegalAccessException("幽默重连来了");
+            } else {
+                if (userFromDB.getPassword().equals(user.getPassword())) {
+                    sLoginPacket = new SLoginPacket(userFromDB.setIp(user.getIp()), database2Table2ColumnMap, SLoginPacket.Info.S, serverConfig.getTheUsersTableName(), serverConfig.getTheUsersTableName());
+                } else sLoginPacket = new SLoginPacket(user, new HashMap<>(), SLoginPacket.Info.W, "", "");
+            }
+            uuid2userMap.put(userFromDB.getUuid(), userFromDB);
+        } else sLoginPacket = new SLoginPacket(user, new HashMap<>(), SLoginPacket.Info.N, "", "");
+        ctx2packetToBeSentMap.get(ctx).add(sLoginPacket);
+        finalStatement.close();
+    }
+
+    private void processQueryPacket(ChannelHandlerContext ctx, CQueryPacket cQueryPacket) throws SQLException {
+        try {
+            m1(ctx, cQueryPacket);
+        } catch (SQLException e) {
+            database2Table2ColumnMap = loadMetaDataFromConnection(databaseName2connectionMap);
+            m1(ctx, cQueryPacket);
+        }
+    }
+
     private void processUpdatePacket(ChannelHandlerContext ctx, CUpdatePacket cUpdatePacket) throws SQLException {
         long id = cUpdatePacket.getId();
         User user = uuid2userMap.get(cUpdatePacket.getUuid());
@@ -231,29 +268,15 @@ public class Server {
         } else throw new SQLException("你无权进行这个操作");
     }
 
-    private void processAlterPacket(ChannelHandlerContext ctx, CAlterPacket cAlterPacket) throws SQLException {
-        String cmd = cAlterPacket.getCmd();
-        String databaseName = cAlterPacket.getDatabaseName();
-        User user = uuid2userMap.get(cAlterPacket.getUuid());
-        if (!user.isOp()) throw new SQLException("你无权进行这个操作");
-        Statement statement = (user.isOp() && databaseName.equals(serverConfig.getTheUsersDatabaseName()) ? connection2UsersDB : databaseName2connectionMap.get(databaseName)).createStatement();
-        int i = statement.executeUpdate(cmd);
-        ctx2packetToBeSentMap.get(ctx).add(new SInfoPacket("成功, " + i + "行受影响"));
-        statement.close();
-        HashMap<String, HashMap<String, ArrayList<ColumnMetaData>>> map = loadMetaDataFromConnection(databaseName2connectionMap);
-        HashMap<String, HashMap<String, ArrayList<ColumnMetaData>>> diffMap = CommonUtil.diffMap(map, database2Table2ColumnMap);
-        database2Table2ColumnMap = map;
-        SLoginPacket updateMetadataPacket = new SLoginPacket(new User("", "", user.getUuid()), diffMap, "update metadata", "", "");
-        for (Map.Entry<ChannelHandlerContext, LinkedBlockingQueue<Packet>> entry : ctx2packetToBeSentMap.entrySet())
-            entry.getValue().add(updateMetadataPacket);
-    }
-
-    private void processQueryPacket(ChannelHandlerContext ctx, CQueryPacket cQueryPacket) throws SQLException {
-        try {
-            m1(ctx, cQueryPacket);
-        } catch (SQLException e) {
-            database2Table2ColumnMap = loadMetaDataFromConnection(databaseName2connectionMap);
-            m1(ctx, cQueryPacket);
+    /**
+     * load connections from server's config
+     */
+    private void checkConnection() throws SQLException {
+        if (!connection2UsersDB.isValid(2)) connection2UsersDB = SqlUtil4Login.getConnection4UsersDB(serverConfig);
+        for (String databaseName0 : serverConfig.getTheTargetDatabaseNameList()) {
+            String databaseName = databaseName0.toLowerCase();
+            if (!(databaseName2connectionMap.containsKey(databaseName) && databaseName2connectionMap.get(databaseName).isValid(1)))
+                databaseName2connectionMap.put(databaseName, SqlUtil.getConnection4TargetDB(serverConfig.getDataBaseAdmin(), databaseName));
         }
     }
 
@@ -303,27 +326,6 @@ public class Server {
             rows.add(row);
         }
         ctx2packetToBeSentMap.get(ctx).add(new SQueryReplyPacket(databaseName, tableName, columnNames, rows));
-        finalStatement.close();
-    }
-
-    private void processLoginPacket(ChannelHandlerContext ctx, CLoginPacket loginPacket) throws SQLException {
-        User user = loginPacket.getUser();
-        final Statement finalStatement = connection2UsersDB.createStatement();
-        SLoginPacket sLoginPacket;
-        User user1 = SqlUtil4Login.getUserByUsername(serverConfig.getTheUsersTableName(), user.getUsername(), finalStatement);
-        if (user1 != null) {
-            uuid2userMap.put(user1.getUuid(), user1);
-            if (user.getUuid() == user1.getUuid()) {
-                sLoginPacket = new SLoginPacket(user1, new HashMap<>(), "reconnect success", "", "");
-            } else {
-                if (user1.getPassword().equals(user.getPassword())) {
-                    sLoginPacket = new SLoginPacket(user1, database2Table2ColumnMap, "success", serverConfig.getTheUsersTableName(), serverConfig.getTheUsersTableName());
-                } else sLoginPacket = new SLoginPacket(user, new HashMap<>(), "wrong password", "", "");
-            }
-        } else sLoginPacket = new SLoginPacket(user, new HashMap<>(), "no such user", "", "");
-        SLoginPacket finalSLoginPacket = sLoginPacket;
-        ctx2packetToBeSentMap.get(ctx).add(finalSLoginPacket);
-        System.out.println("登录请求处理完毕");
         finalStatement.close();
     }
 }

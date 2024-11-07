@@ -5,7 +5,6 @@ import java.io.Serializable;
 public class SInfoPacket extends AbstractPacket implements Serializable {
     String info;
 
-
     public SInfoPacket(String info) {
         this.info = info;
     }

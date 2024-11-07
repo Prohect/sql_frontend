@@ -1,12 +1,11 @@
 package com.prohect.sql_frontend_common;
 
-import java.io.IOException;
-
 public class Test {
-    public static void main(String[] args) throws IOException {
+    public static void main(String[] args) {
 
 
         new Object();
     }
+
 
 }

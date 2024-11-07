@@ -114,7 +114,6 @@ public class ClientHandlerAdapter extends ChannelInboundHandlerAdapter {
 //        byte[] bytes = JSON.toJSONBytes(new SInfoPacket("}[]{0}[]{"));//result: stringBuilder = {"id":-212632573705707520,"info":"}[]{0}[]{","prefix":"SInfoPacket\\"}
 //        byte[] bytes = JSON.toJSONBytes(new TestJsonEncode('g'));//result:  stringBuilder = {"aChar":"g"}
 
-        System.out.println("执行登录操作");
         packets.add((new CLoginPacket(Main.user == null ? new User(Main.loginLogic.getUsernameField().getText(), Main.loginLogic.getPasswordField().getText(), 0L) : new User(Main.user.getUsername(), Main.user.getPassword(), Main.user.getUuid()))));
 
         workerGroup.scheduleAtFixedRate(() -> {
@@ -167,14 +166,19 @@ public class ClientHandlerAdapter extends ChannelInboundHandlerAdapter {
 
     @Override
     public void channelInactive(ChannelHandlerContext ctx) throws Exception {
-        channel2packetsEncoder.get(ctx.channel()).cancel(true);
-        channel2packetDecoderFuture.get(ctx.channel()).cancel(true);
-        channel2lockOfIn.remove(ctx.channel());
-        channel2in.get(ctx.channel()).release();
-        channel2in.remove(ctx.channel());
-        channel2packetsEncoder.remove(ctx.channel());
-        channel2packetDecoderFuture.remove(ctx.channel());
-        Main.channel2packetsMap.remove(ctx.channel());
+        System.out.println("ClientHandlerAdapter.channelInactive");
+        try {
+            channel2packetsEncoder.get(ctx.channel()).cancel(true);
+            channel2packetDecoderFuture.get(ctx.channel()).cancel(true);
+            channel2lockOfIn.remove(ctx.channel());
+            channel2in.get(ctx.channel()).release();
+            channel2in.remove(ctx.channel());
+            channel2packetsEncoder.remove(ctx.channel());
+            channel2packetDecoderFuture.remove(ctx.channel());
+            Main.channel2packetsMap.remove(ctx.channel());
+        } catch (Exception e) {//might catch nullPointer
+            e.printStackTrace();
+        }
 
         Platform.runLater(() -> Main.mainLogic.getInfoLabel().setText("Connection reset, try reconnect"));
         alreadyOnReconnecting.set(false);
@@ -218,7 +222,8 @@ public class ClientHandlerAdapter extends ChannelInboundHandlerAdapter {
                     String name = columnNames.get(columnIndex);
                     TableColumn<Object[], Object> column = ClientHandlerAdapter.getTableColumn(name, columnIndex);
                     AtomicBoolean isAutoIncrement = new AtomicBoolean(false);
-                    Main.db2table2columnMap.get(databaseName).get(tableName).stream().filter(c -> c.getColumnName().equalsIgnoreCase(name)).findFirst().ifPresent(c -> isAutoIncrement.set(c.isAutoIncrement()));
+                    if (!Main.clientConfig.getTheUsersDatabaseName().equals(databaseName))
+                        Main.db2table2columnMap.get(databaseName).get(tableName).stream().filter(c -> c.getColumnName().equalsIgnoreCase(name)).findFirst().ifPresent(c -> isAutoIncrement.set(c.isAutoIncrement()));
                     if (!isAutoIncrement.get())
                         if (Main.user.isOp() || (permission4thisTable != null && permission4thisTable.getOrDefault(name, new Boolean[]{true, false})[1])) {
                             ClientHandlerAdapter.setCellFactory(column);
@@ -310,64 +315,73 @@ public class ClientHandlerAdapter extends ChannelInboundHandlerAdapter {
     }
 
     private void processSLoginPacket(SLoginPacket sLoginPacket) {
-        String info = sLoginPacket.getInfo();
+        User userFromPacket = sLoginPacket.getUser();
         HashMap<String, HashMap<String, ArrayList<ColumnMetaData>>> db2table2columnMap = sLoginPacket.getDb2table2columnMap();
-        Platform.runLater(() -> Main.loginLogic.getLoginInfo().setText(info));
-        if (info.equals("success") && !LoginLogic.logged.get()) {
-            Main.user = sLoginPacket.getUser();
-            Main.clientConfig.setTheUsersDatabaseName(sLoginPacket.getTheUsersDatabaseName());
-            Main.clientConfig.setTheUsersTableName(sLoginPacket.getTheUsersTableName());
-            ClientConfig.saveConfig(Main.clientConfig);
-            Main.db2table2columnMap = db2table2columnMap;
-            Platform.runLater(() -> {
-                ObservableList<String> databaseList = FXCollections.observableArrayList();
-                Main.db2table2columnMap.forEach((db, _) -> databaseList.add(db));
-                ChoiceBox<String> databaseSourceChoiceBox = Main.mainLogic.getDatabaseSourceChoiceBox();
-                databaseSourceChoiceBox.setItems(databaseList);
-                String databaseListFirst = databaseList.getFirst();
-                String value = databaseSourceChoiceBox.getValue();
-                if (value == null || value.isEmpty()) {
-                    if (databaseListFirst != null) {
-                        databaseSourceChoiceBox.setValue(databaseListFirst);
-                    }
-                    ObservableList<String> tableList = FXCollections.observableArrayList();
-                    if (databaseListFirst != null) {
-                        Main.db2table2columnMap.get(databaseListFirst).forEach((table2column, _) -> tableList.add(table2column));
-                    }
-                    Main.mainLogic.getTableChoiceBox().setItems(tableList);
-                    String tableListFirst = tableList.getFirst();
-                    if (tableListFirst != null) {
-                        Main.mainLogic.getTableChoiceBox().setValue(tableListFirst);
-                    }
-                    databaseSourceChoiceBox.valueProperty().addListener((observable, oldValue, newValue) -> {
-                        updateTableChoiceBox(oldValue, newValue);
+        SLoginPacket.Info info = sLoginPacket.getInfo();
+
+        Platform.runLater(() -> Main.mainLogic.getInfoLabel().setText(SLoginPacket.toString(info)));
+        switch (info) {
+            case RS -> {
+                Main.user.setPermissions(userFromPacket.getPermissions());
+                LoginLogic.logged.set(true);
+            }
+            case S -> {
+                if (!LoginLogic.logged.get()) {
+                    Main.user = userFromPacket;
+                    Main.clientConfig.setTheUsersDatabaseName(sLoginPacket.getTheUsersDatabaseName());
+                    Main.clientConfig.setTheUsersTableName(sLoginPacket.getTheUsersTableName());
+                    ClientConfig.saveConfig(Main.clientConfig);
+                    Main.db2table2columnMap = db2table2columnMap;
+                    Platform.runLater(() -> {
+                        ObservableList<String> databaseList = FXCollections.observableArrayList();
+                        Main.db2table2columnMap.forEach((db, _) -> databaseList.add(db));
+                        ChoiceBox<String> databaseSourceChoiceBox = Main.mainLogic.getDatabaseSourceChoiceBox();
+                        databaseSourceChoiceBox.setItems(databaseList);
+                        String databaseListFirst = databaseList.getFirst();
+                        String value = databaseSourceChoiceBox.getValue();
+                        if (value == null || value.isEmpty()) {
+                            if (databaseListFirst != null) {
+                                databaseSourceChoiceBox.setValue(databaseListFirst);
+                            }
+                            ObservableList<String> tableList = FXCollections.observableArrayList();
+                            if (databaseListFirst != null) {
+                                Main.db2table2columnMap.get(databaseListFirst).forEach((table2column, _) -> tableList.add(table2column));
+                            }
+                            Main.mainLogic.getTableChoiceBox().setItems(tableList);
+                            String tableListFirst = tableList.getFirst();
+                            if (tableListFirst != null) {
+                                Main.mainLogic.getTableChoiceBox().setValue(tableListFirst);
+                            }
+                            databaseSourceChoiceBox.valueProperty().addListener((observable, oldValue, newValue) -> {
+                                updateTableChoiceBox(oldValue, newValue);
+                            });
+                        }
+
+                        if (Main.user.isOp())
+                            databaseSourceChoiceBox.getItems().add(Main.clientConfig.getTheUsersDatabaseName());
+                        Main.mainLogic.getInfoLabel().setText("连接成功");
+                        LoginLogic.logged.set(true);
+                        Stage window = MainUi.getWindow();
+                        window.close();
+                        window.setScene(MainUi.mainScene);
+                        window.setMinWidth(800);
+                        window.setMinHeight(400);
+                        window.setWidth(Main.clientConfig.getSizeOfMainGUI()[0]);
+                        window.setHeight(Main.clientConfig.getSizeOfMainGUI()[1]);
+                        window.widthProperty().addListener((observable, oldValue, newValue) -> Main.clientConfig.getSizeOfMainGUI()[0] = newValue.doubleValue());
+                        window.heightProperty().addListener((observable, oldValue, newValue) -> Main.clientConfig.getSizeOfMainGUI()[1] = newValue.doubleValue());
+                        window.setResizable(true);
+                        window.show();
                     });
                 }
-
-                if (Main.user.isOp())
-                    databaseSourceChoiceBox.getItems().add(Main.clientConfig.getTheUsersDatabaseName());
-                Main.mainLogic.getInfoLabel().setText("连接成功");
-                LoginLogic.logged.set(true);
-                Stage window = MainUi.getWindow();
-                window.close();
-                window.setScene(MainUi.mainScene);
-                window.setMinWidth(800);
-                window.setMinHeight(400);
-                window.setWidth(Main.clientConfig.getSizeOfMainGUI()[0]);
-                window.setHeight(Main.clientConfig.getSizeOfMainGUI()[1]);
-                window.widthProperty().addListener((observable, oldValue, newValue) -> Main.clientConfig.getSizeOfMainGUI()[0] = newValue.doubleValue());
-                window.heightProperty().addListener((observable, oldValue, newValue) -> Main.clientConfig.getSizeOfMainGUI()[1] = newValue.doubleValue());
-                window.setResizable(true);
-                window.show();
-            });
-        } else if (sLoginPacket.getInfo().equals("reconnect success")) {
-            Main.user.setPermissions(sLoginPacket.getUser().getPermissions());
-            LoginLogic.logged.set(true);
-        } else if (sLoginPacket.getInfo().equals("update metadata")) {
-            String value = Main.mainLogic.getTableChoiceBox().getValue();
-            CommonUtil.mergeMap(Main.db2table2columnMap, db2table2columnMap);
-            Platform.runLater(() -> updateTableChoiceBox(value, value));
-            Main.mainLogic.updateColumnMetaDataOfInsertNewRowTable();
+            }
+            case UM -> {
+                String value = Main.mainLogic.getTableChoiceBox().getValue();
+                CommonUtil.mergeMap(Main.db2table2columnMap, db2table2columnMap);
+                Platform.runLater(() -> updateTableChoiceBox(value, value));
+                Main.mainLogic.updateColumnMetaDataOfInsertNewRowTable();
+            }
+            case UP -> Main.user.setPermissions(userFromPacket.getPermissions());
         }
     }
 }

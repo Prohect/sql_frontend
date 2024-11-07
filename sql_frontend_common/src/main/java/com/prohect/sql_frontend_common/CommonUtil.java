@@ -69,7 +69,9 @@ public class CommonUtil {
                     try {
                         byte[] bytes = new byte[packetLength];
                         in.readBytes(bytes);
-                        out.offer(PacketManager.convertPacket(bytes));
+                        Packet packet = PacketManager.convertPacket(bytes);
+                        System.out.printf("接收%s%n", packet);
+                        out.offer(packet);
                         lastSuccessReaderIndex = in.readerIndex();
                     } catch (IndexOutOfBoundsException ignored) {
                         break;
