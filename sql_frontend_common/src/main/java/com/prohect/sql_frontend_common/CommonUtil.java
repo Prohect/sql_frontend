@@ -9,8 +9,8 @@ import io.netty.channel.EventLoopGroup;
 import io.netty.util.concurrent.Future;
 import io.netty.util.concurrent.ScheduledFuture;
 
-import java.util.concurrent.LinkedBlockingQueue;
-import java.util.concurrent.TimeUnit;
+import java.util.*;
+import java.util.concurrent.*;
 import java.util.concurrent.locks.ReentrantLock;
 
 public class CommonUtil {
@@ -129,5 +129,94 @@ public class CommonUtil {
                 return false;
             }
         }
+    }
+
+    /**
+     * map0 should be larger than map1, and is somehow created by adding something to map1.
+     * then we find what's been changed
+     */
+    public static <M extends Map<K, V>, K, V, K1, V1, T> M diffMap(M map0, M map1) {
+        M diffMap = deepCloneMap(map0);
+        for (Map.Entry<K, V> entry1 : map1.entrySet()) {
+            K k1 = entry1.getKey();
+            V v1 = entry1.getValue();
+            if (map0.containsKey(k1)) {
+                V v = map0.get(k1);
+                if (v instanceof Map<?, ?> innerMap0 && v1 instanceof Map<?, ?> innerMap1) {
+                    Map<K1, V1> subDiffMap = diffMap((Map<K1, V1>) innerMap0, (Map<K1, V1>) innerMap1);
+                    if (subDiffMap.isEmpty()) diffMap.remove(k1);
+                    else diffMap.put(k1, (V) subDiffMap);
+                } else if (v instanceof List<?> list0 && v1 instanceof List<?> list1) {
+                    List<T> subDiffList = diffList((List<T>) list0, (List<T>) list1);
+                    if (subDiffList.isEmpty()) diffMap.remove(k1);
+                    else diffMap.put(k1, (V) subDiffList);
+                } else if (v == null || v.equals(v1)) diffMap.remove(k1, v);
+            }
+        }
+        return diffMap;
+    }
+
+    /**
+     * list0 should be larger than list1, and is somehow created by adding something to list1.
+     * then we find what's been changed
+     */
+    public static <L extends List<T>, T, T1, K, V> L diffList(L list0, L list1) {
+        L diffList = deepCloneList(list0);
+        L removed = (L) new ArrayList<>();
+        for (int i = 0; i < list1.size(); i++) {
+            T v1 = list1.get(i);
+            T v0 = list0.get(i);
+            if (v0 instanceof List<?> l0 && v1 instanceof List<?> l1) {
+                List<T1> subDiffList = diffList((List<T1>) l0, (List<T1>) l1);
+                if (subDiffList.isEmpty()) removed.add(v0);
+                else diffList.set(i, (T) subDiffList);
+            } else if (v0 instanceof Map<?, ?> map0 && v1 instanceof Map<?, ?> map1) {
+                Map<K, V> subDiffMap = diffMap((Map<K, V>) map0, (Map<K, V>) map1);
+                if (subDiffMap.isEmpty()) removed.add(v0);
+                else diffList.set(i, (T) subDiffMap);
+            } else if (v0 == null || v0.equals(v1)) removed.add(v0);
+        }
+        diffList.removeAll(removed);
+        return diffList;
+    }
+
+    public static <M extends Map<K, V>, K, V, K1, V1, L> M deepCloneMap(M map) {
+        M clone = switch (map) {
+            case LinkedHashMap<?, ?> _ -> (M) new LinkedHashMap<>();
+            case HashMap<?, ?> _ -> (M) new HashMap<>();
+            case TreeMap<?, ?> _ -> (M) new TreeMap<>();
+            case ConcurrentHashMap<?, ?> _ -> (M) new ConcurrentHashMap<>();
+            case Properties _ -> (M) new Properties();
+            case Hashtable<?, ?> _ -> (M) new Hashtable<>();
+            case IdentityHashMap<?, ?> _ -> (M) new IdentityHashMap<>();
+            case WeakHashMap<?, ?> _ -> (M) new WeakHashMap<>();
+            case EnumMap<?, ?> _ -> (M) new EnumMap<>(map.keySet().iterator().next().getClass());
+            case ConcurrentSkipListMap<?, ?> _ -> (M) new ConcurrentSkipListMap<>();
+            default -> throw new IllegalStateException("Unexpected value: " + map.getClass());
+        };
+        for (Map.Entry<K, V> entry : map.entrySet()) {
+            K key = entry.getKey();
+            V value = entry.getValue();
+            if (value instanceof Map<?, ?> innerMap) clone.put(key, (V) deepCloneMap((Map<K1, V1>) innerMap));
+            else if (value instanceof List<?> innerList) clone.put(key, (V) deepCloneList((List<L>) innerList));
+            else clone.put(key, value);
+        }
+        return clone;
+    }
+
+    public static <L extends List<T>, T, T1, K, V> L deepCloneList(L list) {
+        L clone = switch (list) {// who use Collections.SynchronizedList<?> & Collections.UnmodifiableList<?> as his list to work, never
+            case ArrayList<?> _ -> (L) new ArrayList<>();
+            case LinkedList<?> _ -> (L) new LinkedList<>();
+            case Stack<?> _ -> (L) new Stack<>();
+            case Vector<?> _ -> (L) new Vector<>();
+            case CopyOnWriteArrayList<?> _ -> (L) new CopyOnWriteArrayList<>();
+            default -> throw new IllegalStateException("Unexpected value: " + list.getClass());
+        };
+        for (T t : list)
+            if (t instanceof List<?> innerList) clone.add((T) deepCloneList((List<T1>) innerList));
+            else if (t instanceof Map<?, ?> innerMap) clone.add((T) deepCloneMap((Map<K, V>) innerMap));
+            else clone.add(t);
+        return clone;
     }
 }

@@ -32,27 +32,25 @@
   OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 -->
 
-<?import javafx.scene.control.ContextMenu?>
-<?import javafx.scene.control.MenuItem?>
-<?import javafx.scene.control.TableColumn?>
-<?import javafx.scene.control.TableView?>
+<?import javafx.scene.control.*?>
 <?import javafx.scene.layout.AnchorPane?>
 <?import javafx.scene.layout.VBox?>
-
-<VBox prefHeight="400.0" prefWidth="640.0" xmlns="http://javafx.com/javafx/23.0.1" xmlns:fx="http://javafx.com/fxml/1" fx:controller="com.prohect.sql_frontend.main.newTable.insertNewTableLogic">
+<VBox xmlns:fx="http://javafx.com/fxml/1" prefHeight="400.0" prefWidth="640.0" xmlns="http://javafx.com/javafx/23.0.1"
+      fx:controller="com.prohect.sql_frontend.main.newTable.insertNewTableLogic">
     <children>
         <AnchorPane maxHeight="-1.0" maxWidth="-1.0" prefHeight="-1.0" prefWidth="-1.0" VBox.vgrow="ALWAYS">
             <children>
                 <TableView fx:id="table" prefHeight="400.0" prefWidth="640.0">
                     <columns>
-                        <TableColumn prefWidth="75.0" text="C1" />
-                        <TableColumn prefWidth="75.0" text="C2" />
+                        <TableColumn prefWidth="75.0" text="C1"/>
+                        <TableColumn prefWidth="75.0" text="C2"/>
                     </columns>
                     <contextMenu>
                         <ContextMenu>
                             <items>
-                                <MenuItem mnemonicParsing="false" onAction="#insertNewColumnOnAction" text="新列" />
-                        <MenuItem mnemonicParsing="false" onAction="#alterSelectedColumnOnAction" text="查看或修改选中列" />
+                                <MenuItem mnemonicParsing="false" onAction="#insertNewColumnOnAction" text="新列"/>
+                                <MenuItem mnemonicParsing="false" onAction="#alterSelectedColumnOnAction"
+                                          text="查看或修改选中列"/>
                             </items>
                         </ContextMenu>
                     </contextMenu>

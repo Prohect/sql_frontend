@@ -3,6 +3,7 @@ package com.prohect.sql_frontend_server;
 import com.alibaba.fastjson2.JSON;
 import com.alibaba.fastjson2.JSONException;
 import com.prohect.sql_frontend_common.ColumnMetaData;
+import com.prohect.sql_frontend_common.CommonUtil;
 import com.prohect.sql_frontend_common.User;
 import com.prohect.sql_frontend_common.packet.*;
 import com.prohect.sql_frontend_server.sqlUtil.SqlUtil;
@@ -80,88 +81,6 @@ public class Server {
         return serverConfig;
     }
 
-    /**
-     * map0 should be larger than map1, and is somehow created by adding something to map1.
-     * then we find what's been changed
-     */
-    public static <M extends Map<K, V>, K, V, K1, V1, L> M diffMap(M map0, M map1) {
-        M diffMap = mapDeepClone(map0);
-        for (Map.Entry<K, V> entry1 : map1.entrySet()) {
-            K k1 = entry1.getKey();
-            V v1 = entry1.getValue();
-            if (map0.containsKey(k1)) {
-                V v = map0.get(k1);
-                if (v instanceof Map<?, ?> innerMap0 && v1 instanceof Map<?, ?> innerMap1) {
-                    Map<K1, V1> tempMap0 = (Map<K1, V1>) innerMap0;
-                    Map<K1, V1> tempMap1 = (Map<K1, V1>) innerMap1;
-                    Map<K1, V1> diffMap1 = diffMap(tempMap0, tempMap1);
-                    V subDiffMap = (V) diffMap1;
-                    if (diffMap1.isEmpty()) diffMap.remove(k1);
-                    else diffMap.put(k1, subDiffMap);
-                } else if (v instanceof List<?> list0 && v1 instanceof List<?> list1) {
-                    List<L> tempList0 = (List<L>) list0;
-                    List<L> tempList1 = (List<L>) list1;
-                    List<L> diffList1 = diffList(tempList0, tempList1);
-                    V diffList = (V) diffList1;
-                    if (diffList1.isEmpty()) diffMap.remove(k1);
-                    else diffMap.put(k1, diffList);
-                } else {
-                    if (v == null || v.equals(v1)) diffMap.remove(k1, v);
-                }
-            }
-        }
-        return diffMap;
-    }
-
-    /**
-     * list0 could be gotten by somehow adding something to list1, so it's always lager than list1, and has everything that list1 have.
-     * then we find what's been changed
-     */
-    private static <L extends List<L0>, L0, L1, K, V> L diffList(L list0, L list1) {
-        L diffList;
-        if (list0 instanceof ArrayList<?>) diffList = (L) new ArrayList<>(list0).clone();
-        else diffList = (L) new ArrayList<>(list0);
-        List<L0> removed = new ArrayList<>();
-        for (int i = 0; i < list1.size(); i++) {
-            L0 v1 = list1.get(i);
-            L0 v0 = list0.get(i);
-            if (v0 instanceof List<?> l0 && v1 instanceof List<?> l1) {
-                List<L1> tempList0 = (List<L1>) l0;
-                List<L1> tempList1 = (List<L1>) l1;
-                List<L1> diffList1 = diffList(tempList0, tempList1);
-                L0 subDiffList = (L0) diffList1;
-                if (diffList1.isEmpty()) removed.add(v0);
-                else diffList.set(i, subDiffList);
-            } else if (v0 instanceof Map<?, ?> map0 && v1 instanceof Map<?, ?> map1) {
-                Map<K, V> tempMap0 = (Map<K, V>) map0;
-                Map<K, V> tempMap1 = (Map<K, V>) map1;
-                Map<K, V> diffMap1 = diffMap(tempMap0, tempMap1);
-                L0 diffMap = (L0) diffMap1;
-                if (diffMap1.isEmpty()) removed.add(v0);
-                else diffList.set(i, diffMap);
-            } else if (v0 == null || v0.equals(v1)) diffList.remove(v0);
-        }
-        diffList.removeAll(removed);
-        return diffList;
-    }
-
-    public static <M extends Map<K, V>, K, V, K1, V1, L> M mapDeepClone(M map) {
-        M clone = (M) new HashMap<>(map);//this would clone the map, not way just share a same entrySet
-        for (Map.Entry<K, V> entry : map.entrySet()) {
-            K key = entry.getKey();
-            V value = entry.getValue();
-            if (value instanceof Map<?, ?> innerMap) {
-                V clonedMap = (V) mapDeepClone((Map<K1, V1>) innerMap);
-                clone.put(key, clonedMap);
-            }
-            if (value instanceof List<?> list) {
-                List<L> innerList = (List<L>) list;
-                List<L> clonedList = innerList instanceof ArrayList<?> ? (List<L>) new ArrayList<>(innerList).clone() : new ArrayList<>(innerList);
-                clone.put(key, (V) clonedList);
-            }
-        }
-        return clone;
-    }
 
     private HashMap<String, HashMap<String, ArrayList<ColumnMetaData>>> loadMetaDataFromConnection(HashMap<String, Connection> databaseName2connectionMap) {
         HashMap<String, HashMap<String, ArrayList<ColumnMetaData>>> tempDatabase2Table2ColumnMap = new HashMap<>();
@@ -322,7 +241,7 @@ public class Server {
         ctx2packetToBeSentMap.get(ctx).add(new SInfoPacket("成功, " + i + "行受影响"));
         statement.close();
         HashMap<String, HashMap<String, ArrayList<ColumnMetaData>>> map = loadMetaDataFromConnection(databaseName2connectionMap);
-        HashMap<String, HashMap<String, ArrayList<ColumnMetaData>>> diffMap = diffMap(map, database2Table2ColumnMap);
+        HashMap<String, HashMap<String, ArrayList<ColumnMetaData>>> diffMap = CommonUtil.diffMap(map, database2Table2ColumnMap);
         database2Table2ColumnMap = map;
         SLoginPacket updateMetadataPacket = new SLoginPacket(new User("", "", user.getUuid()), diffMap, "update metadata", "", "");
         for (Map.Entry<ChannelHandlerContext, LinkedBlockingQueue<Packet>> entry : ctx2packetToBeSentMap.entrySet())
