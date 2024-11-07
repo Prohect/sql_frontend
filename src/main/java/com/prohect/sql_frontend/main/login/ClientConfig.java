@@ -56,6 +56,7 @@ public class ClientConfig {
     }
 
     public static void saveConfig(ClientConfig clientConfig) {
+        if (clientConfig == null) return;
         try {
             configFile.delete();
             configFile.createNewFile();
