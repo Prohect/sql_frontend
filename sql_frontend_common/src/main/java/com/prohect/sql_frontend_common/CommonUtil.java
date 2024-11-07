@@ -103,11 +103,11 @@ public class CommonUtil {
 
 
     public static String permissionColumnNameEncode(String dataBase4tableView, String table4tableView, String columnName, boolean read4falseWrite4true) {
-        return "P_" + (dataBase4tableView + "_" + table4tableView + "_" + columnName).toLowerCase() + "_" + (read4falseWrite4true ? "Write" : "Read");
+        return "[P_" + (dataBase4tableView + "_" + table4tableView + "_" + columnName).toLowerCase() + "_" + (read4falseWrite4true ? "Write" : "Read") + "]";
     }
 
     public static String[] permissionColumnNameDecode(String context) {
-        return context.substring(2).split("_");
+        return context.substring(3, context.length() - 1).split("_");
     }
 
     public static String convert2SqlServerContextString(Object o) {

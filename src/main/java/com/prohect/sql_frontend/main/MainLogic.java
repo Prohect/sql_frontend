@@ -315,7 +315,10 @@ public class MainLogic implements Initializable {
                 }
             }
         }
-        return false;
+        if (Main.user.getPermissions().getOrDefault(getDataBase4tableView(), new HashMap<>()).getOrDefault(getTableName4tableView(), new HashMap<>()).get(columnName) != null) {
+            getInfoLabel().setText("不能为标识列设定权限, 因为已经设置过");
+            return true;
+        } else return false;
     }
 
     @FXML
