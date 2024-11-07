@@ -1,6 +1,8 @@
 package com.prohect.sql_frontend_common;
 
-public class ColumnMetaData {
+import java.io.Serializable;
+
+public class ColumnMetaData implements Serializable, Comparable<ColumnMetaData> {
     String columnName;
     String columnType;
     boolean isPrimaryKey;
@@ -128,5 +130,15 @@ public class ColumnMetaData {
 
     public void setHasDefaultValue(boolean hasDefaultValue) {
         this.hasDefaultValue = hasDefaultValue;
+    }
+
+    @Override
+    public int compareTo(ColumnMetaData o) {
+        return this.getColumnName().compareTo(o.getColumnName());
+    }
+
+    @Override
+    public int hashCode() {
+        return this.getColumnName().hashCode();
     }
 }

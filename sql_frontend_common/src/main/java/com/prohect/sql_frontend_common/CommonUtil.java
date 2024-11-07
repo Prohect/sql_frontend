@@ -131,18 +131,47 @@ public class CommonUtil {
         }
     }
 
+    public static <M extends Map<K, V>, K, V, K1, V1, T> void mergeMap(M map, M diffMap) {
+        for (Map.Entry<K, V> entry : diffMap.entrySet()) {
+            K k = entry.getKey();
+            V vDiff = entry.getValue();
+            if (map.containsKey(k)) {
+                V v0 = map.get(k);
+                if (v0 instanceof Map<?, ?> innerMap0 && vDiff instanceof Map<?, ?> innerMapDiff)
+                    mergeMap((Map<K1, V1>) innerMap0, (Map<K1, V1>) innerMapDiff);
+                else if (v0 instanceof List<?> list0 && vDiff instanceof List<?>)
+                    mergeList((List<T>) list0, (List<T>) vDiff);
+                else map.put(k, vDiff);
+            } else map.put(k, vDiff);
+        }
+    }
+
+    public static <L extends List<T>, T, T1, K, V> void mergeList(L list, L diffList) {
+        for (int i = 0; i < diffList.size(); i++) {// since we kept the structure of the list when computing diffList, diffList's size would always >= list's size when it's a list containing maps
+            T t1 = diffList.get(i);
+            if (i < list.size()) {
+                T t = list.get(i);
+                if (t instanceof Map<?, ?> innerMap && t1 instanceof Map<?, ?> innerMapDiff)
+                    mergeMap((Map<K, V>) innerMap, (Map<K, V>) innerMapDiff);
+                else if (t instanceof List<?> innerList && t1 instanceof List<?> innerListDiff)
+                    mergeList((List<T1>) innerList, (List<T1>) innerListDiff);
+                else list.set(i, t1);
+            } else list.add(t1);
+        }
+    }
+
     /**
-     * map0 should be larger than map1, and is somehow created by adding something to map1.
-     * then we find what's been changed
+     * map should be larger than map1, and is somehow created by adding something to map1.
+     * then we find what's been changed by calling equals()
      */
-    public static <M extends Map<K, V>, K, V, K1, V1, T> M diffMap(M map0, M map1) {
-        M diffMap = deepCloneMap(map0);
+    public static <M extends Map<K, V>, K, V, K1, V1, T> M diffMap(M map, M map1) {
+        M diffMap = structureCloneMap(map);
         for (Map.Entry<K, V> entry1 : map1.entrySet()) {
             K k1 = entry1.getKey();
             V v1 = entry1.getValue();
-            if (map0.containsKey(k1)) {
-                V v = map0.get(k1);
-                if (v instanceof Map<?, ?> innerMap0 && v1 instanceof Map<?, ?> innerMap1) {
+            if (map.containsKey(k1)) {
+                V v = map.get(k1);
+                if (v instanceof Map<?, ?> innerMap0 && v1 instanceof Map<?, ?> innerMap1) {//no need to remain structure because we can know whom to merge by the key
                     Map<K1, V1> subDiffMap = diffMap((Map<K1, V1>) innerMap0, (Map<K1, V1>) innerMap1);
                     if (subDiffMap.isEmpty()) diffMap.remove(k1);
                     else diffMap.put(k1, (V) subDiffMap);
@@ -150,37 +179,31 @@ public class CommonUtil {
                     List<T> subDiffList = diffList((List<T>) list0, (List<T>) list1);
                     if (subDiffList.isEmpty()) diffMap.remove(k1);
                     else diffMap.put(k1, (V) subDiffList);
-                } else if (v == null || v.equals(v1)) diffMap.remove(k1, v);
+                } else if (v != null && !v.equals(v1)) diffMap.put(k1, v);
             }
         }
         return diffMap;
     }
 
     /**
-     * list0 should be larger than list1, and is somehow created by adding something to list1.
-     * then we find what's been changed
+     * list should be larger than list1, and is somehow created by adding something to list1.
+     * then we find what's been changed by calling equals()
      */
-    public static <L extends List<T>, T, T1, K, V> L diffList(L list0, L list1) {
-        L diffList = deepCloneList(list0);
-        L removed = (L) new ArrayList<>();
+    public static <L extends List<T>, T, T1, K, V> L diffList(L list, L list1) {
+        L diffList = structureCloneList(list);
         for (int i = 0; i < list1.size(); i++) {
             T v1 = list1.get(i);
-            T v0 = list0.get(i);
-            if (v0 instanceof List<?> l0 && v1 instanceof List<?> l1) {
-                List<T1> subDiffList = diffList((List<T1>) l0, (List<T1>) l1);
-                if (subDiffList.isEmpty()) removed.add(v0);
-                else diffList.set(i, (T) subDiffList);
-            } else if (v0 instanceof Map<?, ?> map0 && v1 instanceof Map<?, ?> map1) {
-                Map<K, V> subDiffMap = diffMap((Map<K, V>) map0, (Map<K, V>) map1);
-                if (subDiffMap.isEmpty()) removed.add(v0);
-                else diffList.set(i, (T) subDiffMap);
-            } else if (v0 == null || v0.equals(v1)) removed.add(v0);
+            T v = list.get(i);
+            if (v instanceof List<?> l && v1 instanceof List<?> l1) //remain the structure of contained list or map even it's empty,
+                diffList.set(i, (T) diffList((List<T1>) l, (List<T1>) l1));// because we get things from list by index, we need that index to find out whom to merge
+            else if (v instanceof Map<?, ?> map && v1 instanceof Map<?, ?> map1)
+                diffList.set(i, (T) diffMap((Map<K, V>) map, (Map<K, V>) map1));
+            else if (v != null && !v.equals(v1)) diffList.add(v);
         }
-        diffList.removeAll(removed);
         return diffList;
     }
 
-    public static <M extends Map<K, V>, K, V, K1, V1, L> M deepCloneMap(M map) {
+    public static <M extends Map<K, V>, K, V, K1, V1, L> M structureCloneMap(M map) {
         M clone = switch (map) {
             case LinkedHashMap<?, ?> _ -> (M) new LinkedHashMap<>();
             case HashMap<?, ?> _ -> (M) new HashMap<>();
@@ -190,21 +213,19 @@ public class CommonUtil {
             case Hashtable<?, ?> _ -> (M) new Hashtable<>();
             case IdentityHashMap<?, ?> _ -> (M) new IdentityHashMap<>();
             case WeakHashMap<?, ?> _ -> (M) new WeakHashMap<>();
-            case EnumMap<?, ?> _ -> (M) new EnumMap<>(map.keySet().iterator().next().getClass());
             case ConcurrentSkipListMap<?, ?> _ -> (M) new ConcurrentSkipListMap<>();
             default -> throw new IllegalStateException("Unexpected value: " + map.getClass());
         };
         for (Map.Entry<K, V> entry : map.entrySet()) {
             K key = entry.getKey();
             V value = entry.getValue();
-            if (value instanceof Map<?, ?> innerMap) clone.put(key, (V) deepCloneMap((Map<K1, V1>) innerMap));
-            else if (value instanceof List<?> innerList) clone.put(key, (V) deepCloneList((List<L>) innerList));
-            else clone.put(key, value);
+            if (value instanceof Map<?, ?> innerMap) clone.put(key, (V) structureCloneMap((Map<K1, V1>) innerMap));
+            else if (value instanceof List<?> innerList) clone.put(key, (V) structureCloneList((List<L>) innerList));
         }
         return clone;
     }
 
-    public static <L extends List<T>, T, T1, K, V> L deepCloneList(L list) {
+    public static <L extends List<T>, T, T1, K, V> L structureCloneList(L list) {
         L clone = switch (list) {// who use Collections.SynchronizedList<?> & Collections.UnmodifiableList<?> as his list to work, never
             case ArrayList<?> _ -> (L) new ArrayList<>();
             case LinkedList<?> _ -> (L) new LinkedList<>();
@@ -214,9 +235,8 @@ public class CommonUtil {
             default -> throw new IllegalStateException("Unexpected value: " + list.getClass());
         };
         for (T t : list)
-            if (t instanceof List<?> innerList) clone.add((T) deepCloneList((List<T1>) innerList));
-            else if (t instanceof Map<?, ?> innerMap) clone.add((T) deepCloneMap((Map<K, V>) innerMap));
-            else clone.add(t);
+            if (t instanceof List<?> innerList) clone.add((T) structureCloneList((List<T1>) innerList));
+            else if (t instanceof Map<?, ?> innerMap) clone.add((T) structureCloneMap((Map<K, V>) innerMap));
         return clone;
     }
 }
