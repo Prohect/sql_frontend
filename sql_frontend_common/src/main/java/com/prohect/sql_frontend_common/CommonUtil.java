@@ -52,8 +52,7 @@ public class CommonUtil {
         in.writeBytes(msg);
         msg.release();
         return workerGroup.submit(() -> {
-            if (future != null)
-                future.addListener(_ -> processInIntoPackets2Out_concurrent(lock, in, out));
+            if (future != null) future.addListener(_ -> processInIntoPackets2Out_concurrent(lock, in, out));
             else processInIntoPackets2Out_concurrent(lock, in, out);
         });
     }
@@ -146,17 +145,39 @@ public class CommonUtil {
         }
     }
 
+    /**
+     * when the contained things of the list is neither Map nor List,
+     * probably simple POJO,
+     * call hashcode() to find its old version one to be updated,
+     * if no old version found simply add it to the list
+     */
     public static <L extends List<T>, T, T1, K, V> void mergeList(L list, L diffList) {
         for (int i = 0; i < diffList.size(); i++) {// since we kept the structure of the list when computing diffList, diffList's size would always >= list's size when it's a list containing maps
             T t1 = diffList.get(i);
             if (i < list.size()) {
                 T t = list.get(i);
-                if (t instanceof Map<?, ?> innerMap && t1 instanceof Map<?, ?> innerMapDiff)
+                if (t instanceof Map<?, ?> innerMap && t1 instanceof Map<?, ?> innerMapDiff) {
                     mergeMap((Map<K, V>) innerMap, (Map<K, V>) innerMapDiff);
-                else if (t instanceof List<?> innerList && t1 instanceof List<?> innerListDiff)
+                    continue;
+                } else if (t instanceof List<?> innerList && t1 instanceof List<?> innerListDiff) {
                     mergeList((List<T1>) innerList, (List<T1>) innerListDiff);
-                else list.set(i, t1);
-            } else list.add(t1);
+                    continue;
+                }
+            }
+            if (t1 instanceof Map<?, ?> || t1 instanceof List<?>) {
+                list.add(t1);
+                continue;
+            }//list or map processed, now we process POJO
+            boolean flag = false;
+            for (int i1 = 0; i1 < list.size(); i1++) {
+                T t = list.get(i1);
+                if (t != null && t1 != null && t.hashCode() == t1.hashCode()) {
+                    list.set(i1, t1);
+                    flag = true;
+                    break;
+                }
+            }
+            if (!flag) list.add(t1);
         }
     }
 
@@ -166,21 +187,21 @@ public class CommonUtil {
      */
     public static <M extends Map<K, V>, K, V, K1, V1, T> M diffMap(M map, M map1) {
         M diffMap = structureCloneMap(map);
-        for (Map.Entry<K, V> entry1 : map1.entrySet()) {
-            K k1 = entry1.getKey();
-            V v1 = entry1.getValue();
-            if (map.containsKey(k1)) {
-                V v = map.get(k1);
-                if (v instanceof Map<?, ?> innerMap0 && v1 instanceof Map<?, ?> innerMap1) {//no need to remain structure because we can know whom to merge by the key
-                    Map<K1, V1> subDiffMap = diffMap((Map<K1, V1>) innerMap0, (Map<K1, V1>) innerMap1);
-                    if (subDiffMap.isEmpty()) diffMap.remove(k1);
-                    else diffMap.put(k1, (V) subDiffMap);
-                } else if (v instanceof List<?> list0 && v1 instanceof List<?> list1) {
-                    List<T> subDiffList = diffList((List<T>) list0, (List<T>) list1);
-                    if (subDiffList.isEmpty()) diffMap.remove(k1);
-                    else diffMap.put(k1, (V) subDiffList);
-                } else if (v != null && !v.equals(v1)) diffMap.put(k1, v);
-            }
+        for (Map.Entry<K, V> entry : map.entrySet()) {
+            K k = entry.getKey();
+            V v = entry.getValue();
+            if (map1.containsKey(k)) {
+                V v1 = map1.get(k);
+                if (v instanceof Map<?, ?> innerMap && v1 instanceof Map<?, ?> innerMap1) {//no need to remain structure because we can know whom to merge by the key
+                    Map<K1, V1> subDiffMap = diffMap((Map<K1, V1>) innerMap, (Map<K1, V1>) innerMap1);
+                    if (subDiffMap.isEmpty()) diffMap.remove(k);
+                    else diffMap.put(k, (V) subDiffMap);
+                } else if (v instanceof List<?> innerList && v1 instanceof List<?> innerList1) {
+                    List<T> subDiffList = diffList((List<T>) innerList, (List<T>) innerList1);
+                    if (subDiffList.isEmpty()) diffMap.remove(k);
+                    else diffMap.put(k, (V) subDiffList);
+                } else if (v != null && v1 != null && !v.equals(v1)) diffMap.put(k, v);
+            } else diffMap.put(k, v);
         }
         return diffMap;
     }
@@ -191,14 +212,16 @@ public class CommonUtil {
      */
     public static <L extends List<T>, T, T1, K, V> L diffList(L list, L list1) {
         L diffList = structureCloneList(list);
-        for (int i = 0; i < list1.size(); i++) {
-            T v1 = list1.get(i);
-            T v = list.get(i);
-            if (v instanceof List<?> l && v1 instanceof List<?> l1) //remain the structure of contained list or map even it's empty,
-                diffList.set(i, (T) diffList((List<T1>) l, (List<T1>) l1));// because we get things from list by index, we need that index to find out whom to merge
-            else if (v instanceof Map<?, ?> map && v1 instanceof Map<?, ?> map1)
-                diffList.set(i, (T) diffMap((Map<K, V>) map, (Map<K, V>) map1));
-            else if (v != null && !v.equals(v1)) diffList.add(v);
+        for (int i = 0; i < list.size(); i++) {
+            T t = list.get(i);
+            if (i < list1.size()) {
+                T t1 = list1.get(i);
+                if (t instanceof List<?> innerList && t1 instanceof List<?> innerList1) //remain the structure of contained list or innerMap even it's empty,
+                    diffList.set(i, (T) diffList((List<T1>) innerList, (List<T1>) innerList1));// because we get things from list by index, we need that index to find out whom to merge
+                else if (t instanceof Map<?, ?> innerMap && t1 instanceof Map<?, ?> innerMap1)
+                    diffList.set(i, (T) diffMap((Map<K, V>) innerMap, (Map<K, V>) innerMap1));
+                else if (t != null && t1 != null && !t.equals(t1)) diffList.add(t);
+            } else diffList.add(t);
         }
         return diffList;
     }
@@ -217,10 +240,10 @@ public class CommonUtil {
             default -> throw new IllegalStateException("Unexpected value: " + map.getClass());
         };
         for (Map.Entry<K, V> entry : map.entrySet()) {
-            K key = entry.getKey();
-            V value = entry.getValue();
-            if (value instanceof Map<?, ?> innerMap) clone.put(key, (V) structureCloneMap((Map<K1, V1>) innerMap));
-            else if (value instanceof List<?> innerList) clone.put(key, (V) structureCloneList((List<L>) innerList));
+            K k = entry.getKey();
+            V v = entry.getValue();
+            if (v instanceof Map<?, ?> innerMap) clone.put(k, (V) structureCloneMap((Map<K1, V1>) innerMap));
+            else if (v instanceof List<?> innerList) clone.put(k, (V) structureCloneList((List<L>) innerList));
         }
         return clone;
     }

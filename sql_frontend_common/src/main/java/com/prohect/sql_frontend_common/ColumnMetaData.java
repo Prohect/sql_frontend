@@ -14,11 +14,11 @@ public class ColumnMetaData implements Serializable, Comparable<ColumnMetaData> 
     /**
      * the every first value of a column with isAutoIncrement
      */
-    long basicValue;
+    long basicValue4ID;
     /**
      * the delta the value of a column with isAutoIncrement increase every new row
      */
-    long deltaValue;
+    long deltaValue4ID;
     boolean unique;
 
     public ColumnMetaData() {
@@ -32,15 +32,15 @@ public class ColumnMetaData implements Serializable, Comparable<ColumnMetaData> 
         this.isNullable = isNullable;
     }
 
-    public ColumnMetaData(String columnName, String columnType, boolean isPrimaryKey, boolean isAutoIncrement, boolean isNullable, String defaultValue, long basicValue, long deltaValue, boolean unique, boolean hasDefaultValue) {
+    public ColumnMetaData(String columnName, String columnType, boolean isPrimaryKey, boolean isAutoIncrement, boolean isNullable, String defaultValue, long basicValue4ID, long deltaValue4ID, boolean unique, boolean hasDefaultValue) {
         this.columnName = columnName;
         this.columnType = columnType;
         this.isPrimaryKey = isPrimaryKey;
         this.isAutoIncrement = isAutoIncrement;
         this.isNullable = isNullable;
         this.defaultValue = defaultValue;
-        this.basicValue = basicValue;
-        this.deltaValue = deltaValue;
+        this.basicValue4ID = basicValue4ID;
+        this.deltaValue4ID = deltaValue4ID;
         this.unique = unique;
         this.hasDefaultValue = hasDefaultValue;
     }
@@ -93,20 +93,20 @@ public class ColumnMetaData implements Serializable, Comparable<ColumnMetaData> 
         this.defaultValue = defaultValue;
     }
 
-    public long getBasicValue() {
-        return basicValue;
+    public long getBasicValue4ID() {
+        return basicValue4ID;
     }
 
-    public void setBasicValue(long basicValue) {
-        this.basicValue = basicValue;
+    public void setBasicValue4ID(long basicValue4ID) {
+        this.basicValue4ID = basicValue4ID;
     }
 
-    public long getDeltaValue() {
-        return deltaValue;
+    public long getDeltaValue4ID() {
+        return deltaValue4ID;
     }
 
-    public void setDeltaValue(long deltaValue) {
-        this.deltaValue = deltaValue;
+    public void setDeltaValue4ID(long deltaValue4ID) {
+        this.deltaValue4ID = deltaValue4ID;
     }
 
     public boolean isUnique() {
@@ -121,7 +121,13 @@ public class ColumnMetaData implements Serializable, Comparable<ColumnMetaData> 
     public boolean equals(Object obj) {
         if (obj == this) return true;
         if (obj == null) return false;
-        return obj instanceof ColumnMetaData columnMetaData1 && columnMetaData1.getColumnName().equals(this.columnName);
+        if (obj instanceof ColumnMetaData columnMetaData1) {
+            return columnMetaData1.getColumnName().equals(this.columnName) && columnMetaData1.getColumnType().equals(this.columnType) &&
+                    this.isPrimaryKey() == columnMetaData1.isPrimaryKey() && this.isAutoIncrement() == columnMetaData1.isAutoIncrement() &&
+                    this.isNullable() == columnMetaData1.isNullable() && this.getDefaultValue().equals(columnMetaData1.getDefaultValue()) &&
+                    this.getBasicValue4ID() == columnMetaData1.getBasicValue4ID() && this.getDeltaValue4ID() == columnMetaData1.getDeltaValue4ID() &&
+                    this.isUnique() == columnMetaData1.isUnique() && this.isHasDefaultValue() == columnMetaData1.isHasDefaultValue();
+        } else return false;
     }
 
     public boolean isHasDefaultValue() {
