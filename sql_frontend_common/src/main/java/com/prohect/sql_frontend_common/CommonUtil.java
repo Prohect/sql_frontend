@@ -132,16 +132,16 @@ public class CommonUtil {
 
     public static <M extends Map<K, V>, K, V, K1, V1, T> void mergeMap(M map, M diffMap) {
         for (Map.Entry<K, V> entry : diffMap.entrySet()) {
-            K k = entry.getKey();
-            V vDiff = entry.getValue();
-            if (map.containsKey(k)) {
-                V v0 = map.get(k);
-                if (v0 instanceof Map<?, ?> innerMap0 && vDiff instanceof Map<?, ?> innerMapDiff)
-                    mergeMap((Map<K1, V1>) innerMap0, (Map<K1, V1>) innerMapDiff);
-                else if (v0 instanceof List<?> list0 && vDiff instanceof List<?>)
-                    mergeList((List<T>) list0, (List<T>) vDiff);
-                else map.put(k, vDiff);
-            } else map.put(k, vDiff);
+            K k1 = entry.getKey();
+            V v1 = entry.getValue();
+            if (map.containsKey(k1)) {
+                V v = map.get(k1);
+                if (v instanceof Map<?, ?> innerMap && v1 instanceof Map<?, ?> innerMapDiff)
+                    mergeMap((Map<K1, V1>) innerMap, (Map<K1, V1>) innerMapDiff);
+                else if (v instanceof List<?> innerList && v1 instanceof List<?> innerListDiff)
+                    mergeList((List<T>) innerList, (List<T>) innerListDiff);
+                else map.put(k1, v1);
+            } else map.put(k1, v1);
         }
     }
 
@@ -182,7 +182,7 @@ public class CommonUtil {
     }
 
     /**
-     * map should be larger than map1, and is somehow created by adding something to map1.
+     * map should be larger than map1, and is somehow created by adding something to map1 or update some of its contents.
      * then we find what's been changed by calling equals()
      */
     public static <M extends Map<K, V>, K, V, K1, V1, T> M diffMap(M map, M map1) {
@@ -207,7 +207,7 @@ public class CommonUtil {
     }
 
     /**
-     * list should be larger than list1, and is somehow created by adding something to list1.
+     * list should be larger than list1, and is somehow created by adding something to list1 or update some of its contents.
      * then we find what's been changed by calling equals()
      */
     public static <L extends List<T>, T, T1, K, V> L diffList(L list, L list1) {
