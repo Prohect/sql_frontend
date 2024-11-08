@@ -23,7 +23,7 @@ This guide will walk you through importing a project from a Version Control Syst
 
 1. Once all dependencies are downloaded, go to the Maven UI.
 2. In the Maven tool window, find the `sql_frontend_common` module.
-3. click on the module and click in `Lifecycle` and sequentially operate:
+3. click on the module and click on `Lifecycle` and sequentially operate:
    - `Clean`
    - `Package`
    - `Install`
