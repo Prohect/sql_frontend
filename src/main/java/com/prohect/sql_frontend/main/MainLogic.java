@@ -78,18 +78,6 @@ public class MainLogic implements Initializable {
     public void initialize(URL location, ResourceBundle resources) {
         Platform.runLater(() -> {
             try {
-//                AnchorPane.setTopAnchor(tableView, 0.0);
-//                AnchorPane.setLeftAnchor(tableView, 0.0);
-//                AnchorPane.setBottomAnchor(tableView, 0.0);
-//                AnchorPane.setRightAnchor(tableView, 0.0);
-//                pane4TableView.widthProperty().addListener((observable, oldValue, newValue) -> {
-//                    tableView.setPrefWidth(newValue.doubleValue());
-//                    System.out.println("MainLogic.initialize.pane4TableView.widthProperty() = " + newValue.doubleValue());
-//                });
-//                pane4TableView.heightProperty().addListener((observable, oldValue, newValue) -> {
-//                    tableView.setPrefHeight(newValue.doubleValue());
-//                    System.out.println("MainLogic.initialize.pane4TableView.heightProperty() = " + newValue.doubleValue());
-//                });
                 scene4InsertNewRowsScene = new Scene(insertFXMLLoader.load(), 640, 400);
                 scene4InsertNewColumnScene = new Scene(insertNewColumnFXMLLoader.load(), 359, 127);
 
@@ -125,6 +113,10 @@ public class MainLogic implements Initializable {
                 textInputDialog4newTableName = new TextInputDialog("表1");
                 textInputDialog4newTableName.setTitle("创建新表");
                 textInputDialog4newTableName.setHeaderText("请输入要创建的表的名称:");
+
+                this.getTableChoiceBox().valueProperty().addListener((observable, oldValue, newValue) -> {
+                    if (newValue != null && !newValue.equals(oldValue)) onCustomQueryButtonClicked();
+                });
 
             } catch (IOException e) {
                 throw new RuntimeException(e);
