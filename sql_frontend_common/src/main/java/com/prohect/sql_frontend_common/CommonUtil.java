@@ -26,7 +26,6 @@ public class CommonUtil {
                 for (; ; ) {
                     Packet packet = packets.poll();
                     if (packet == null) break;
-                    System.out.printf("发送%s%n", packet);
                     byte[] jsonBytes = packet.toBytesWithClassInfo();
                     byte[] lengthBytes = new byte[4];
                     for (int i = 1; i < 5; i++) {
@@ -69,7 +68,6 @@ public class CommonUtil {
                         byte[] bytes = new byte[packetLength];
                         in.readBytes(bytes);
                         Packet packet = PacketManager.convertPacket(bytes);
-                        System.out.printf("接收%s%n", packet);
                         out.offer(packet);
                         lastSuccessReaderIndex = in.readerIndex();
                     } catch (IndexOutOfBoundsException ignored) {
@@ -128,6 +126,14 @@ public class CommonUtil {
                 return false;
             }
         }
+    }
+
+    public static <T> T merge(T t1, T t2) {
+        if (t1 instanceof Map && t2 instanceof Map) {
+            return (T) merge((Map) t1, (Map) t2);
+        } else if (t1 instanceof List && t2 instanceof List) {
+            return (T) merge((List) t1, (List) t2);
+        } else throw new IllegalStateException("Cannot merge " + t1.getClass());
     }
 
     @SuppressWarnings("unchecked")
@@ -191,7 +197,7 @@ public class CommonUtil {
      */
     @SuppressWarnings("unchecked")
     public static <M extends Map<K, V>, K, V, K1, V1, T> M diff(M map, M map1) {
-        M diffMap = structureClone(map);
+        M diffMap = structureClone(map1);
         for (Map.Entry<K, V> entry : map.entrySet()) {
             K k = entry.getKey();
             V v = entry.getValue();
@@ -217,7 +223,7 @@ public class CommonUtil {
      */
     @SuppressWarnings("unchecked")
     public static <L extends List<T>, T, T1, K, V> L diff(L list, L list1) {
-        L diffList = structureClone(list);
+        L diffList = structureClone(list1);
         for (int i = 0; i < list.size(); i++) {
             T t = list.get(i);
             if (i < list1.size()) {
