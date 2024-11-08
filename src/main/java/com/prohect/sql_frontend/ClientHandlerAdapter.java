@@ -395,12 +395,16 @@ public class ClientHandlerAdapter extends ChannelInboundHandlerAdapter {
                         String value = databaseSourceChoiceBox.getValue();
                         if (value == null || value.isEmpty()) {
                             if (databaseListFirst != null) {
+                                if (databaseList.contains(Main.clientConfig.getLastDB()))
+                                    databaseListFirst = Main.clientConfig.getLastDB();
                                 databaseSourceChoiceBox.setValue(databaseListFirst);
                                 Main.db2tb2columnMD.get(databaseListFirst).forEach((table2column, _) -> tableList.add(table2column));
                             }
                             Main.mainLogic.getTableChoiceBox().setItems(tableList);
                             String tableListFirst = tableList.getFirst();
                             if (tableListFirst != null) {
+                                if (tableList.contains(Main.clientConfig.getLastTB()))
+                                    tableListFirst = Main.clientConfig.getLastTB();
                                 Main.mainLogic.getTableChoiceBox().setValue(tableListFirst);
                             }
                         }

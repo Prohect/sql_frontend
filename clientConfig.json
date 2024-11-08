@@ -1,10 +1,1 @@
-{
-  "port": 45931,
-  "serverHost": "122.228.26.226",
-  "sizeOfMainGUI": [
-    1233.0,
-    687.0
-  ],
-  "theUsersDatabaseName": "usersofmysqlfrontend",
-  "theUsersTableName": "usersofmysqlfrontend"
-}
+{"lastDB":"testdatabase1","lastTB":"table1","port":45931,"serverHost":"122.228.26.226","sizeOfMainGUI":[1369.0,806.0],"theUsersDatabaseName":"usersofmysqlfrontend","theUsersTableName":"usersofmysqlfrontend"}

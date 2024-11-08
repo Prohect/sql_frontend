@@ -64,7 +64,7 @@ public class MainLogic implements Initializable {
     }
 
     public String getTableName4tableView() {
-        return getDatabaseChoiceBox().getValue();
+        return getTableChoiceBox().getValue();
     }
 
     @Override
