@@ -1,7 +1,7 @@
 package com.prohect.sql_frontend.main.newColumn;
 
 import com.prohect.sql_frontend.main.Main;
-import com.prohect.sql_frontend_common.CommonUtil;
+import com.prohect.sql_frontend_common.Util;
 import com.prohect.sql_frontend_common.packet.CAlterPacket;
 import javafx.event.ActionEvent;
 import javafx.fxml.FXML;
@@ -12,9 +12,9 @@ import javafx.scene.control.TextField;
 import java.util.concurrent.LinkedBlockingQueue;
 
 public class InsertNewColumnLogic {
-
+    private boolean needUpdateMainTable = false;
     @FXML
-    private CheckBox asDefault;
+    private CheckBox hasDefaultCheckBox;
     @FXML
     private TextField autoIncrementDelta;
     @FXML
@@ -26,28 +26,36 @@ public class InsertNewColumnLogic {
     @FXML
     private TextField defaultTextField;
     @FXML
-    private CheckBox isAutoIncrement;
+    private CheckBox isAutoIncrementCheckBox;
     @FXML
-    private CheckBox isPrimaryKey;
+    private CheckBox isPrimaryKeyCheckBox;
     @FXML
-    private CheckBox isUnique;
+    private CheckBox isUniqueCheckBox;
     @FXML
-    private CheckBox notNull;
+    private CheckBox notNullCheckBox;
 
     public InsertNewColumnLogic() {
         Main.insertNewColumnLogic = this;
+    }
+
+    public boolean isNeedUpdateMainTable() {
+        return needUpdateMainTable;
+    }
+
+    public void setNeedUpdateMainTable(boolean needUpdateMainTable) {
+        this.needUpdateMainTable = needUpdateMainTable;
     }
 
     public ChoiceBox<String> getColumnTypeChoiceBox() {
         return columnTypeChoiceBox;
     }
 
-    public CheckBox getAsDefault() {
-        return asDefault;
+    public CheckBox getHasDefaultCheckBox() {
+        return hasDefaultCheckBox;
     }
 
-    public CheckBox getNotNull() {
-        return notNull;
+    public CheckBox getNotNullCheckBox() {
+        return notNullCheckBox;
     }
 
     @FXML
@@ -61,16 +69,16 @@ public class InsertNewColumnLogic {
             return;
         }
         StringBuilder cmd = new StringBuilder("ALTER TABLE " + Main.mainLogic.getTableName4tableView() + " ADD [" + columnNameTextField.getText() + "] " + columnTypeChoiceBox.getValue());
-        if (isAutoIncrement.isSelected()) {
+        if (isAutoIncrementCheckBox.isSelected()) {
             cmd.append(" IDENTITY(").append(autoIncrementHome.getText()).append(",").append(autoIncrementDelta.getText()).append(")");
         } else {
-            if (notNull.isSelected()) cmd.append(" NOT NULL ");
-            if (asDefault.isSelected())
-                cmd.append(" DEFAULT ").append(CommonUtil.convert2SqlServerContextString(defaultTextField.getText()));
-            if (isUnique.isSelected()) cmd.append(" UNIQUE");
+            if (notNullCheckBox.isSelected()) cmd.append(" NOT NULL ");
+            if (hasDefaultCheckBox.isSelected())
+                cmd.append(" DEFAULT ").append(Util.convert2SqlServerContextString(defaultTextField.getText()));
+            if (isUniqueCheckBox.isSelected()) cmd.append(" UNIQUE");
         }
-        if (isPrimaryKey.isSelected()) cmd.append(" PRIMARY KEY");
-        CAlterPacket cAlterPacket = new CAlterPacket(Main.user.getUuid(), cmd.toString(), Main.mainLogic.getDataBase4tableView());
+        if (isPrimaryKeyCheckBox.isSelected()) cmd.append(" PRIMARY KEY");
+        CAlterPacket cAlterPacket = new CAlterPacket(Main.user.getUuid(), cmd.toString(), Main.mainLogic.getDataBaseName4tableView());
         Main.channel2packetsMap.computeIfAbsent(Main.ctx.channel(), c -> new LinkedBlockingQueue<>()).add(cAlterPacket);
     }
 }

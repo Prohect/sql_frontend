@@ -40,12 +40,8 @@
     <children>
         <MenuBar VBox.vgrow="NEVER">
             <menus>
-                <Menu fx:id="inspectFromDBMenu" mnemonicParsing="false" text="数据库">
+                <Menu mnemonicParsing="false" text="数据库">
                     <items>
-                        <MenuItem fx:id="createRowMenuItem" mnemonicParsing="false"
-                                  onAction="#insertNewRowMenuItemOnAction" text="新建行"/>
-                        <MenuItem fx:id="createColumnMenuItem" mnemonicParsing="false"
-                                  onAction="#insertNewColumnMenuItemOnAction" text="新建列"/>
                         <MenuItem mnemonicParsing="false" onAction="#insertNewTableMenuItemOnAction" text="新建表"/>
                     </items>
                 </Menu>
@@ -82,8 +78,8 @@
         </AnchorPane>
         <HBox>
             <children>
-                <Button fx:id="customQueryButton" mnemonicParsing="false" onMouseClicked="#onCustomQueryButtonClicked"
-                        prefHeight="25.0" text="查询"/>
+                <Button mnemonicParsing="false" onMouseClicked="#onCustomQueryButtonClicked" prefHeight="25.0"
+                        text="查询"/>
                 <Label prefHeight="25.0" text="查询指令: select">
                     <HBox.margin>
                         <Insets left="10.0"/>
@@ -101,14 +97,12 @@
                 </Label>
                 <ChoiceBox fx:id="tableChoiceBox" prefHeight="25.0" prefWidth="150.0"/>
                 <Pane HBox.hgrow="ALWAYS"/>
-                <Label fx:id="databaseSourceChoiceBoxLabel" alignment="CENTER_RIGHT" prefHeight="25.0"
-                       text="数据库名: ">
+                <Label alignment="CENTER_RIGHT" prefHeight="25.0" text="数据库名: ">
                     <HBox.margin>
                         <Insets left="10.0"/>
                     </HBox.margin>
                 </Label>
-                <ChoiceBox fx:id="databaseSourceChoiceBox" onMouseClicked="#databaseSourceChoiceBoxOnMouseClicked"
-                           prefHeight="25.0" prefWidth="150.0">
+                <ChoiceBox fx:id="databaseChoiceBox" prefHeight="25.0" prefWidth="150.0">
                     <opaqueInsets>
                         <Insets/>
                     </opaqueInsets>

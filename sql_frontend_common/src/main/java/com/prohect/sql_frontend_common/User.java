@@ -99,6 +99,9 @@ public class User {
         this.password = password;
     }
 
+    /**
+     * @return a permission map:db->table->column->boolean[]{read, write}. note: all names are lowercased
+     */
     public HashMap<String, HashMap<String, HashMap<String, Boolean[]>>> getPermissions() {
         return permissions;
     }

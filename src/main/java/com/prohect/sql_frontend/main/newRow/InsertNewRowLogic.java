@@ -3,7 +3,7 @@ package com.prohect.sql_frontend.main.newRow;
 import com.prohect.sql_frontend.main.Main;
 import com.prohect.sql_frontend.main.MainLogic;
 import com.prohect.sql_frontend_common.ColumnMetaData;
-import com.prohect.sql_frontend_common.CommonUtil;
+import com.prohect.sql_frontend_common.Util;
 import com.prohect.sql_frontend_common.packet.CInsertPacket;
 import com.prohect.sql_frontend_common.packet.Packet;
 import javafx.collections.ObservableList;
@@ -33,7 +33,7 @@ public class InsertNewRowLogic implements Initializable {
     public static final String nullableString = "可选·输入";
     public static final String normalString = "请·输·入";
     public static final String hasDefaultString = "有·默认值";
-    public static final String bitString = "true·OR·false";
+    public static final String bitString = "1·OR·0";
 
     public static String databaseName = "";
     public static String tableName = "";
@@ -151,7 +151,7 @@ public class InsertNewRowLogic implements Initializable {
 
     private Object[] getNewItem() {
         Object[] objects = new Object[this.theInsertTableView.getColumns().size()];
-        ArrayList<ColumnMetaData> columnMetaDataList = Main.db2table2columnMap.get(Main.mainLogic.getDataBase4tableView()).get(Main.mainLogic.getTableName4tableView());
+        ArrayList<ColumnMetaData> columnMetaDataList = Main.db2tb2columnMD.get(Main.mainLogic.getDataBaseName4tableView()).get(Main.mainLogic.getTableName4tableView());
         for (int i = 0; i < objects.length; i++) {
             ColumnMetaData columnMetaData = columnMetaDataList.get(i);
             objects[i] = getPromptOfColumn(columnMetaData);
@@ -190,7 +190,7 @@ public class InsertNewRowLogic implements Initializable {
     @FXML
     void submitTheChanges(MouseEvent event) {
         try {
-            ArrayList<ColumnMetaData> columnMetaDataList = Main.db2table2columnMap.get(Main.mainLogic.getDataBase4tableView()).get(Main.mainLogic.getTableName4tableView());
+            ArrayList<ColumnMetaData> columnMetaDataList = Main.db2tb2columnMD.get(Main.mainLogic.getDataBaseName4tableView()).get(Main.mainLogic.getTableName4tableView());
             ObservableList<Object[]> items = this.getTheInsertTableView().getItems();
             List<Packet> packets = new ArrayList<>();
             for (Object[] item : items) {
@@ -247,15 +247,15 @@ public class InsertNewRowLogic implements Initializable {
                     if (first) {
                         first = false;
                         assert cmd != null;
-                        cmd.append(") VALUES (").append(CommonUtil.isNumber((String) object) ? (String) object : CommonUtil.convert2SqlServerContextString(object));
+                        cmd.append(") VALUES (").append(Util.isNumber((String) object) ? (String) object : Util.convert2SqlServerContextString(object));
                     } else {
                         if (bitString.equals(object)) object = "0";
-                        cmd.append(",").append(CommonUtil.isNumber((String) object) ? (String) object : CommonUtil.convert2SqlServerContextString(object));
+                        cmd.append(",").append(Util.isNumber((String) object) ? (String) object : Util.convert2SqlServerContextString(object));
                     }
                 }
                 assert cmd != null;
                 cmd.append(")");
-                CInsertPacket cInsertPacket = new CInsertPacket(Main.user.getUuid(), cmd.toString(), Main.mainLogic.getDataBase4tableView());
+                CInsertPacket cInsertPacket = new CInsertPacket(Main.user.getUuid(), cmd.toString(), Main.mainLogic.getDataBaseName4tableView());
                 Main.packetID2insertedValueMap.put(cInsertPacket.getId(), item);
                 packets.add(cInsertPacket);
 
@@ -263,8 +263,8 @@ public class InsertNewRowLogic implements Initializable {
             for (Packet packet : packets) {
                 Main.channel2packetsMap.computeIfAbsent(Main.ctx.channel(), c -> new LinkedBlockingQueue<>()).add(packet);
             }
-        } catch (Exception ignored) {
-            ignored.printStackTrace();
+        } catch (Exception e) {
+            Main.logger.log(e);
         }
     }
 
@@ -292,7 +292,7 @@ public class InsertNewRowLogic implements Initializable {
                 ObservableList<TableColumn<Object[], ?>> tableColumns = tableView.getColumns();
                 int columns = tableColumns.size();
                 int skip = -1;
-                ArrayList<ColumnMetaData> columnMetaDataArrayList = Main.db2table2columnMap.get(databaseName).get(tableName);
+                ArrayList<ColumnMetaData> columnMetaDataArrayList = Main.db2tb2columnMD.get(databaseName).get(tableName);
                 for (int i = 0; i < tableColumns.size(); i++) {
                     if (skip != -1) break;
                     TableColumn<Object[], ?> tableColumn = tableColumns.get(i);
@@ -318,10 +318,10 @@ public class InsertNewRowLogic implements Initializable {
                 tableView.getItems().addAll(formattedItems);
             } catch (Exception e) {
                 Main.mainLogic.getInfoLabel().setText(e.getMessage());
-                e.printStackTrace();
+                Main.logger.log(e);
             }
         } else {
-            System.out.println("No file selected.");
+            Main.logger.log("No file selected.");
         }
     }
 

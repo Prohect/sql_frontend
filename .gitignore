@@ -38,6 +38,8 @@ build/
 .DS_Store
 
 ### My custom blacklist ###
+log/
+*.log
 *.csv
 *.xlsx
 clientConfig.json

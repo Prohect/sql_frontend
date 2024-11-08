@@ -3,7 +3,7 @@ package com.prohect.sql_frontend_server;
 import com.alibaba.fastjson2.JSON;
 import com.alibaba.fastjson2.JSONException;
 import com.prohect.sql_frontend_common.ColumnMetaData;
-import com.prohect.sql_frontend_common.CommonUtil;
+import com.prohect.sql_frontend_common.Logger;
 import com.prohect.sql_frontend_common.User;
 import com.prohect.sql_frontend_common.packet.*;
 import com.prohect.sql_frontend_server.sqlUtil.SqlUtil;
@@ -25,10 +25,13 @@ import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.LinkedBlockingQueue;
 import java.util.concurrent.TimeUnit;
 
+import static com.prohect.sql_frontend_common.CollectionUtil.diff;
+
 
 public class Server {
 
-    public final static ConcurrentHashMap<ChannelHandlerContext, LinkedBlockingQueue<Packet>> ctx2packetToBeSentMap = new ConcurrentHashMap<>();
+    public static final ConcurrentHashMap<ChannelHandlerContext, LinkedBlockingQueue<Packet>> ctx2packetToBeSentMap = new ConcurrentHashMap<>();
+    public static final Logger logger;
     private static final HashMap<String, Connection> databaseName2connectionMap = new HashMap<>();
     private static final File configFile = new File("serverConfig.json");
     private static final HashMap<Long, User> uuid2userMap = new HashMap<>();
@@ -38,17 +41,26 @@ public class Server {
      */
     private static HashMap<String, HashMap<String, ArrayList<ColumnMetaData>>> database2Table2ColumnMap = new HashMap<>();
     private static Connection connection2UsersDB;
+
+    static {
+        try {
+            logger = new Logger("server");
+        } catch (IOException e) {
+            throw new RuntimeException(e);
+        }
+    }
+
     private final ServerConfig serverConfig;
 
     public Server(ServerConfig config) {
         this.serverConfig = config;
     }
 
-    public static void main(String[] args) {
+    public static void main(String[] args) throws IOException {
         try {
             new Server(loadConfig()).run();
         } catch (SQLException e) {
-            System.out.println("Error: " + e.getMessage() + "\r\n" + "检查SQL配置是否正确");
+            logger.log("Error: " + e.getMessage() + "\r\n" + "检查SQL配置是否正确");
             throw new RuntimeException(e);
         } catch (IOException e) {
             throw new RuntimeException(e);
@@ -85,12 +97,12 @@ public class Server {
     private HashMap<String, HashMap<String, ArrayList<ColumnMetaData>>> loadMetaDataFromConnection(HashMap<String, Connection> databaseName2connectionMap) {
         HashMap<String, HashMap<String, ArrayList<ColumnMetaData>>> tempDatabase2Table2ColumnMap = new HashMap<>();
         databaseName2connectionMap.forEach((databaseName, connection) -> {
-            try {
+            try {//note:db,table,column all names are lowercased before storing
                 DatabaseMetaData metaData = connection.getMetaData();
-                ResultSet tableMetadatas = metaData.getTables(null, null, "%", new String[]{"TABLE"});
+                ResultSet tableMetaDataResultSet = metaData.getTables(null, null, "%", new String[]{"TABLE"});
                 List<String> tableNameBlackList = serverConfig.getTheTargetDatabaseNameBlackList();
-                while (tableMetadatas.next()) {
-                    String tableName = tableMetadatas.getString("TABLE_NAME").toLowerCase();
+                while (tableMetaDataResultSet.next()) {
+                    String tableName = tableMetaDataResultSet.getString("TABLE_NAME").toLowerCase();
                     if (tableNameBlackList.contains(tableName)) continue;
                     ArrayList<String> primaryKeyList = new ArrayList<>();
                     ArrayList<ColumnMetaData> columnList = tempDatabase2Table2ColumnMap.computeIfAbsent(databaseName.toLowerCase(), k -> new HashMap<>()).computeIfAbsent(tableName, k -> new ArrayList<>());
@@ -117,7 +129,7 @@ public class Server {
 
     public void run() throws SQLException, IOException {
         if (serverConfig == null) {
-            System.out.println("没有设置文件，现在已经自动生成，请配置好设置文件之后再启动！");
+            logger.log("没有设置文件，现在已经自动生成，请配置好设置文件之后再启动！");
             return;
         }
         try {
@@ -135,6 +147,7 @@ public class Server {
                             Packet packet = packets.poll();
                             if (packet == null) break;
                             checkConnection();
+                            logger.log("接收%s".formatted(packet.toString()));
                             switch (packet) {
                                 case CAlterPacket cAlterPacket -> processAlterPacket(ctx, cAlterPacket);
                                 case CDeletePacket cDeletePacket -> processDeletePacket(ctx, cDeletePacket);
@@ -146,7 +159,7 @@ public class Server {
                                 }
                             }
                         } catch (Exception e) {
-                            e.printStackTrace();
+                            logger.log(e);
                             ctx2packetToBeSentMap.get(ctx).add(new SInfoPacket(e.getMessage()));
                         }
                     }
@@ -170,7 +183,7 @@ public class Server {
         ctx2packetToBeSentMap.get(ctx).add(new SInfoPacket("成功, " + i + "行受影响"));
         statement.close();
         HashMap<String, HashMap<String, ArrayList<ColumnMetaData>>> map = loadMetaDataFromConnection(databaseName2connectionMap);
-        HashMap<String, HashMap<String, ArrayList<ColumnMetaData>>> diffMap = CommonUtil.diffMap(map, database2Table2ColumnMap);
+        HashMap<String, HashMap<String, ArrayList<ColumnMetaData>>> diffMap = diff(map, database2Table2ColumnMap);
         database2Table2ColumnMap = map;
         SLoginPacket updateMetadataPacket = new SLoginPacket(new User("", "", user.getUuid()), diffMap, SLoginPacket.Info.UM, "", "");
         for (Map.Entry<ChannelHandlerContext, LinkedBlockingQueue<Packet>> entry : ctx2packetToBeSentMap.entrySet())
@@ -225,9 +238,9 @@ public class Server {
         if (userFromDB != null) {
             if (user.getUuid() == userFromDB.getUuid()) {//consider this as reconnect
                 if (uuid2userMap.getOrDefault(user.getUuid(), new User()).getIp() == user.getIp()) {
-                    sLoginPacket = new SLoginPacket(userFromDB.setIp(user.getIp()), new HashMap<>(), SLoginPacket.Info.RS, "", "");
-                } else if (user.getPassword().equals(userFromDB.getPassword())) {
-                    sLoginPacket = new SLoginPacket(userFromDB.setIp(user.getIp()), new HashMap<>(), SLoginPacket.Info.RS, "", "");
+                    sLoginPacket = new SLoginPacket(new User(), new HashMap<>(), SLoginPacket.Info.RS, "", "");
+                } else if (user.getPassword().equals(userFromDB.getPassword())) {//probably server crashes and reboot, so just take this as normal login and update all data
+                    sLoginPacket = new SLoginPacket(userFromDB.setIp(user.getIp()), database2Table2ColumnMap, SLoginPacket.Info.S, serverConfig.getTheUsersTableName(), serverConfig.getTheUsersTableName());
                 } else throw new IllegalAccessException("幽默重连来了");
             } else {
                 if (userFromDB.getPassword().equals(user.getPassword())) {

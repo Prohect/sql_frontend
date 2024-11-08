@@ -1,7 +1,7 @@
 package com.prohect.sql_frontend_server.sqlUtil;
 
-import com.prohect.sql_frontend_common.CommonUtil;
 import com.prohect.sql_frontend_common.User;
+import com.prohect.sql_frontend_common.Util;
 import com.prohect.sql_frontend_server.DatabaseAdmin;
 import com.prohect.sql_frontend_server.ServerConfig;
 
@@ -37,7 +37,7 @@ public class SqlUtil4Login {
             for (int columnIndex = 1; columnIndex <= columnCount; columnIndex++) {
                 String columnName = metaData.getColumnName(columnIndex);
                 if (columnName.startsWith("P_")) {
-                    String[] decode = CommonUtil.permissionColumnNameDecode(columnName);//0->databaseName; 1->tableName; 2->columnName; 3->ReadOrWrite
+                    String[] decode = Util.permissionColumnNameDecode(columnName);//0->databaseName; 1->tableName; 2->columnName; 3->ReadOrWrite
                     Boolean[] booleans = user.getPermissions().computeIfAbsent(decode[0], k -> new HashMap<>()).computeIfAbsent(decode[1], k -> new HashMap<>()).computeIfAbsent(decode[2], k -> new Boolean[2]);
                     if (decode[3].equals("Read")) {
                         booleans[0] = set.getBoolean(columnIndex);

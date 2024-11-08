@@ -47,11 +47,15 @@ public class MainUi extends Application {
 
     @Override
     public void stop() throws Exception {
+        if (Main.clientConfig != null) {
+            Main.clientConfig.setLastDB(Main.mainLogic.getDataBaseName4tableView());
+            Main.clientConfig.setLastTB(Main.mainLogic.getTableName4tableView());
+            ClientConfig.saveConfig(Main.clientConfig);
+        }
         if (Main.client != null) Main.client.close();
         for (int i = 0; i < NettyClient.threadGroups.size(); i++) {
             if (NettyClient.threadGroups.get(i) != null) NettyClient.threadGroups.get(i).shutdownGracefully();
         }
-        ClientConfig.saveConfig(Main.clientConfig);
         Platform.exit();
     }
 

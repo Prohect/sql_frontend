@@ -11,7 +11,6 @@ import javafx.scene.control.Label;
 import javafx.scene.control.PasswordField;
 import javafx.scene.control.TextField;
 import javafx.scene.input.KeyEvent;
-import javafx.scene.input.MouseEvent;
 
 import java.util.concurrent.atomic.AtomicBoolean;
 
@@ -32,8 +31,7 @@ public class LoginLogic {
         Main.loginLogic = this;
     }
 
-    @FXML
-    public void login(MouseEvent event) throws Exception {
+    private static void login1() throws Exception {
         Main.clientConfig = ClientConfig.readConfig();
         //new network client
         String serverHost = Main.clientConfig.getServerHost();
@@ -41,6 +39,11 @@ public class LoginLogic {
         Bootstrap b = new Bootstrap();
         NioEventLoopGroup workerGroup = new NioEventLoopGroup();
         Main.setAndRunNewNettyClient(new NettyClient(serverHost, port, b, workerGroup, new ClientHandlerAdapter(serverHost, port, b, workerGroup)));
+    }
+
+    @FXML
+    public void login() throws Exception {
+        login1();
     }
 
     public Label getLoginInfo() {

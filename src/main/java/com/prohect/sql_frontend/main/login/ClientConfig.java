@@ -10,12 +10,14 @@ import java.nio.file.Files;
 
 public class ClientConfig {
     static final File configFile = new File("clientConfig.json");
+
     private String serverHost = "localhost";
     private int port = 19336;
     private String theUsersTableName;
     private String theUsersDatabaseName;
-
     private double[] sizeOfMainGUI = new double[]{800, 600};
+    private String lastDB;
+    private String lastTB;
 
     public ClientConfig(String serverHost, int port, String theUsersTableName, String theUsersDatabaseName) {
         this.serverHost = serverHost;
@@ -24,12 +26,7 @@ public class ClientConfig {
         this.theUsersDatabaseName = theUsersDatabaseName;
     }
 
-    public ClientConfig(String serverHost, int port, String theUsersTableName, String theUsersDatabaseName, double[] sizeOfMainGUI) {
-        this.serverHost = serverHost;
-        this.port = port;
-        this.theUsersTableName = theUsersTableName;
-        this.theUsersDatabaseName = theUsersDatabaseName;
-        this.sizeOfMainGUI = sizeOfMainGUI;
+    public ClientConfig() {
     }
 
     public static ClientConfig readConfig() throws IOException {
@@ -64,6 +61,22 @@ public class ClientConfig {
             fos.write(JSON.toJSONBytes(clientConfig));
         } catch (IOException ignored) {
         }
+    }
+
+    public String getLastTB() {
+        return lastTB;
+    }
+
+    public void setLastTB(String lastTB) {
+        this.lastTB = lastTB;
+    }
+
+    public String getLastDB() {
+        return lastDB;
+    }
+
+    public void setLastDB(String lastDB) {
+        this.lastDB = lastDB;
     }
 
     public double[] getSizeOfMainGUI() {
