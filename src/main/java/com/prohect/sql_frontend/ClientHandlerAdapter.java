@@ -7,7 +7,7 @@ import com.prohect.sql_frontend.main.UpdateOfCellOfTable;
 import com.prohect.sql_frontend.main.login.ClientConfig;
 import com.prohect.sql_frontend.main.login.LoginLogic;
 import com.prohect.sql_frontend_common.ColumnMetaData;
-import com.prohect.sql_frontend_common.CommonUtil;
+import com.prohect.sql_frontend_common.Util;
 import com.prohect.sql_frontend_common.User;
 import com.prohect.sql_frontend_common.packet.*;
 import io.netty.bootstrap.Bootstrap;
@@ -35,6 +35,8 @@ import java.util.concurrent.LinkedBlockingQueue;
 import java.util.concurrent.TimeUnit;
 import java.util.concurrent.atomic.AtomicBoolean;
 import java.util.concurrent.locks.ReentrantLock;
+
+import static com.prohect.sql_frontend_common.CollectionUtil.*;
 
 @ChannelHandler.Sharable
 public class ClientHandlerAdapter extends ChannelInboundHandlerAdapter {
@@ -92,7 +94,7 @@ public class ClientHandlerAdapter extends ChannelInboundHandlerAdapter {
 
     private static void updateTableChoiceBox(String oldValue, String newValue) {
         ObservableList<String> list = FXCollections.observableArrayList();
-        HashMap<String, ArrayList<ColumnMetaData>> table2columnsMap = Main.db2table2columnMap.get(Main.mainLogic.getDatabaseSourceChoiceBox().getValue());
+        HashMap<String, ArrayList<ColumnMetaData>> table2columnsMap = Main.db2tb2knownColumn.get(Main.mainLogic.getDatabaseSourceChoiceBox().getValue());
         if (table2columnsMap != null) table2columnsMap.forEach((tableName, _) -> list.add(tableName));
         Main.mainLogic.getTableChoiceBox().setItems(list);
         if (newValue != null && newValue.equals(oldValue)) {
@@ -108,7 +110,7 @@ public class ClientHandlerAdapter extends ChannelInboundHandlerAdapter {
     public void channelActive(ChannelHandlerContext ctx) throws Exception {
         Main.ctx = ctx;
         LinkedBlockingQueue<Packet> packets = new LinkedBlockingQueue<>();
-        channel2packetsEncoder.put(ctx.channel(), CommonUtil.encoderRegister(workerGroup, ctx, packets, 25));
+        channel2packetsEncoder.put(ctx.channel(), Util.encoderRegister(workerGroup, ctx, packets, 25));
         Main.channel2packetsMap.put(ctx.channel(), packets);
         //Json:8种基本数据类型,只有char用双引号为"a", 数字直接为1.2, Boolean为true | false, 引用类型字符串为"string..."
 //        byte[] bytes = JSON.toJSONBytes(new SInfoPacket("}[]{0}[]{"));//result: stringBuilder = {"id":-212632573705707520,"info":"}[]{0}[]{","prefix":"SInfoPacket\\"}
@@ -121,6 +123,7 @@ public class ClientHandlerAdapter extends ChannelInboundHandlerAdapter {
                 for (; ; ) {
                     Packet packet = Main.packetReceivedQueue.poll();
                     if (packet == null) break;
+                    Main.logger.log("接收%s".formatted(packet));
                     switch (packet) {
                         case SQueryReplyPacket sQueryReplyPacket -> processSQueryReplyPacket(sQueryReplyPacket);
                         case SInfoPacket sInfoPacket -> processSInfoPacket(sInfoPacket);
@@ -141,7 +144,7 @@ public class ClientHandlerAdapter extends ChannelInboundHandlerAdapter {
 
     @Override
     public void channelRead(ChannelHandlerContext ctx, Object msg) {
-        channel2packetDecoderFuture.put(ctx.channel(), CommonUtil.getPackets_concurrent(workerGroup, channel2packetDecoderFuture.get(ctx.channel()), (ByteBuf) msg, channel2lockOfIn.computeIfAbsent(ctx.channel(), _ -> new ReentrantLock()), channel2in.computeIfAbsent(ctx.channel(), _ -> ctx.alloc().buffer(1048576)), Main.packetReceivedQueue));
+        channel2packetDecoderFuture.put(ctx.channel(), Util.getPackets_concurrent(workerGroup, channel2packetDecoderFuture.get(ctx.channel()), (ByteBuf) msg, channel2lockOfIn.computeIfAbsent(ctx.channel(), _ -> new ReentrantLock()), channel2in.computeIfAbsent(ctx.channel(), _ -> ctx.alloc().buffer(1048576)), Main.packetReceivedQueue));
     }
 
     public void reconnect() {
@@ -224,7 +227,7 @@ public class ClientHandlerAdapter extends ChannelInboundHandlerAdapter {
                     TableColumn<Object[], Object> column = ClientHandlerAdapter.getTableColumn(name, columnIndex);
                     AtomicBoolean isAutoIncrement = new AtomicBoolean(false);
                     if (!Main.clientConfig.getTheUsersDatabaseName().equals(databaseName))
-                        Main.db2table2columnMap.get(databaseName).get(tableName).stream().filter(c -> c.getColumnName().equalsIgnoreCase(name)).findFirst().ifPresent(c -> isAutoIncrement.set(c.isAutoIncrement()));
+                        Main.db2tb2knownColumn.get(databaseName).get(tableName).stream().filter(c -> c.getColumnName().equalsIgnoreCase(name)).findFirst().ifPresent(c -> isAutoIncrement.set(c.isAutoIncrement()));
                     if (!isAutoIncrement.get())
                         if (Main.user.isOp() || (permission4thisTable != null && permission4thisTable.getOrDefault(name, new Boolean[]{true, false})[1])) {
                             ClientHandlerAdapter.setCellFactory(column);
@@ -236,11 +239,11 @@ public class ClientHandlerAdapter extends ChannelInboundHandlerAdapter {
                                 String newValue = (String) event.getNewValue();
                                 Object o1 = row[(targetColumnIndex == 0) ? 1 : 0];
                                 ObservableList<TableColumn<Object[], ?>> columns = Main.mainLogic.getTableView().getColumns();
-                                StringBuilder condition = new StringBuilder("UPDATE " + Main.mainLogic.getTableName4tableView() + " SET [" + columns.get(targetColumnIndex).getText() + "] = " + (CommonUtil.isNumber(newValue) ? newValue : "'" + newValue + "'") + " WHERE [" + (columns.get(targetColumnIndex == 0 ? 1 : 0)).getText() + "] = " + CommonUtil.convert2SqlServerContextString(o1));
+                                StringBuilder condition = new StringBuilder("UPDATE " + Main.mainLogic.getTableName4tableView() + " SET [" + columns.get(targetColumnIndex).getText() + "] = " + (Util.isNumber(newValue) ? newValue : "'" + newValue + "'") + " WHERE [" + (columns.get(targetColumnIndex == 0 ? 1 : 0)).getText() + "] = " + Util.convert2SqlServerContextString(o1));
                                 for (int i = 1; i < row.length; i++) {
                                     if (i == targetColumnIndex) continue;
                                     if (row[i] == null) continue;
-                                    String convert2SqlServerContextString = CommonUtil.convert2SqlServerContextString(row[i]);
+                                    String convert2SqlServerContextString = Util.convert2SqlServerContextString(row[i]);
                                     String columnName = columns.get(i).getText();
                                     if (convert2SqlServerContextString == null || convert2SqlServerContextString.isEmpty()) {
                                         continue;
@@ -278,7 +281,7 @@ public class ClientHandlerAdapter extends ChannelInboundHandlerAdapter {
 
         TableView<Object[]> tableView = Main.mainLogic.getTableView();
         String columnName = tableView.getColumns().get(targetColumnIndex).getText();
-        ArrayList<ColumnMetaData> columnMetaDataArrayList = Main.db2table2columnMap.get(Main.mainLogic.getDataBaseName4tableView()).get(Main.mainLogic.getTableName4tableView());
+        ArrayList<ColumnMetaData> columnMetaDataArrayList = Main.db2tb2knownColumn.get(Main.mainLogic.getDataBaseName4tableView()).get(Main.mainLogic.getTableName4tableView());
         Platform.runLater(() -> {
             ObservableList<Object[]> items = tableView.getItems();
             Object[] objects = items.get(targetRowIndex);
@@ -289,11 +292,11 @@ public class ClientHandlerAdapter extends ChannelInboundHandlerAdapter {
                 Main.logger.log("oldValue.getClass().getSimpleName() = " + clazzName);
                 switch (clazzName) {
                     case "Integer":
-                        if (CommonUtil.isNumber((String) newValue)) newValue = Integer.parseInt((String) newValue);
+                        if (Util.isNumber((String) newValue)) newValue = Integer.parseInt((String) newValue);
                         else newValue = (int) Double.parseDouble((String) newValue);
                         break;
                     case "Long":
-                        if (CommonUtil.isNumber((String) newValue)) newValue = Long.parseLong((String) newValue);
+                        if (Util.isNumber((String) newValue)) newValue = Long.parseLong((String) newValue);
                         else newValue = (long) Double.parseDouble((String) newValue);
                         break;
                     case "Double":
@@ -322,34 +325,35 @@ public class ClientHandlerAdapter extends ChannelInboundHandlerAdapter {
 
         Platform.runLater(() -> Main.mainLogic.getInfoLabel().setText(SLoginPacket.toString(info)));
         switch (info) {
-            case RS -> {
-                Main.user.setPermissions(userFromPacket.getPermissions());
-                LoginLogic.logged.set(true);
-            }
+            case RS -> LoginLogic.logged.set(true);
             case S -> {
                 if (!LoginLogic.logged.get()) {
                     Main.user = userFromPacket;
                     Main.clientConfig.setTheUsersDatabaseName(sLoginPacket.getTheUsersDatabaseName());
                     Main.clientConfig.setTheUsersTableName(sLoginPacket.getTheUsersTableName());
                     ClientConfig.saveConfig(Main.clientConfig);
-                    Main.db2table2columnMap = db2table2columnMap;
+                    merge(Main.db2tb2knownColumn, db2table2columnMap);
 
                     HashMap<String, HashMap<String, HashMap<String, Boolean[]>>> permissions = userFromPacket.getPermissions();
-                    var m = CommonUtil.structureCloneAndMerge(db2table2columnMap);
+                    var m = structureCloneAndMerge(db2table2columnMap);
                     m.forEach((db, tb2cml) -> tb2cml.forEach((tb, cml) -> cml.removeAll(cml.stream().filter(cm -> !permissions.getOrDefault(db, new HashMap<>()).getOrDefault(tb, new HashMap<>()).getOrDefault(cm.getColumnName(), new Boolean[]{true, false})[0]).toList())));
-                    HashMap<String, HashMap<String, ObservableList<Object[]>>> db2tb2l = new HashMap<>();
+
                     HashMap<String, HashMap<String, ArrayList<TableColumn<?, ?>>>> db2tb2tcl = new HashMap<>();
-                    m.forEach((db, tb2cml) -> tb2cml.forEach((tb, _) -> db2tb2l.computeIfAbsent(db, _ -> new HashMap<>()).computeIfAbsent(tb, _ -> FXCollections.observableArrayList())));
                     m.forEach((db, tb2cml) -> tb2cml.forEach((tb, cml) -> {
                         for (int i = 0; i < cml.size(); i++) {
                             ColumnMetaData columnMetaData = cml.get(i);
                             db2tb2tcl.computeIfAbsent(db, _ -> new HashMap<>()).computeIfAbsent(tb, _ -> new ArrayList<>()).add(getTableColumn(columnMetaData.getColumnName(), i));
                         }
                     }));
+                    merge(Main.db2tb2permittedColumn, db2tb2tcl);
+
+                    HashMap<String, HashMap<String, ObservableList<Object[]>>> db2tb2items = new HashMap<>();
+                    m.forEach((db, tb2cml) -> tb2cml.forEach((tb, _) -> db2tb2items.computeIfAbsent(db, _ -> new HashMap<>()).computeIfAbsent(tb, _ -> FXCollections.observableArrayList())));
+                    merge(Main.db2tb2items, db2tb2items);
 
                     Platform.runLater(() -> {
                         ObservableList<String> databaseList = FXCollections.observableArrayList();
-                        Main.db2table2columnMap.forEach((db, _) -> databaseList.add(db));
+                        Main.db2tb2knownColumn.forEach((db, _) -> databaseList.add(db));
                         ChoiceBox<String> databaseSourceChoiceBox = Main.mainLogic.getDatabaseSourceChoiceBox();
                         databaseSourceChoiceBox.setItems(databaseList);
                         String databaseListFirst = databaseList.getFirst();
@@ -360,7 +364,7 @@ public class ClientHandlerAdapter extends ChannelInboundHandlerAdapter {
                             }
                             ObservableList<String> tableList = FXCollections.observableArrayList();
                             if (databaseListFirst != null) {
-                                Main.db2table2columnMap.get(databaseListFirst).forEach((table2column, _) -> tableList.add(table2column));
+                                Main.db2tb2knownColumn.get(databaseListFirst).forEach((table2column, _) -> tableList.add(table2column));
                             }
                             Main.mainLogic.getTableChoiceBox().setItems(tableList);
                             String tableListFirst = tableList.getFirst();
@@ -392,11 +396,11 @@ public class ClientHandlerAdapter extends ChannelInboundHandlerAdapter {
             }
             case UM -> {
                 String value = Main.mainLogic.getTableChoiceBox().getValue();
-                CommonUtil.merge(Main.db2table2columnMap, db2table2columnMap);
+                merge(Main.db2tb2knownColumn, db2table2columnMap);
                 Platform.runLater(() -> updateTableChoiceBox(value, value));
                 Main.mainLogic.updateColumnMetaDataOfInsertNewRowTable();
             }
-            case UP -> Main.user.setPermissions(userFromPacket.getPermissions());
+            case UP -> merge(Main.user.getPermissions(), userFromPacket.getPermissions());
         }
     }
 }

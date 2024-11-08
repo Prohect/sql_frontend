@@ -25,7 +25,7 @@ public class Logger {
     }
 
     public static String datetime() {
-        return LocalDateTime.now().format(DateTimeFormatter.ofPattern("yyyyMMdd_HHmmss"));
+        return LocalDateTime.now().format(DateTimeFormatter.ofPattern("yyyyMMdd.HHmmss"));
     }
 
     public static String time() {
@@ -41,7 +41,8 @@ public class Logger {
         for (String string : message) {
             builder.append(string);
         }
-        System.out.println(builder);
+        builder.append("\r\n");
+        System.out.print(builder);
         try {
             logFileChannel.write(ByteBuffer.wrap(builder.toString().getBytes()));
         } catch (IOException e) {

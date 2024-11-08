@@ -3,7 +3,7 @@ package com.prohect.sql_frontend_server;
 import com.alibaba.fastjson2.JSON;
 import com.alibaba.fastjson2.JSONException;
 import com.prohect.sql_frontend_common.ColumnMetaData;
-import com.prohect.sql_frontend_common.CommonUtil;
+import com.prohect.sql_frontend_common.Util;
 import com.prohect.sql_frontend_common.Logger;
 import com.prohect.sql_frontend_common.User;
 import com.prohect.sql_frontend_common.packet.*;
@@ -25,6 +25,8 @@ import java.util.Map;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.LinkedBlockingQueue;
 import java.util.concurrent.TimeUnit;
+
+import static com.prohect.sql_frontend_common.CollectionUtil.*;
 
 
 public class Server {
@@ -59,7 +61,7 @@ public class Server {
         try {
             new Server(loadConfig()).run();
         } catch (SQLException e) {
-            Server.logger.log("Error: " + e.getMessage() + "\r\n" + "检查SQL配置是否正确");
+            logger.log("Error: " + e.getMessage() + "\r\n" + "检查SQL配置是否正确");
             throw new RuntimeException(e);
         } catch (IOException e) {
             throw new RuntimeException(e);
@@ -128,7 +130,7 @@ public class Server {
 
     public void run() throws SQLException, IOException {
         if (serverConfig == null) {
-            Server.logger.log("没有设置文件，现在已经自动生成，请配置好设置文件之后再启动！");
+            logger.log("没有设置文件，现在已经自动生成，请配置好设置文件之后再启动！");
             return;
         }
         try {
@@ -146,6 +148,7 @@ public class Server {
                             Packet packet = packets.poll();
                             if (packet == null) break;
                             checkConnection();
+                            logger.log("接收%s".formatted(packet.toString()));
                             switch (packet) {
                                 case CAlterPacket cAlterPacket -> processAlterPacket(ctx, cAlterPacket);
                                 case CDeletePacket cDeletePacket -> processDeletePacket(ctx, cDeletePacket);
@@ -157,7 +160,7 @@ public class Server {
                                 }
                             }
                         } catch (Exception e) {
-                            Server.logger.log(e);
+                            logger.log(e);
                             ctx2packetToBeSentMap.get(ctx).add(new SInfoPacket(e.getMessage()));
                         }
                     }
@@ -181,7 +184,7 @@ public class Server {
         ctx2packetToBeSentMap.get(ctx).add(new SInfoPacket("成功, " + i + "行受影响"));
         statement.close();
         HashMap<String, HashMap<String, ArrayList<ColumnMetaData>>> map = loadMetaDataFromConnection(databaseName2connectionMap);
-        HashMap<String, HashMap<String, ArrayList<ColumnMetaData>>> diffMap = CommonUtil.diff(map, database2Table2ColumnMap);
+        HashMap<String, HashMap<String, ArrayList<ColumnMetaData>>> diffMap = diff(map, database2Table2ColumnMap);
         database2Table2ColumnMap = map;
         SLoginPacket updateMetadataPacket = new SLoginPacket(new User("", "", user.getUuid()), diffMap, SLoginPacket.Info.UM, "", "");
         for (Map.Entry<ChannelHandlerContext, LinkedBlockingQueue<Packet>> entry : ctx2packetToBeSentMap.entrySet())
@@ -236,9 +239,9 @@ public class Server {
         if (userFromDB != null) {
             if (user.getUuid() == userFromDB.getUuid()) {//consider this as reconnect
                 if (uuid2userMap.getOrDefault(user.getUuid(), new User()).getIp() == user.getIp()) {
-                    sLoginPacket = new SLoginPacket(userFromDB.setIp(user.getIp()), new HashMap<>(), SLoginPacket.Info.RS, "", "");
-                } else if (user.getPassword().equals(userFromDB.getPassword())) {
-                    sLoginPacket = new SLoginPacket(userFromDB.setIp(user.getIp()), new HashMap<>(), SLoginPacket.Info.RS, "", "");
+                    sLoginPacket = new SLoginPacket(new User(), new HashMap<>(), SLoginPacket.Info.RS, "", "");
+                } else if (user.getPassword().equals(userFromDB.getPassword())) {//probably server crashes and reboot, so just take this as normal login and update all data
+                    sLoginPacket = new SLoginPacket(userFromDB.setIp(user.getIp()), database2Table2ColumnMap, SLoginPacket.Info.S, serverConfig.getTheUsersTableName(), serverConfig.getTheUsersTableName());
                 } else throw new IllegalAccessException("幽默重连来了");
             } else {
                 if (userFromDB.getPassword().equals(user.getPassword())) {

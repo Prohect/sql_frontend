@@ -1,7 +1,7 @@
 package com.prohect.sql_frontend.main.newColumn;
 
 import com.prohect.sql_frontend.main.Main;
-import com.prohect.sql_frontend_common.CommonUtil;
+import com.prohect.sql_frontend_common.Util;
 import com.prohect.sql_frontend_common.packet.CAlterPacket;
 import javafx.event.ActionEvent;
 import javafx.fxml.FXML;
@@ -74,7 +74,7 @@ public class InsertNewColumnLogic {
         } else {
             if (notNullCheckBox.isSelected()) cmd.append(" NOT NULL ");
             if (hasDefaultCheckBox.isSelected())
-                cmd.append(" DEFAULT ").append(CommonUtil.convert2SqlServerContextString(defaultTextField.getText()));
+                cmd.append(" DEFAULT ").append(Util.convert2SqlServerContextString(defaultTextField.getText()));
             if (isUniqueCheckBox.isSelected()) cmd.append(" UNIQUE");
         }
         if (isPrimaryKeyCheckBox.isSelected()) cmd.append(" PRIMARY KEY");

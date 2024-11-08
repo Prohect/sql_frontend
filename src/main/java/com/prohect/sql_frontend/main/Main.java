@@ -12,6 +12,8 @@ import com.prohect.sql_frontend_common.packet.Packet;
 import io.netty.channel.Channel;
 import io.netty.channel.ChannelFuture;
 import io.netty.channel.ChannelHandlerContext;
+import javafx.collections.ObservableList;
+import javafx.scene.control.TableColumn;
 
 import java.io.IOException;
 import java.util.ArrayList;
@@ -22,14 +24,15 @@ import java.util.concurrent.LinkedBlockingQueue;
 public class Main {
     public final static ConcurrentHashMap<Channel, LinkedBlockingQueue<Packet>> channel2packetsMap = new ConcurrentHashMap<>();
     public static final Logger logger;
+    public static final HashMap<String, HashMap<String, ArrayList<ColumnMetaData>>> db2tb2knownColumn = new HashMap<>();
+    public static final HashMap<String, HashMap<String, ArrayList<TableColumn<?, ?>>>> db2tb2permittedColumn = new HashMap<>();
+    public static final HashMap<String, HashMap<String, ObservableList<Object[]>>> db2tb2items = new HashMap<>();
     public static ClientConfig clientConfig;
     public static LoginLogic loginLogic;
     public static MainLogic mainLogic;
     public static InsertNewRowLogic insertNewRowLogic;
     public static InsertNewColumnLogic insertNewColumnLogic;
     public static User user;
-    //todo:maps
-    public static HashMap<String, HashMap<String, ArrayList<ColumnMetaData>>> db2table2columnMap;
     public static ChannelHandlerContext ctx;
     public static NettyClient client;
     public static LinkedBlockingQueue<Packet> packetReceivedQueue = new LinkedBlockingQueue<>();

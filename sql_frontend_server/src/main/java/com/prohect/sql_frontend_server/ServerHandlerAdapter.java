@@ -1,6 +1,6 @@
 package com.prohect.sql_frontend_server;
 
-import com.prohect.sql_frontend_common.CommonUtil;
+import com.prohect.sql_frontend_common.Util;
 import com.prohect.sql_frontend_common.packet.Packet;
 import io.netty.buffer.ByteBuf;
 import io.netty.channel.*;
@@ -54,14 +54,14 @@ public class ServerHandlerAdapter extends ChannelInboundHandlerAdapter {
     @Override
     public void channelActive(ChannelHandlerContext ctx) throws Exception {
         LinkedBlockingQueue<Packet> packets = new LinkedBlockingQueue<>();
-        channel2packetsEncoder.put(ctx.channel(), CommonUtil.encoderRegister(workerGroup, ctx, packets, 25));
+        channel2packetsEncoder.put(ctx.channel(), Util.encoderRegister(workerGroup, ctx, packets, 25));
         Server.ctx2packetToBeSentMap.put(ctx, packets);
         Server.ctx2packetReceivedMap.put(ctx, new LinkedBlockingQueue<>());
     }
 
     @Override
     public void channelRead(ChannelHandlerContext ctx, Object msg) throws Exception {
-        channel2packetDecoderFuture.put(ctx.channel(), CommonUtil.getPackets_concurrent(workerGroup, channel2packetDecoderFuture.get(ctx.channel()), (ByteBuf) msg, channel2lockOfIn.computeIfAbsent(ctx.channel(), _ -> new ReentrantLock()), channel2in.computeIfAbsent(ctx.channel(), _ -> ctx.alloc().buffer(1048576)), Server.ctx2packetReceivedMap.get(ctx)));
+        channel2packetDecoderFuture.put(ctx.channel(), Util.getPackets_concurrent(workerGroup, channel2packetDecoderFuture.get(ctx.channel()), (ByteBuf) msg, channel2lockOfIn.computeIfAbsent(ctx.channel(), _ -> new ReentrantLock()), channel2in.computeIfAbsent(ctx.channel(), _ -> ctx.alloc().buffer(1048576)), Server.ctx2packetReceivedMap.get(ctx)));
     }
 
 }
