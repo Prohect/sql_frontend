@@ -1,0 +1,4 @@
+#Develop  
+  import this project from VCS in InteliJ IDEA, then wait for maven to automatically download all the dependencies to your PC, which would show a progressing bar at the right side of the bottom navigation bar. then, go to maven's UI, select sql_frontend_common and click 'clean' then 'package' then 'install'. These steps install the sql_frontend_common mudule  
+  to your local maven repository, then refresh maven project, after which u will find out the sql_frontend module and sql_frontend_server module could find the dependency called sql_frontend_common. Now everything should be fine, goto mainui.java or server.java u can launch the app, and mod the source as u want.  
+  ##Note: when u want to package the output class into a .jar, u must install the newest sql_frontend_common module to your local maven repository first if it's modded, otherwise maven might throw exceptions and not work.
