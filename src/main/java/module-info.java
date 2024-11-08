@@ -6,7 +6,7 @@ module com.prohect.sql_frontend {
     requires io.netty.buffer;
     requires com.alibaba.fastjson2;
     requires sql.frontend.common;
-    requires javafx.media;
+
 
     opens com.prohect.sql_frontend to javafx.fxml;
     opens com.prohect.sql_frontend.main.login to javafx.fxml;

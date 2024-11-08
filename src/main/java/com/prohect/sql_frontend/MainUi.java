@@ -17,11 +17,11 @@ public class MainUi extends Application {
     public static FXMLLoader mainFXMLLoader = new FXMLLoader(MainUi.class.getResource("main-view.fxml"));
     public static Scene loginScene;
     public static Scene mainScene;
-    public static Stage window;
+    private static Stage window;
 
     static {
         try {
-            loginScene = new Scene(loginFXMLLoader.load(), 1280, 720);
+            loginScene = new Scene(loginFXMLLoader.load(), 322, 375);
             mainScene = new Scene(mainFXMLLoader.load(), 1280, 720);
         } catch (IOException e) {
             throw new RuntimeException(e);

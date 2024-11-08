@@ -10,19 +10,10 @@ import javafx.scene.control.Button;
 import javafx.scene.control.Label;
 import javafx.scene.control.PasswordField;
 import javafx.scene.control.TextField;
-import javafx.scene.effect.BoxBlur;
 import javafx.scene.input.KeyEvent;
 import javafx.scene.input.MouseEvent;
-import javafx.scene.layout.Pane;
-import javafx.scene.layout.StackPane;
-import javafx.scene.media.Media;
-import javafx.scene.media.MediaPlayer;
-import javafx.scene.media.MediaView;
 
-import java.net.URL;
 import java.util.concurrent.atomic.AtomicBoolean;
-
-import static com.prohect.sql_frontend.LoginUi.window;
 
 
 public class LoginLogic {
@@ -36,24 +27,6 @@ public class LoginLogic {
     private TextField usernameField;
     @FXML
     private PasswordField passwordField;
-    @FXML
-    private MediaView mediaView;
-
-    @FXML
-    public void initialize() {
-        URL resourceUrl = getClass().getResource("/com/prohect/gui/background.mp4");
-        if (resourceUrl == null) {
-            throw new RuntimeException("无法找到资源文件");
-        }
-        Media media = new Media(resourceUrl.toString());
-        mediaView.setPreserveRatio(false);
-        mediaView.setFitWidth(1280);
-        mediaView.setFitHeight(720);
-        MediaPlayer mediaPlayer = new MediaPlayer(media);
-        mediaView.setMediaPlayer(mediaPlayer);
-        mediaPlayer.setAutoPlay(true);
-        mediaPlayer.setCycleCount(MediaPlayer.INDEFINITE);
-    }
 
     public LoginLogic() {
         Main.loginLogic = this;
