@@ -39,10 +39,6 @@ public class MainLogic implements Initializable {
     String tableName4tableView;
     TextInputDialog textInputDialog4newTableName;
     @FXML
-    private MenuItem createColumnMenuItem;
-    @FXML
-    private MenuItem createRowMenuItem;
-    @FXML
     private Button customQueryButton;
     @FXML
     private TextField customQueryTextField;
@@ -139,10 +135,6 @@ public class MainLogic implements Initializable {
 
     public void setTableName4tableView(String tableName4tableView) {
         this.tableName4tableView = tableName4tableView;
-    }
-
-    public MenuItem getCreateColumnMenuItem() {
-        return createColumnMenuItem;
     }
 
     public Button getCustomQueryButton() {
