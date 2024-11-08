@@ -33,7 +33,7 @@ public class InsertNewRowLogic implements Initializable {
     public static final String nullableString = "可选·输入";
     public static final String normalString = "请·输·入";
     public static final String hasDefaultString = "有·默认值";
-    public static final String bitString = "true·OR·false";
+    public static final String bitString = "1·OR·0";
 
     public static String databaseName = "";
     public static String tableName = "";
@@ -151,7 +151,7 @@ public class InsertNewRowLogic implements Initializable {
 
     private Object[] getNewItem() {
         Object[] objects = new Object[this.theInsertTableView.getColumns().size()];
-        ArrayList<ColumnMetaData> columnMetaDataList = Main.db2table2columnMap.get(Main.mainLogic.getDataBase4tableView()).get(Main.mainLogic.getTableName4tableView());
+        ArrayList<ColumnMetaData> columnMetaDataList = Main.db2table2columnMap.get(Main.mainLogic.getDataBaseName4tableView()).get(Main.mainLogic.getTableName4tableView());
         for (int i = 0; i < objects.length; i++) {
             ColumnMetaData columnMetaData = columnMetaDataList.get(i);
             objects[i] = getPromptOfColumn(columnMetaData);
@@ -190,7 +190,7 @@ public class InsertNewRowLogic implements Initializable {
     @FXML
     void submitTheChanges(MouseEvent event) {
         try {
-            ArrayList<ColumnMetaData> columnMetaDataList = Main.db2table2columnMap.get(Main.mainLogic.getDataBase4tableView()).get(Main.mainLogic.getTableName4tableView());
+            ArrayList<ColumnMetaData> columnMetaDataList = Main.db2table2columnMap.get(Main.mainLogic.getDataBaseName4tableView()).get(Main.mainLogic.getTableName4tableView());
             ObservableList<Object[]> items = this.getTheInsertTableView().getItems();
             List<Packet> packets = new ArrayList<>();
             for (Object[] item : items) {
@@ -255,7 +255,7 @@ public class InsertNewRowLogic implements Initializable {
                 }
                 assert cmd != null;
                 cmd.append(")");
-                CInsertPacket cInsertPacket = new CInsertPacket(Main.user.getUuid(), cmd.toString(), Main.mainLogic.getDataBase4tableView());
+                CInsertPacket cInsertPacket = new CInsertPacket(Main.user.getUuid(), cmd.toString(), Main.mainLogic.getDataBaseName4tableView());
                 Main.packetID2insertedValueMap.put(cInsertPacket.getId(), item);
                 packets.add(cInsertPacket);
 
@@ -263,8 +263,8 @@ public class InsertNewRowLogic implements Initializable {
             for (Packet packet : packets) {
                 Main.channel2packetsMap.computeIfAbsent(Main.ctx.channel(), c -> new LinkedBlockingQueue<>()).add(packet);
             }
-        } catch (Exception ignored) {
-            ignored.printStackTrace();
+        } catch (Exception e) {
+            Main.logger.log(e);
         }
     }
 
@@ -318,10 +318,10 @@ public class InsertNewRowLogic implements Initializable {
                 tableView.getItems().addAll(formattedItems);
             } catch (Exception e) {
                 Main.mainLogic.getInfoLabel().setText(e.getMessage());
-                e.printStackTrace();
+                Main.logger.log(e);
             }
         } else {
-            System.out.println("No file selected.");
+            Main.logger.log("No file selected.");
         }
     }
 

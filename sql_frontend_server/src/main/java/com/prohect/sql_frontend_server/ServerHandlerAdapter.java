@@ -40,7 +40,7 @@ public class ServerHandlerAdapter extends ChannelInboundHandlerAdapter {
         channel2packetsEncoder.get(ctx.channel()).cancel(true);
         Server.ctx2packetReceivedMap.remove(ctx);
         Server.ctx2packetToBeSentMap.remove(ctx);
-        System.out.println("exceptionCaught\t" + "ctx = " + ctx + ", cause = " + cause);
+        Server.logger.log("exceptionCaught\t" + "ctx = " + ctx + ", cause = " + cause);
     }
 
     @Override
@@ -48,7 +48,7 @@ public class ServerHandlerAdapter extends ChannelInboundHandlerAdapter {
         channel2packetsEncoder.get(ctx.channel()).cancel(true);
         Server.ctx2packetReceivedMap.remove(ctx);
         Server.ctx2packetToBeSentMap.remove(ctx);
-        System.out.println("channelInactive\t" + "ctx = " + ctx);
+        Server.logger.log("channelInactive\t" + "ctx = " + ctx);
     }
 
     @Override

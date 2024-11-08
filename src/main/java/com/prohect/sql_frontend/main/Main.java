@@ -6,12 +6,14 @@ import com.prohect.sql_frontend.main.login.LoginLogic;
 import com.prohect.sql_frontend.main.newColumn.InsertNewColumnLogic;
 import com.prohect.sql_frontend.main.newRow.InsertNewRowLogic;
 import com.prohect.sql_frontend_common.ColumnMetaData;
+import com.prohect.sql_frontend_common.Logger;
 import com.prohect.sql_frontend_common.User;
 import com.prohect.sql_frontend_common.packet.Packet;
 import io.netty.channel.Channel;
 import io.netty.channel.ChannelFuture;
 import io.netty.channel.ChannelHandlerContext;
 
+import java.io.IOException;
 import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.concurrent.ConcurrentHashMap;
@@ -19,12 +21,14 @@ import java.util.concurrent.LinkedBlockingQueue;
 
 public class Main {
     public final static ConcurrentHashMap<Channel, LinkedBlockingQueue<Packet>> channel2packetsMap = new ConcurrentHashMap<>();
+    public static final Logger logger;
     public static ClientConfig clientConfig;
     public static LoginLogic loginLogic;
     public static MainLogic mainLogic;
     public static InsertNewRowLogic insertNewRowLogic;
     public static InsertNewColumnLogic insertNewColumnLogic;
     public static User user;
+    //todo:maps
     public static HashMap<String, HashMap<String, ArrayList<ColumnMetaData>>> db2table2columnMap;
     public static ChannelHandlerContext ctx;
     public static NettyClient client;
@@ -32,6 +36,14 @@ public class Main {
     public static HashMap<Long, UpdateOfCellOfTable> packetID2updatedValueMap = new HashMap<>();
     public static HashMap<Long, Object[]> packetID2insertedValueMap = new HashMap<>();
     public static HashMap<Long, Object[]> packetID2DeletedValueMap = new HashMap<>();
+
+    static {
+        try {
+            logger = new Logger("client");
+        } catch (IOException e) {
+            throw new RuntimeException(e);
+        }
+    }
 
     public static ChannelFuture setAndRunNewNettyClient(NettyClient client) throws Exception {
         if (Main.client != null) {

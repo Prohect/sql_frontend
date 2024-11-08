@@ -160,13 +160,13 @@ public class ClientHandlerAdapter extends ChannelInboundHandlerAdapter {
 
     @Override
     public void channelUnregistered(ChannelHandlerContext ctx) throws Exception {
-        System.out.println("ClientHandlerAdapter.channelUnregistered()");
+        Main.logger.log("ClientHandlerAdapter.channelUnregistered()");
         super.channelUnregistered(ctx);
     }
 
     @Override
     public void channelInactive(ChannelHandlerContext ctx) throws Exception {
-        System.out.println("ClientHandlerAdapter.channelInactive");
+        Main.logger.log("ClientHandlerAdapter.channelInactive");
         try {
             channel2packetsEncoder.get(ctx.channel()).cancel(true);
             channel2packetDecoderFuture.get(ctx.channel()).cancel(true);
@@ -177,7 +177,7 @@ public class ClientHandlerAdapter extends ChannelInboundHandlerAdapter {
             channel2packetDecoderFuture.remove(ctx.channel());
             Main.channel2packetsMap.remove(ctx.channel());
         } catch (Exception e) {//might catch nullPointer
-            e.printStackTrace();
+            Main.logger.log(e);
         }
 
         Platform.runLater(() -> Main.mainLogic.getInfoLabel().setText("Connection reset, try reconnect"));
@@ -187,7 +187,7 @@ public class ClientHandlerAdapter extends ChannelInboundHandlerAdapter {
 
     @Override
     public void exceptionCaught(ChannelHandlerContext ctx, Throwable cause) {
-        cause.printStackTrace();
+        Main.logger.log(cause);
     }
 
     private void processInsertPacket(SInsertPacket sInsertPacket) {
@@ -211,7 +211,7 @@ public class ClientHandlerAdapter extends ChannelInboundHandlerAdapter {
                 ArrayList<String> columnNames = sQueryReplyPacket.getColumnNames();
                 ObservableList<Object[]> data = FXCollections.observableArrayList(sQueryReplyPacket.getRows());
 
-                Main.mainLogic.setDataBase4tableView(databaseName.toLowerCase());
+                Main.mainLogic.setDataBaseName4tableView(databaseName.toLowerCase());
                 Main.mainLogic.setTableName4tableView(tableName.toLowerCase());
 
                 int columnCount = columnNames.size();
@@ -247,7 +247,7 @@ public class ClientHandlerAdapter extends ChannelInboundHandlerAdapter {
                                     }
                                     condition.append(" AND [").append(columnName).append("] = ").append(convert2SqlServerContextString);
                                 }
-                                CUpdatePacket cUpdatePacket = new CUpdatePacket(Main.user.getUuid(), condition.toString(), Main.mainLogic.getDataBase4tableView());
+                                CUpdatePacket cUpdatePacket = new CUpdatePacket(Main.user.getUuid(), condition.toString(), Main.mainLogic.getDataBaseName4tableView());
                                 Main.packetID2updatedValueMap.put(cUpdatePacket.getId(), new UpdateOfCellOfTable(targetRowIndex, targetColumnIndex, newValue));
                                 Main.channel2packetsMap.computeIfAbsent(Main.ctx.channel(), _ -> new LinkedBlockingQueue<>()).add(cUpdatePacket);
                             });
@@ -261,7 +261,7 @@ public class ClientHandlerAdapter extends ChannelInboundHandlerAdapter {
                 Main.mainLogic.getInfoLabel().setText("查询成功");
             } catch (Exception e) {
                 Main.mainLogic.getInfoLabel().setText(e.getMessage());
-                e.printStackTrace();
+                Main.logger.log(e);
             }
         });
     }
@@ -278,7 +278,7 @@ public class ClientHandlerAdapter extends ChannelInboundHandlerAdapter {
 
         TableView<Object[]> tableView = Main.mainLogic.getTableView();
         String columnName = tableView.getColumns().get(targetColumnIndex).getText();
-        ArrayList<ColumnMetaData> columnMetaDataArrayList = Main.db2table2columnMap.get(Main.mainLogic.getDataBase4tableView()).get(Main.mainLogic.getTableName4tableView());
+        ArrayList<ColumnMetaData> columnMetaDataArrayList = Main.db2table2columnMap.get(Main.mainLogic.getDataBaseName4tableView()).get(Main.mainLogic.getTableName4tableView());
         Platform.runLater(() -> {
             ObservableList<Object[]> items = tableView.getItems();
             Object[] objects = items.get(targetRowIndex);
@@ -286,7 +286,7 @@ public class ClientHandlerAdapter extends ChannelInboundHandlerAdapter {
             Object newValue = update.getNewValue();
             if (oldValue != null) {
                 String clazzName = oldValue.getClass().getSimpleName();
-                System.out.printf("oldValue.getClass().getSimpleName() = %s%n", clazzName);
+                Main.logger.log("oldValue.getClass().getSimpleName() = " + clazzName);
                 switch (clazzName) {
                     case "Integer":
                         if (CommonUtil.isNumber((String) newValue)) newValue = Integer.parseInt((String) newValue);
@@ -333,6 +333,20 @@ public class ClientHandlerAdapter extends ChannelInboundHandlerAdapter {
                     Main.clientConfig.setTheUsersTableName(sLoginPacket.getTheUsersTableName());
                     ClientConfig.saveConfig(Main.clientConfig);
                     Main.db2table2columnMap = db2table2columnMap;
+
+                    HashMap<String, HashMap<String, HashMap<String, Boolean[]>>> permissions = userFromPacket.getPermissions();
+                    var m = CommonUtil.structureCloneAndMerge(db2table2columnMap);
+                    m.forEach((db, tb2cml) -> tb2cml.forEach((tb, cml) -> cml.removeAll(cml.stream().filter(cm -> !permissions.getOrDefault(db, new HashMap<>()).getOrDefault(tb, new HashMap<>()).getOrDefault(cm.getColumnName(), new Boolean[]{true, false})[0]).toList())));
+                    HashMap<String, HashMap<String, ObservableList<Object[]>>> db2tb2l = new HashMap<>();
+                    HashMap<String, HashMap<String, ArrayList<TableColumn<?, ?>>>> db2tb2tcl = new HashMap<>();
+                    m.forEach((db, tb2cml) -> tb2cml.forEach((tb, _) -> db2tb2l.computeIfAbsent(db, _ -> new HashMap<>()).computeIfAbsent(tb, _ -> FXCollections.observableArrayList())));
+                    m.forEach((db, tb2cml) -> tb2cml.forEach((tb, cml) -> {
+                        for (int i = 0; i < cml.size(); i++) {
+                            ColumnMetaData columnMetaData = cml.get(i);
+                            db2tb2tcl.computeIfAbsent(db, _ -> new HashMap<>()).computeIfAbsent(tb, _ -> new ArrayList<>()).add(getTableColumn(columnMetaData.getColumnName(), i));
+                        }
+                    }));
+
                     Platform.runLater(() -> {
                         ObservableList<String> databaseList = FXCollections.observableArrayList();
                         Main.db2table2columnMap.forEach((db, _) -> databaseList.add(db));
@@ -378,7 +392,7 @@ public class ClientHandlerAdapter extends ChannelInboundHandlerAdapter {
             }
             case UM -> {
                 String value = Main.mainLogic.getTableChoiceBox().getValue();
-                CommonUtil.mergeMap(Main.db2table2columnMap, db2table2columnMap);
+                CommonUtil.merge(Main.db2table2columnMap, db2table2columnMap);
                 Platform.runLater(() -> updateTableChoiceBox(value, value));
                 Main.mainLogic.updateColumnMetaDataOfInsertNewRowTable();
             }
