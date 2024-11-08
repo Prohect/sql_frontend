@@ -165,7 +165,7 @@ public class Server {
         String databaseName = cAlterPacket.getDatabaseName();
         User user = uuid2userMap.get(cAlterPacket.getUuid());
         if (!user.isOp()) throw new SQLException("你无权进行这个操作");
-        Statement statement = (user.isOp() && databaseName.equals(serverConfig.getTheUsersDatabaseName()) ? connection2UsersDB : databaseName2connectionMap.get(databaseName)).createStatement();
+        Statement statement = (user.isOp() && serverConfig.getTheUsersDatabaseName().equals(databaseName) ? connection2UsersDB : databaseName2connectionMap.get(databaseName)).createStatement();
         int i = statement.executeUpdate(cmd);
         ctx2packetToBeSentMap.get(ctx).add(new SInfoPacket("成功, " + i + "行受影响"));
         statement.close();

@@ -111,7 +111,10 @@ public class MainLogic implements Initializable {
                 stage4InsertNewRowsWindow.setScene(scene4InsertNewRowsScene);
                 stage4InsertNewRowsWindow.setOnCloseRequest(event -> {
                     stage4InsertNewRowsWindow.close();
-                    this.onCustomQueryButtonClicked();
+                    if (Main.insertNewRowLogic.isNeedUpdateMainTable()) {
+                        this.onCustomQueryButtonClicked();
+                        Main.insertNewRowLogic.setNeedUpdateMainTable(false);
+                    }
                 });
                 stage4InsertNewRowsWindow.initOwner(MainUi.getWindow());
                 stage4InsertNewRowsWindow.initModality(Modality.WINDOW_MODAL);
@@ -352,7 +355,7 @@ public class MainLogic implements Initializable {
     }
 
     @FXML
-    void onCustomQueryButtonClicked() {//removed args: MouseEvent event
+    public void onCustomQueryButtonClicked() {//removed args: MouseEvent event
         try {
             ChoiceBox<String> choiceBox = Main.mainLogic.getDatabaseSourceChoiceBox();
             String databaseName = choiceBox.getValue() == null ? choiceBox.getItems().getFirst() : choiceBox.getValue();
@@ -361,6 +364,5 @@ public class MainLogic implements Initializable {
         } catch (Exception e) {
             e.printStackTrace();
         }
-
     }
 }

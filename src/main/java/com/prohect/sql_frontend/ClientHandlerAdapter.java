@@ -194,6 +194,7 @@ public class ClientHandlerAdapter extends ChannelInboundHandlerAdapter {
         long id = sInsertPacket.getTheID();
         Object[] objects = Main.packetID2insertedValueMap.get(id);
         Main.insertNewRowLogic.getTheInsertTableView().getItems().remove(objects);
+        Main.insertNewRowLogic.setNeedUpdateMainTable(true);
     }
 
     private void processDeletePacket(SDeletePacket sDeletePacket) {

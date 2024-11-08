@@ -9,6 +9,7 @@ import com.prohect.sql_frontend_common.packet.Packet;
 import javafx.collections.ObservableList;
 import javafx.event.ActionEvent;
 import javafx.fxml.FXML;
+import javafx.fxml.Initializable;
 import javafx.scene.control.Label;
 import javafx.scene.control.TableColumn;
 import javafx.scene.control.TablePosition;
@@ -20,12 +21,14 @@ import java.io.BufferedReader;
 import java.io.File;
 import java.io.FileNotFoundException;
 import java.io.FileReader;
+import java.net.URL;
 import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
+import java.util.ResourceBundle;
 import java.util.concurrent.LinkedBlockingQueue;
 
-public class InsertNewRowLogic {
+public class InsertNewRowLogic implements Initializable {
 
     public static final String nullableString = "可选·输入";
     public static final String normalString = "请·输·入";
@@ -37,6 +40,7 @@ public class InsertNewRowLogic {
     FileChooser fileChooser;
     boolean hasIdentifier = false;
     int identifierIndex = -1;
+    private boolean needUpdateMainTable = false;
     @FXML
     private Label infoLabel;
     @FXML
@@ -47,6 +51,14 @@ public class InsertNewRowLogic {
 
     public InsertNewRowLogic() {
         Main.insertNewRowLogic = this;
+    }
+
+    public boolean isNeedUpdateMainTable() {
+        return needUpdateMainTable;
+    }
+
+    public void setNeedUpdateMainTable(boolean needUpdateMainTable) {
+        this.needUpdateMainTable = needUpdateMainTable;
     }
 
     public int getIdentifierIndex() {
@@ -133,7 +145,7 @@ public class InsertNewRowLogic {
     }
 
     @FXML
-    void newRowButtonOnAction(ActionEvent event) {
+    public void newRowButtonOnAction() {
         this.getTheInsertTableView().getItems().add(getNewItem());
     }
 
@@ -305,5 +317,9 @@ public class InsertNewRowLogic {
         } else {
             System.out.println("No file selected.");
         }
+    }
+
+    @Override
+    public void initialize(URL location, ResourceBundle resources) {
     }
 }
