@@ -102,8 +102,7 @@
                         <Insets left="10.0"/>
                     </HBox.margin>
                 </Label>
-                <ChoiceBox fx:id="databaseSourceChoiceBox" onMouseClicked="#databaseSourceChoiceBoxOnMouseClicked"
-                           prefHeight="25.0" prefWidth="150.0">
+                <ChoiceBox fx:id="databaseChoiceBox" prefHeight="25.0" prefWidth="150.0">
                     <opaqueInsets>
                         <Insets/>
                     </opaqueInsets>

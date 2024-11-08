@@ -151,7 +151,7 @@ public class InsertNewRowLogic implements Initializable {
 
     private Object[] getNewItem() {
         Object[] objects = new Object[this.theInsertTableView.getColumns().size()];
-        ArrayList<ColumnMetaData> columnMetaDataList = Main.db2tb2knownColumn.get(Main.mainLogic.getDataBaseName4tableView()).get(Main.mainLogic.getTableName4tableView());
+        ArrayList<ColumnMetaData> columnMetaDataList = Main.db2tb2columnMD.get(Main.mainLogic.getDataBaseName4tableView()).get(Main.mainLogic.getTableName4tableView());
         for (int i = 0; i < objects.length; i++) {
             ColumnMetaData columnMetaData = columnMetaDataList.get(i);
             objects[i] = getPromptOfColumn(columnMetaData);
@@ -190,7 +190,7 @@ public class InsertNewRowLogic implements Initializable {
     @FXML
     void submitTheChanges(MouseEvent event) {
         try {
-            ArrayList<ColumnMetaData> columnMetaDataList = Main.db2tb2knownColumn.get(Main.mainLogic.getDataBaseName4tableView()).get(Main.mainLogic.getTableName4tableView());
+            ArrayList<ColumnMetaData> columnMetaDataList = Main.db2tb2columnMD.get(Main.mainLogic.getDataBaseName4tableView()).get(Main.mainLogic.getTableName4tableView());
             ObservableList<Object[]> items = this.getTheInsertTableView().getItems();
             List<Packet> packets = new ArrayList<>();
             for (Object[] item : items) {
@@ -292,7 +292,7 @@ public class InsertNewRowLogic implements Initializable {
                 ObservableList<TableColumn<Object[], ?>> tableColumns = tableView.getColumns();
                 int columns = tableColumns.size();
                 int skip = -1;
-                ArrayList<ColumnMetaData> columnMetaDataArrayList = Main.db2tb2knownColumn.get(databaseName).get(tableName);
+                ArrayList<ColumnMetaData> columnMetaDataArrayList = Main.db2tb2columnMD.get(databaseName).get(tableName);
                 for (int i = 0; i < tableColumns.size(); i++) {
                     if (skip != -1) break;
                     TableColumn<Object[], ?> tableColumn = tableColumns.get(i);

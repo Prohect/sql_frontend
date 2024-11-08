@@ -24,8 +24,11 @@ import java.util.concurrent.LinkedBlockingQueue;
 public class Main {
     public final static ConcurrentHashMap<Channel, LinkedBlockingQueue<Packet>> channel2packetsMap = new ConcurrentHashMap<>();
     public static final Logger logger;
-    public static final HashMap<String, HashMap<String, ArrayList<ColumnMetaData>>> db2tb2knownColumn = new HashMap<>();
-    public static final HashMap<String, HashMap<String, ArrayList<TableColumn<?, ?>>>> db2tb2permittedColumn = new HashMap<>();
+    public static final HashMap<String, HashMap<String, ArrayList<ColumnMetaData>>> db2tb2columnMD = new HashMap<>();
+    /**
+     * notice: this contains the user db's db name and table name but, that columnMetadata list would be empty
+     */
+    public static final HashMap<String, HashMap<String, ArrayList<TableColumn<Object[], ?>>>> db2tb2tableColumn = new HashMap<>();
     public static final HashMap<String, HashMap<String, ObservableList<Object[]>>> db2tb2items = new HashMap<>();
     public static ClientConfig clientConfig;
     public static LoginLogic loginLogic;

@@ -1,7 +1,7 @@
 package com.prohect.sql_frontend_server.sqlUtil;
 
-import com.prohect.sql_frontend_common.Util;
 import com.prohect.sql_frontend_common.User;
+import com.prohect.sql_frontend_common.Util;
 import com.prohect.sql_frontend_server.DatabaseAdmin;
 import com.prohect.sql_frontend_server.ServerConfig;
 

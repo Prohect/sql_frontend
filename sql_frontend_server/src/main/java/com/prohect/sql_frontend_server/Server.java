@@ -3,7 +3,6 @@ package com.prohect.sql_frontend_server;
 import com.alibaba.fastjson2.JSON;
 import com.alibaba.fastjson2.JSONException;
 import com.prohect.sql_frontend_common.ColumnMetaData;
-import com.prohect.sql_frontend_common.Util;
 import com.prohect.sql_frontend_common.Logger;
 import com.prohect.sql_frontend_common.User;
 import com.prohect.sql_frontend_common.packet.*;
@@ -26,7 +25,7 @@ import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.LinkedBlockingQueue;
 import java.util.concurrent.TimeUnit;
 
-import static com.prohect.sql_frontend_common.CollectionUtil.*;
+import static com.prohect.sql_frontend_common.CollectionUtil.diff;
 
 
 public class Server {
