@@ -179,7 +179,12 @@ public class InsertNewRowLogic implements Initializable {
 
     @FXML
     void removeSelectedRow(ActionEvent event) {
-        theInsertTableView.getItems().remove(selectedRowIndex);
+        try {
+            theInsertTableView.getItems().remove(selectedRowIndex);
+            this.infoLabel.setText("删除成功");
+        } catch (IndexOutOfBoundsException ignored) {
+            this.infoLabel.setText("已经删过选中的行");
+        }
     }
 
     @FXML
@@ -266,6 +271,7 @@ public class InsertNewRowLogic implements Initializable {
     @FXML
     void removeAllRow(ActionEvent event) {
         theInsertTableView.getItems().clear();
+        this.infoLabel.setText("删除所有行成功");
     }
 
     @FXML
