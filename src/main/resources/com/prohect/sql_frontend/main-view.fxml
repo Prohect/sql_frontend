@@ -42,10 +42,6 @@
             <menus>
                 <Menu fx:id="inspectFromDBMenu" mnemonicParsing="false" text="数据库">
                     <items>
-                        <MenuItem fx:id="createRowMenuItem" mnemonicParsing="false"
-                                  onAction="#insertNewRowMenuItemOnAction" text="新建行"/>
-                        <MenuItem fx:id="createColumnMenuItem" mnemonicParsing="false"
-                                  onAction="#insertNewColumnMenuItemOnAction" text="新建列"/>
                         <MenuItem mnemonicParsing="false" onAction="#insertNewTableMenuItemOnAction" text="新建表"/>
                     </items>
                 </Menu>
