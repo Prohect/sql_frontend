@@ -12,7 +12,6 @@ import javafx.scene.control.PasswordField;
 import javafx.scene.control.TextField;
 import javafx.scene.input.KeyCode;
 import javafx.scene.input.KeyEvent;
-import javafx.scene.layout.VBox;
 
 import java.net.URL;
 import java.util.ResourceBundle;
@@ -29,15 +28,13 @@ public class LoginLogic implements Initializable {
     @FXML
     private PasswordField passwordField;
     @FXML
-    private Label usernameTipLable;
-    @FXML
-    private VBox vBox;
+    private Label usernameTipLabel;
 
     public LoginLogic() {
         Main.loginLogic = this;
     }
 
-    private static void login1() throws Exception {
+    private static void login1() {
         //new network client
         String serverHost = Main.clientConfig.getServerHost();
         int port = Main.clientConfig.getPort();
@@ -46,16 +43,12 @@ public class LoginLogic implements Initializable {
         Main.setAndRunNewNettyClient(new NettyClient(serverHost, port, b, workerGroup, new ClientHandlerAdapter(serverHost, port, b, workerGroup)));
     }
 
-    public VBox getvBox() {
-        return vBox;
-    }
-
     public Label getLoginInfo() {
         return loginInfo;
     }
 
     @FXML
-    public void login() throws Exception {
+    public void login() {
         login1();
     }
 
@@ -82,14 +75,14 @@ public class LoginLogic implements Initializable {
             }
         }
         if (flag)
-            usernameTipLable.setText(tip);
-        else usernameTipLable.setText("");
+            usernameTipLabel.setText(tip);
+        else usernameTipLabel.setText("");
     }
 
     @FXML
     public void autoComplete4Username(KeyEvent event) {
         if (event.getCode() == KeyCode.TAB) {
-            if (!usernameTipLable.getText().isEmpty()) getUsernameField().setText(usernameTipLable.getText());
+            if (!usernameTipLabel.getText().isEmpty()) getUsernameField().setText(usernameTipLabel.getText());
         }
     }
 
@@ -100,5 +93,6 @@ public class LoginLogic implements Initializable {
                 if (event.getCode() != KeyCode.TAB && event.getCode() != KeyCode.BACK_SPACE)//不是tab或者backspace则无视event
                     event.consume();
         });
+        usernameTipLabel.setMouseTransparent(true);
     }
 }
