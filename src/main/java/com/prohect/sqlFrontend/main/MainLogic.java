@@ -8,6 +8,7 @@ import com.prohect.sqlFrontendCommon.Util;
 import com.prohect.sqlFrontendCommon.packet.CAlterPacket;
 import com.prohect.sqlFrontendCommon.packet.CDeletePacket;
 import com.prohect.sqlFrontendCommon.packet.CQueryPacket;
+import javafx.animation.Transition;
 import javafx.application.Platform;
 import javafx.collections.FXCollections;
 import javafx.collections.ObservableList;
@@ -17,8 +18,11 @@ import javafx.fxml.Initializable;
 import javafx.scene.Scene;
 import javafx.scene.control.*;
 import javafx.scene.input.DragEvent;
+import javafx.scene.layout.Pane;
+import javafx.scene.paint.Color;
 import javafx.stage.Modality;
 import javafx.stage.Stage;
+import javafx.util.Duration;
 
 import java.io.IOException;
 import java.net.URL;
@@ -34,6 +38,8 @@ public class MainLogic implements Initializable {
     private Stage stage4InsertNewColumnWindow;
     private Scene scene4InsertNewColumnScene;
     private TextInputDialog textInputDialog4newTableName;
+    @FXML
+    private Pane pane4infoLabel;
     @FXML
     private ChoiceBox<String> databaseChoiceBox;
     @FXML
@@ -78,6 +84,21 @@ public class MainLogic implements Initializable {
         Platform.runLater(() -> {
             try {
                 //for this UI
+                getInfoLabel().textProperty().addListener((_, oldValue, newValue) -> {
+                    if (newValue != null && newValue.equals(oldValue)) return;
+                    new Transition() {
+                        {
+                            setCycleDuration(Duration.millis(5000));
+                            setCycleCount(1);
+                            setAutoReverse(false);
+                        }
+
+                        @Override
+                        protected void interpolate(double frac) {
+                            infoLabel.textFillProperty().setValue(Color.color(1f - frac, 0f, 0f));
+                        }
+                    }.playFromStart();
+                });
 
                 //load insertNewRows UI
                 scene4InsertNewRowsScene = new Scene(insertFXMLLoader.load(), 640, 400);

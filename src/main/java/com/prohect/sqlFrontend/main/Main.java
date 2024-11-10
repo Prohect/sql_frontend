@@ -11,6 +11,7 @@ import com.prohect.sqlFrontendCommon.User;
 import com.prohect.sqlFrontendCommon.packet.Packet;
 import io.netty.channel.Channel;
 import io.netty.channel.ChannelHandlerContext;
+import io.netty.channel.nio.NioEventLoopGroup;
 import javafx.collections.ObservableList;
 import javafx.scene.control.TableColumn;
 
@@ -22,6 +23,7 @@ import java.util.concurrent.LinkedBlockingQueue;
 
 public class Main {
     public final static ConcurrentHashMap<Channel, LinkedBlockingQueue<Packet>> channel2packetsMap = new ConcurrentHashMap<>();
+    public static final NioEventLoopGroup workerGroup = new NioEventLoopGroup();
     public static final Logger logger;
     public static final HashMap<String, HashMap<String, ArrayList<ColumnMetaData>>> db2tb2columnMD = new HashMap<>();
     /**
