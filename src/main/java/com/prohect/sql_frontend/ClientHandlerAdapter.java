@@ -382,6 +382,14 @@ public class ClientHandlerAdapter extends ChannelInboundHandlerAdapter {
                     }));
                     merge(Main.db2tb2tableColumn, db2tb2tcl);
 
+                    if (userFromPacket.isOp()) {
+                        merge(Main.db2tb2tableColumn, new HashMap<>() {{
+                            put(theUsersDatabaseName, new HashMap<>() {{
+                                put(theUsersTableName, new ArrayList<>());
+                            }});
+                        }});
+                    }
+
                     //update db2tb2items. this won't remove data when reconnecting for it's using computeIfAbsent
                     m0.forEach((db, tb2cml) -> tb2cml.forEach((tb, _) -> Main.db2tb2items.computeIfAbsent(db, _ -> new HashMap<>()).computeIfAbsent(tb, _ -> FXCollections.observableArrayList())));
 

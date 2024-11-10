@@ -45,7 +45,7 @@ public class InsertNewRowLogic implements Initializable {
     private Label infoLabel;
     @FXML
     private TableView<Object[]> theInsertTableView;
-    private TableColumn selectedColumn;
+    private TableColumn<Object[], Object> selectedColumn;
     private int selectedRowIndex;
     private int selectedColumnIndex;
 
