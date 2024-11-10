@@ -80,9 +80,15 @@ public class LoginLogic implements Initializable {
     }
 
     @FXML
+    void passwordFieldOnKeyPressed(KeyEvent event) {
+        if (event.getCode() == KeyCode.ENTER) login();
+    }
+
+    @FXML
     public void autoComplete4Username(KeyEvent event) {
-        if (event.getCode() == KeyCode.TAB) {
+        if (event.getCode() == KeyCode.TAB || event.getCode() == KeyCode.ENTER) {
             if (!usernameTipLabel.getText().isEmpty()) getUsernameField().setText(usernameTipLabel.getText());
+            getPasswordField().requestFocus();
         }
     }
 
@@ -90,7 +96,7 @@ public class LoginLogic implements Initializable {
     public void initialize(URL location, ResourceBundle resources) {
         getUsernameField().addEventFilter(KeyEvent.KEY_PRESSED, event -> {
             if (!Character.isLetterOrDigit(event.getCharacter().charAt(0)))//不是字母或数字
-                if (event.getCode() != KeyCode.TAB && event.getCode() != KeyCode.BACK_SPACE)//不是tab或者backspace则无视event
+                if (event.getCode() != KeyCode.TAB && event.getCode() != KeyCode.BACK_SPACE && event.getCode() != KeyCode.ENTER)//不是tab或者backspace则无视event
                     event.consume();
         });
         usernameTipLabel.setMouseTransparent(true);

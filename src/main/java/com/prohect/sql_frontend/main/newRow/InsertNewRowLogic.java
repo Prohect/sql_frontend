@@ -28,6 +28,8 @@ import java.util.List;
 import java.util.ResourceBundle;
 import java.util.concurrent.LinkedBlockingQueue;
 
+import static com.prohect.sql_frontend_common.CollectionUtil.structureCloneAndMerge;
+
 public class InsertNewRowLogic implements Initializable {
 
     public static final String nullableString = "可选·输入";
@@ -58,11 +60,12 @@ public class InsertNewRowLogic implements Initializable {
      * if the tableData's first row contains something same(ignore case) with the column name of columns of tableView, map them.
      * if nothing matches, return an empty map
      */
-    private static HashMap<Integer, Integer> mapColumnIndex(List<String[]> tableData, TableView<Object[]> tableView) {
+    private static HashMap<Integer, Integer> mapColumnIndex(List<String[]> tableData, TableView<Object[]> tableView, int identifierIndex) {
         String[] columnsFromCsv = tableData.getFirst();
         HashMap<Integer, Integer> listFromCsv2columnMap = new HashMap<>();
         ObservableList<TableColumn<Object[], ?>> columnsFromTableView = tableView.getColumns();
         for (int i = 0; i < columnsFromTableView.size(); i++) {
+            if (i == identifierIndex) continue;
             String columnFromTableView = columnsFromTableView.get(i).getText();
             for (int i1 = 0; i1 < columnsFromCsv.length; i1++) {
                 String columnFromCsv = columnsFromCsv[i1];
@@ -94,18 +97,24 @@ public class InsertNewRowLogic implements Initializable {
      * @param listFromCsv the source list
      * @param tableView   the target table which tells the information of the column order
      */
-    private List<Object[]> getFormattedItems(List<String[]> listFromCsv, TableView<Object[]> tableView) {
-        HashMap<Integer, Integer> listFromCsv2tableColumn = mapColumnIndex(listFromCsv, tableView);
+    private List<Object[]> getFormattedItems(List<String[]> listFromCsv, TableView<Object[]> tableView, int identifierIndex) {
+        HashMap<Integer, Integer> listFromCsv2tableColumn = mapColumnIndex(listFromCsv, tableView, identifierIndex);
         List<Object[]> formattedItems = new ArrayList<>();
         if (!listFromCsv2tableColumn.isEmpty()) {
             listFromCsv.removeFirst();
-            for (Object[] originItem : listFromCsv) {
+            for (String[] originItem : listFromCsv) {
                 Object[] formattedItem = getNewItem();
-                listFromCsv2tableColumn.forEach((k, v) -> formattedItem[v] = originItem[k]);
+                listFromCsv2tableColumn.forEach((k, v) -> {
+                    if (originItem[k] != null) formattedItem[v] = originItem[k];
+                });
                 formattedItems.add(formattedItem);
             }
         } else {
-            formattedItems.addAll(listFromCsv);
+            for (String[] originItem : listFromCsv) {
+                Object[] formattedItem = getNewItem();
+                for (int i = 0; i < originItem.length; i++) if (originItem[i] != null) formattedItem[i] = originItem[i];
+                formattedItems.add(formattedItem);
+            }
         }
         return formattedItems;
     }
@@ -122,7 +131,7 @@ public class InsertNewRowLogic implements Initializable {
                 objs.add(values);
             }
         } else {
-            throw new FileNotFoundException(file.getAbsolutePath());
+            Main.logger.log(new FileNotFoundException(file.getAbsolutePath()));
         }
         return objs;
     }
@@ -157,7 +166,7 @@ public class InsertNewRowLogic implements Initializable {
     }
 
     @FXML
-    void onDragDropped(DragEvent event) throws Exception {
+    void onDragDropped(DragEvent event) {
         List<File> files = event.getDragboard().getFiles();
         for (File file : files) {
             if (file.getName().toLowerCase().endsWith(".csv")) {//eg. clientConfig.json
@@ -178,14 +187,14 @@ public class InsertNewRowLogic implements Initializable {
         }
     }
 
-    private Object[] getNewItem() {
-        Object[] objects = new Object[this.theInsertTableView.getColumns().size()];
+    private String[] getNewItem() {
+        String[] strings = new String[this.theInsertTableView.getColumns().size()];
         ArrayList<ColumnMetaData> columnMetaDataList = Main.db2tb2columnMD.get(Main.mainLogic.getDataBaseName4tableView()).get(Main.mainLogic.getTableName4tableView());
-        for (int i = 0; i < objects.length; i++) {
+        for (int i = 0; i < strings.length; i++) {
             ColumnMetaData columnMetaData = columnMetaDataList.get(i);
-            objects[i] = getPromptOfColumn(columnMetaData);
+            strings[i] = getPromptOfColumn(columnMetaData);
         }
-        return objects;
+        return strings;
     }
 
     public void setHasIdentifier(boolean hasIdentifier) {
@@ -302,42 +311,32 @@ public class InsertNewRowLogic implements Initializable {
         fileChooser.getExtensionFilters().addAll(new FileChooser.ExtensionFilter("选择.csv文件", "*.csv"));
         File selectedFile = fileChooser.showOpenDialog(MainLogic.stage4InsertNewRowsWindow);
         loadFromFile(selectedFile);
-        if (selectedFile != null)
-            Main.clientConfig.setLoadFromCsvPath(selectedFile.getParent());
+        if (selectedFile != null) Main.clientConfig.setLoadFromCsvPath(selectedFile.getParent());
     }
 
     private void loadFromFile(File selectedFile) {
         if (selectedFile != null) {
             try {
-                List<String[]> listFromCsv0 = loadListFromCsv(selectedFile);
                 TableView<Object[]> tableView = theInsertTableView;
                 ObservableList<TableColumn<Object[], ?>> tableColumns = tableView.getColumns();
                 int columns = tableColumns.size();
-                int skip = -1;
-                ArrayList<ColumnMetaData> columnMetaDataArrayList = Main.db2tb2columnMD.get(databaseName).get(tableName);
-                for (int i = 0; i < tableColumns.size(); i++) {
-                    if (skip != -1) break;
-                    TableColumn<Object[], ?> tableColumn = tableColumns.get(i);
-                    for (ColumnMetaData columnMetaData : columnMetaDataArrayList)
-                        if (columnMetaData.getColumnName().equals(tableColumn.getText()))
-                            if (columnMetaData.isAutoIncrement()) {
-                                skip = i;
-                                break;
-                            }
-                }
-                List<String[]> listFromCsv = new ArrayList<>();
-                for (String[] strings : listFromCsv0) {
-                    int copied = 0;
-                    String[] newRow = new String[columns];
-                    for (int i = 0; i < columns; i++) {
-                        if (i == skip || copied >= strings.length) continue;
-                        newRow[i] = strings[copied];
-                        copied++;
+                int identifierIndex = -1;//the index of the autoincrement identifier if exist
+                var identifierColumn = structureCloneAndMerge(Main.db2tb2columnMD.get(databaseName).get(tableName)).stream().filter(ColumnMetaData::isAutoIncrement).findFirst();
+                if (identifierColumn.isPresent()) for (int i = 0; i < columns; i++) {
+                    String columnName = tableColumns.get(i).getText();
+                    if (identifierColumn.get().getColumnName().equals(columnName)) {
+                        identifierIndex = i;
+                        break;
                     }
+                }
+                List<String[]> listFromCsv = new ArrayList<>();//load and format it to match the column numbers
+                for (String[] strings : loadListFromCsv(selectedFile)) {
+                    String[] newRow = new String[columns];
+                    for (int i = 0; i < strings.length; i++)
+                        newRow[identifierIndex == -1 ? i : i < identifierIndex ? i : i + 1] = strings[i];
                     listFromCsv.add(newRow);
                 }
-                List<Object[]> formattedItems = getFormattedItems(listFromCsv, tableView);
-                tableView.getItems().addAll(formattedItems);
+                tableView.getItems().addAll(getFormattedItems(listFromCsv, tableView, identifierIndex));
             } catch (Exception e) {
                 Main.mainLogic.getInfoLabel().setText(e.getMessage());
                 Main.logger.log(e);

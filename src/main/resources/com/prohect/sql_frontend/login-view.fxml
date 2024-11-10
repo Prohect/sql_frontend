@@ -49,7 +49,8 @@
             <TextField fx:id="usernameField" layoutY="14.0" onKeyPressed="#autoComplete4Username"
                        onKeyTyped="#tryAutoComplete" prefHeight="23.0" prefWidth="171.0"/>
 
-            <PasswordField fx:id="passwordField" layoutY="101.0" prefHeight="23.0" prefWidth="171.0"/>
+            <PasswordField fx:id="passwordField" layoutY="101.0" onKeyPressed="#passwordFieldOnKeyPressed"
+                           prefHeight="23.0" prefWidth="171.0"/>
 
             <Button layoutX="131.0" layoutY="154.0" mnemonicParsing="false" onAction="#login" text="登录"/>
             <Label fx:id="loginInfo" layoutX="14.0" layoutY="170.0" prefHeight="20.0" prefWidth="100.0"/>
