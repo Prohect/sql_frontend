@@ -336,6 +336,8 @@ public class ClientHandlerAdapter extends ChannelInboundHandlerAdapter {
                     String theUsersDatabaseName = sLoginPacket.getTheUsersDatabaseName();
                     String theUsersTableName = sLoginPacket.getTheUsersTableName();
 
+                    Main.clientConfig.getUsernames().add(userFromPacket.getUsername());
+
                     merge(Main.db2tb2columnMD, db2table2columnMap);
 
                     Main.clientConfig.setTheUsersDatabaseName(theUsersDatabaseName);

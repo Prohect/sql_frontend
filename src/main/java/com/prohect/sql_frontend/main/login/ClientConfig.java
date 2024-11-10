@@ -2,11 +2,13 @@ package com.prohect.sql_frontend.main.login;
 
 import com.alibaba.fastjson2.JSON;
 import com.alibaba.fastjson2.JSONException;
+import com.alibaba.fastjson2.JSONWriter;
 
 import java.io.File;
 import java.io.FileOutputStream;
 import java.io.IOException;
 import java.nio.file.Files;
+import java.util.HashSet;
 
 @SuppressWarnings("unused")
 public class ClientConfig {
@@ -19,15 +21,18 @@ public class ClientConfig {
     private double[] sizeOfMainGUI = new double[]{800, 600};
     private String lastDB;
     private String lastTB;
+    private HashSet<String> usernames;
 
     public ClientConfig(String serverHost, int port, String theUsersTableName, String theUsersDatabaseName) {
         this.serverHost = serverHost;
         this.port = port;
         this.theUsersTableName = theUsersTableName;
         this.theUsersDatabaseName = theUsersDatabaseName;
+        usernames = new HashSet<>();
     }
 
     public ClientConfig() {
+        usernames = new HashSet<>();
     }
 
     public static ClientConfig readConfig() throws IOException {
@@ -61,11 +66,22 @@ public class ClientConfig {
             configFile.delete();
             configFile.createNewFile();
             FileOutputStream fos = new FileOutputStream(configFile);
-            fos.write(JSON.toJSONBytes(clientConfig));
+            fos.write(JSON.toJSONBytes(clientConfig, JSONWriter.Feature.PrettyFormat));
             fos.flush();
             fos.close();
         } catch (IOException ignored) {
         }
+    }
+
+    /**
+     * usernames saved locally, which is used to autofill in login UI
+     */
+    public HashSet<String> getUsernames() {
+        return usernames;
+    }
+
+    public void setUsernames(HashSet<String> usernames) {
+        this.usernames = usernames;
     }
 
     public String getLastTB() {

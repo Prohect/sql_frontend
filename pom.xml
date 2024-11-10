@@ -70,7 +70,7 @@
                     <target>23</target>
                     <release>23</release>
                     <compilerArgs>
-                        <arg></arg>
+                        <arg/>
                     </compilerArgs>
                 </configuration>
             </plugin>

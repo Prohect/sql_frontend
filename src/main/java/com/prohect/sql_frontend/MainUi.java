@@ -37,9 +37,10 @@ public class MainUi extends Application {
     }
 
     @Override
-    public void start(Stage stage) {
+    public void start(Stage stage) throws IOException {
+        Main.clientConfig = ClientConfig.readConfig();
         window = stage;
-        stage.setTitle("Hello!");
+        stage.setTitle("登录!");
         stage.setScene(loginScene);
         stage.setResizable(false);
         stage.show();

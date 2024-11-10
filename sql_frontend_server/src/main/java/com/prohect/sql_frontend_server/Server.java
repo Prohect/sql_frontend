@@ -2,6 +2,7 @@ package com.prohect.sql_frontend_server;
 
 import com.alibaba.fastjson2.JSON;
 import com.alibaba.fastjson2.JSONException;
+import com.alibaba.fastjson2.JSONWriter;
 import com.prohect.sql_frontend_common.ColumnMetaData;
 import com.prohect.sql_frontend_common.Logger;
 import com.prohect.sql_frontend_common.User;
@@ -88,7 +89,7 @@ public class Server {
         configFile.delete();
         configFile.createNewFile();
         FileOutputStream fileOutputStream = new FileOutputStream(configFile);
-        fileOutputStream.write(JSON.toJSONBytes(serverConfig));
+        fileOutputStream.write(JSON.toJSONBytes(serverConfig, JSONWriter.Feature.PrettyFormat));
         fileOutputStream.flush();
         fileOutputStream.close();
         return serverConfig;
