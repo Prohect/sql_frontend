@@ -80,8 +80,7 @@ public class LoginLogic implements Initializable {
                 char[] chars = newValue.substring(oldValue.length()).toCharArray();
                 StringBuilder stringBuilder = new StringBuilder(oldValue);
                 for (char c : chars) {
-                    if (!Character.isLetter(c)) continue;
-                    else if (Character.isDigit(c)) continue;
+                    if (!Character.isLetter(c) && Character.isDigit(c)) continue;
                     stringBuilder.append(c);
                 }
                 usernameField.setText(stringBuilder.toString());
@@ -99,8 +98,7 @@ public class LoginLogic implements Initializable {
                     }
                 }
             }
-            if (flag)
-                usernameTipLabel.setText(tip);
+            if (flag) usernameTipLabel.setText(tip);
             else usernameTipLabel.setText("");
         });
         usernameTipLabel.setMouseTransparent(true);
