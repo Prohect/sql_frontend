@@ -57,7 +57,12 @@ public class Server {
         this.serverConfig = config;
     }
 
-    public static void main() {
+    @SuppressWarnings("unused")
+    public static void main(String[] args) {
+        m();
+    }
+
+    public static void m() {
         try {
             new Server(loadConfig()).run();
         } catch (SQLException e) {

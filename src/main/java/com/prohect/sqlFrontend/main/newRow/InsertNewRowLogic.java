@@ -276,10 +276,10 @@ public class InsertNewRowLogic implements Initializable {
                     if (first) {
                         first = false;
                         assert cmd != null;
-                        cmd.append(") VALUES (").append(Util.isNumber((String) object) ? (String) object : Util.convert2SqlServerContextString(object));
+                        cmd.append(") VALUES (").append(Util.isNumber((String) object) != null ? (String) object : Util.convert2SqlServerContextString(object));
                     } else {
                         if (bitString.equals(object)) object = "0";
-                        cmd.append(",").append(Util.isNumber((String) object) ? (String) object : Util.convert2SqlServerContextString(object));
+                        cmd.append(",").append(Util.isNumber((String) object) != null ? (String) object : Util.convert2SqlServerContextString(object));
                     }
                 }
                 assert cmd != null;
