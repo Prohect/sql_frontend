@@ -4,7 +4,6 @@ import com.prohect.sqlFrontend.ClientHandlerAdapter;
 import com.prohect.sqlFrontend.NettyClient;
 import com.prohect.sqlFrontend.main.Main;
 import io.netty.bootstrap.Bootstrap;
-import io.netty.channel.nio.NioEventLoopGroup;
 import javafx.fxml.FXML;
 import javafx.fxml.Initializable;
 import javafx.scene.control.Label;
@@ -39,8 +38,7 @@ public class LoginLogic implements Initializable {
         String serverHost = Main.clientConfig.getServerHost();
         int port = Main.clientConfig.getPort();
         Bootstrap b = new Bootstrap();
-        NioEventLoopGroup workerGroup = new NioEventLoopGroup();
-        Main.setAndRunNewNettyClient(new NettyClient(serverHost, port, b, workerGroup, new ClientHandlerAdapter(serverHost, port, b, workerGroup)));
+        Main.setAndRunNewNettyClient(new NettyClient(serverHost, port, b, Main.workerGroup, new ClientHandlerAdapter(serverHost, port, b, Main.workerGroup)));
     }
 
     public Label getLoginInfo() {
@@ -80,8 +78,7 @@ public class LoginLogic implements Initializable {
                 char[] chars = newValue.substring(oldValue.length()).toCharArray();
                 StringBuilder stringBuilder = new StringBuilder(oldValue);
                 for (char c : chars) {
-                    if (!Character.isLetter(c)) continue;
-                    else if (Character.isDigit(c)) continue;
+                    if (!Character.isLetter(c) && !Character.isDigit(c)) continue;
                     stringBuilder.append(c);
                 }
                 usernameField.setText(stringBuilder.toString());
@@ -99,8 +96,7 @@ public class LoginLogic implements Initializable {
                     }
                 }
             }
-            if (flag)
-                usernameTipLabel.setText(tip);
+            if (flag) usernameTipLabel.setText(tip);
             else usernameTipLabel.setText("");
         });
         usernameTipLabel.setMouseTransparent(true);

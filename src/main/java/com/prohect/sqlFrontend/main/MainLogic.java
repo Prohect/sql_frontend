@@ -8,6 +8,7 @@ import com.prohect.sqlFrontendCommon.Util;
 import com.prohect.sqlFrontendCommon.packet.CAlterPacket;
 import com.prohect.sqlFrontendCommon.packet.CDeletePacket;
 import com.prohect.sqlFrontendCommon.packet.CQueryPacket;
+import javafx.animation.Transition;
 import javafx.application.Platform;
 import javafx.collections.FXCollections;
 import javafx.collections.ObservableList;
@@ -17,8 +18,11 @@ import javafx.fxml.Initializable;
 import javafx.scene.Scene;
 import javafx.scene.control.*;
 import javafx.scene.input.DragEvent;
+import javafx.scene.layout.Pane;
+import javafx.scene.paint.Color;
 import javafx.stage.Modality;
 import javafx.stage.Stage;
+import javafx.util.Duration;
 
 import java.io.IOException;
 import java.net.URL;
@@ -35,7 +39,7 @@ public class MainLogic implements Initializable {
     private Scene scene4InsertNewColumnScene;
     private TextInputDialog textInputDialog4newTableName;
     @FXML
-    private TextField customQueryTextField;
+    private Pane pane4infoLabel;
     @FXML
     private ChoiceBox<String> databaseChoiceBox;
     @FXML
@@ -80,7 +84,21 @@ public class MainLogic implements Initializable {
         Platform.runLater(() -> {
             try {
                 //for this UI
-                getCustomQueryTextField().setEditable(false);
+                getInfoLabel().textProperty().addListener((_, oldValue, newValue) -> {
+                    if (newValue != null && newValue.equals(oldValue)) return;
+                    new Transition() {
+                        {
+                            setCycleDuration(Duration.millis(5000));
+                            setCycleCount(1);
+                            setAutoReverse(false);
+                        }
+
+                        @Override
+                        protected void interpolate(double frac) {
+                            infoLabel.textFillProperty().setValue(Color.color(1f - frac, 0f, 0f));
+                        }
+                    }.playFromStart();
+                });
 
                 //load insertNewRows UI
                 scene4InsertNewRowsScene = new Scene(insertFXMLLoader.load(), 640, 400);
@@ -145,10 +163,6 @@ public class MainLogic implements Initializable {
 
     public ChoiceBox<String> getDatabaseChoiceBox() {
         return databaseChoiceBox;
-    }
-
-    public TextField getCustomQueryTextField() {
-        return customQueryTextField;
     }
 
     @FXML
@@ -331,7 +345,7 @@ public class MainLogic implements Initializable {
         try {
             ChoiceBox<String> choiceBox = Main.mainLogic.getDatabaseChoiceBox();
             String databaseName = choiceBox.getValue() == null ? choiceBox.getItems().getFirst() : choiceBox.getValue();
-            CQueryPacket cQueryPacket = new CQueryPacket(Main.user.getUuid(), "select " + getCustomQueryTextField().getText() + " from " + getTableChoiceBox().getValue(), databaseName);
+            CQueryPacket cQueryPacket = new CQueryPacket(Main.user.getUuid(), "select * from " + getTableChoiceBox().getValue(), databaseName);
             Main.channel2packetsMap.computeIfAbsent(Main.ctx.channel(), _ -> new LinkedBlockingQueue<>()).add(cQueryPacket);
         } catch (Exception e) {
             Main.logger.log(e);
