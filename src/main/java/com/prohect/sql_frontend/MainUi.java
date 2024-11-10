@@ -32,7 +32,8 @@ public class MainUi extends Application {
         return window;
     }
 
-    public static void main() {
+    @SuppressWarnings("unused")
+    public static void main(String[] args) {
         Application.launch();
     }
 
