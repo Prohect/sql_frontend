@@ -5,9 +5,8 @@
     <modelVersion>4.0.0</modelVersion>
 
     <groupId>com.prohect</groupId>
-    <artifactId>sql_frontend</artifactId>
+    <artifactId>sql-frontend</artifactId>
     <version>0.0.9</version>
-    <name>sql_frontend</name>
 
     <properties>
         <project.build.sourceEncoding>UTF-8</project.build.sourceEncoding>
@@ -17,7 +16,7 @@
     <dependencies>
         <dependency>
             <groupId>com.prohect</groupId>
-            <artifactId>sql_frontend_common</artifactId>
+            <artifactId>sql-frontend-common</artifactId>
             <version>0.0.9</version>
         </dependency>
         <dependency>
