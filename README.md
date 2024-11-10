@@ -15,7 +15,7 @@ This guide will walk you through importing a project from a Version Control Syst
 ### Waiting for Maven to Download Dependencies
 
 1. After the project is imported, IntelliJ IDEA will automatically start downloading all project dependencies using Maven.
-2. You can see a progress bar at the right side of the bottom navigation bar, indicating the download process.
+2. You can see a progress bar on the right side of the bottom navigation bar, indicating the download process.
 
 ## Building Modules
 
