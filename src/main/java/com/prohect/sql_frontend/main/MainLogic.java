@@ -79,6 +79,9 @@ public class MainLogic implements Initializable {
     public void initialize(URL location, ResourceBundle resources) {
         Platform.runLater(() -> {
             try {
+                //for this UI
+                getCustomQueryTextField().setEditable(false);
+
                 //load insertNewRows UI
                 scene4InsertNewRowsScene = new Scene(insertFXMLLoader.load(), 640, 400);
                 stage4InsertNewRowsWindow = new Stage();
