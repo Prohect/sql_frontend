@@ -258,12 +258,17 @@ public class Server {
         finalStatement.close();
     }
 
-    private void processQueryPacket(ChannelHandlerContext ctx, CQueryPacket cQueryPacket) throws SQLException {
+    private void processQueryPacket(ChannelHandlerContext ctx, CQueryPacket cQueryPacket) {
         try {
             m1(ctx, cQueryPacket);
         } catch (SQLException e) {
             database2Table2ColumnMap = loadMetaDataFromConnection();
-            m1(ctx, cQueryPacket);
+            try {
+                m1(ctx, cQueryPacket);
+            } catch (SQLException ex) {
+                logger.log(ex);
+                logger.log("failed cmd = +" + cQueryPacket.getQuery());
+            }
         }
     }
 
