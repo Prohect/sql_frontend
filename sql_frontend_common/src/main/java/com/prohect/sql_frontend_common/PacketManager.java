@@ -7,23 +7,14 @@ import com.alibaba.fastjson2.filter.Filter;
 import com.prohect.sql_frontend_common.packet.*;
 
 import java.util.ArrayList;
-import java.util.HashMap;
 import java.util.List;
 
 public class PacketManager {
-
-    final static HashMap<String, Packet> prefixPacketMap = new HashMap<>();
     static Filter autoTypeFilter;
     static boolean initialized = false;
 
     static {
         init();
-    }
-
-    public static Class<? extends Packet> getPacketClassByPrefix(String prefix) {
-        if (!initialized) init();
-        Packet packet = prefixPacketMap.get(prefix);
-        return packet.getClass();
     }
 
     public static Packet convertPacket(byte[] bytes) throws JSONException {
@@ -35,7 +26,6 @@ public class PacketManager {
     }
 
     private static void init() {
-        prefixPacketMap.clear();
         ArrayList<Packet> list = new ArrayList<>();
         list.add(new CLoginPacket());
         list.add(new SLoginPacket());
@@ -50,10 +40,7 @@ public class PacketManager {
         list.add(new CDeletePacket());
         list.add(new SDeletePacket());
         List<Class<? extends Packet>> packetClassList = new ArrayList<>();
-        list.forEach((packet) -> {
-            prefixPacketMap.put(packet.getPrefix(), packet);
-            packetClassList.add(packet.getClass());
-        });
+        list.forEach((packet) -> packetClassList.add(packet.getClass()));
         autoTypeFilter = JSONReader.autoTypeFilter(packetClassList.toArray(new Class[list.size()]));
         initialized = true;
     }

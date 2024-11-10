@@ -3,6 +3,7 @@ package com.prohect.sql_frontend_common.packet;
 import java.io.Serializable;
 import java.util.ArrayList;
 
+@SuppressWarnings("unused")
 public class SQueryReplyPacket extends AbstractPacket implements Serializable {
 
     private String databaseName;

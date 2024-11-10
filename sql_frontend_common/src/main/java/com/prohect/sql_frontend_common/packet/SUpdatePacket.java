@@ -2,6 +2,7 @@ package com.prohect.sql_frontend_common.packet;
 
 import java.io.Serializable;
 
+@SuppressWarnings("unused")
 public class SUpdatePacket extends AbstractPacket implements Serializable {
     long theID;
 

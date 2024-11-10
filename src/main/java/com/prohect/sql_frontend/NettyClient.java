@@ -1,7 +1,10 @@
 package com.prohect.sql_frontend;
 
 import io.netty.bootstrap.Bootstrap;
-import io.netty.channel.*;
+import io.netty.channel.ChannelInboundHandlerAdapter;
+import io.netty.channel.ChannelInitializer;
+import io.netty.channel.ChannelOption;
+import io.netty.channel.EventLoopGroup;
 import io.netty.channel.socket.SocketChannel;
 import io.netty.channel.socket.nio.NioSocketChannel;
 
@@ -34,7 +37,7 @@ public class NettyClient {
         b.option(ChannelOption.SO_KEEPALIVE, true).option(ChannelOption.SO_RCVBUF, 262144).option(ChannelOption.SO_SNDBUF, 262144); // (4)
         b.handler(new ChannelInitializer<SocketChannel>() {
             @Override
-            public void initChannel(SocketChannel ch) throws Exception {
+            public void initChannel(SocketChannel ch) {
                 for (ChannelInboundHandlerAdapter channelInboundHandlerAdapter : channelInboundHandlerAdapters) {
                     ch.pipeline().addLast(channelInboundHandlerAdapter);
                 }
@@ -42,21 +45,13 @@ public class NettyClient {
         });
     }
 
-    public String getHost() {
-        return host;
-    }
-
-    public int getPort() {
-        return port;
-    }
-
     public void close() {
         workerGroup.shutdownGracefully(200, 200, TimeUnit.MILLISECONDS);
     }
 
-    public ChannelFuture run() throws Exception {
+    public void run() {
         // Start the client.
-        return b.connect(host, port); // (5)
+        b.connect(host, port);
     }
 
 }

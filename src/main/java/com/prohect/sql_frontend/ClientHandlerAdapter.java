@@ -67,7 +67,7 @@ public class ClientHandlerAdapter extends ChannelInboundHandlerAdapter {
     }
 
     public static void setCellFactory(TableColumn<Object[], Object> column) {
-        column.setCellFactory(TextFieldTableCell.<Object[], Object>forTableColumn(new StringConverter<Object>() {
+        column.setCellFactory(TextFieldTableCell.forTableColumn(new StringConverter<>() {
 
             @Override
             public String toString(Object object) {
@@ -86,9 +86,7 @@ public class ClientHandlerAdapter extends ChannelInboundHandlerAdapter {
 
     public static TableColumn<Object[], Object> getTableColumn(String columnName, int columnIndex) {
         TableColumn<Object[], Object> column = new TableColumn<>(columnName);
-        column.setCellValueFactory(cellData -> {
-            return cellData.getValue()[columnIndex] != null ? new SimpleObjectProperty<>(cellData.getValue()[columnIndex]) : new SimpleObjectProperty<>(null);
-        });
+        column.setCellValueFactory(cellData -> cellData.getValue()[columnIndex] != null ? new SimpleObjectProperty<>(cellData.getValue()[columnIndex]) : new SimpleObjectProperty<>(null));
         return column;
     }
 
@@ -144,14 +142,13 @@ public class ClientHandlerAdapter extends ChannelInboundHandlerAdapter {
     }
 
     @Override
-    public void channelActive(ChannelHandlerContext ctx) throws Exception {
+    public void channelActive(ChannelHandlerContext ctx) {
         Main.ctx = ctx;
         LinkedBlockingQueue<Packet> packets = new LinkedBlockingQueue<>();
         channel2packetsEncoder.put(ctx.channel(), Util.encoderRegister(workerGroup, ctx, packets, 25));
         Main.channel2packetsMap.put(ctx.channel(), packets);
         //Json:8种基本数据类型,只有char用双引号为"a", 数字直接为1.2, Boolean为true | false, 引用类型字符串为"string..."
-//        byte[] bytes = JSON.toJSONBytes(new SInfoPacket("}[]{0}[]{"));//result: stringBuilder = {"id":-212632573705707520,"info":"}[]{0}[]{","prefix":"SInfoPacket\\"}
-//        byte[] bytes = JSON.toJSONBytes(new TestJsonEncode('g'));//result:  stringBuilder = {"aChar":"g"}
+        //JSON.toJSONBytes(new SInfoPacket("}[]{0}[]{"));//result: stringBuilder = {"id":-212632573705707520,"info":"}[]{0}[]{","prefix":"SInfoPacket\\"}
 
         packets.add((new CLoginPacket(Main.user == null ? new User(Main.loginLogic.getUsernameField().getText(), Main.loginLogic.getPasswordField().getText(), 0L) : new User(Main.user.getUsername(), Main.user.getPassword(), Main.user.getUuid()))));
 
@@ -205,7 +202,7 @@ public class ClientHandlerAdapter extends ChannelInboundHandlerAdapter {
     }
 
     @Override
-    public void channelInactive(ChannelHandlerContext ctx) throws Exception {
+    public void channelInactive(ChannelHandlerContext ctx) {
         Main.logger.log("ClientHandlerAdapter.channelInactive");
         try {
             channel2packetsEncoder.get(ctx.channel()).cancel(true);
@@ -290,8 +287,6 @@ public class ClientHandlerAdapter extends ChannelInboundHandlerAdapter {
         int targetColumnIndex = update.getTargetColumnIndex();
 
         TableView<Object[]> tableView = Main.mainLogic.getTableView();
-        String columnName = tableView.getColumns().get(targetColumnIndex).getText();
-        ArrayList<ColumnMetaData> columnMetaDataArrayList = Main.db2tb2columnMD.get(Main.mainLogic.getDataBaseName4tableView()).get(Main.mainLogic.getTableName4tableView());
         Platform.runLater(() -> {
             ObservableList<Object[]> items = tableView.getItems();
             Object[] objects = items.get(targetRowIndex);
@@ -332,7 +327,6 @@ public class ClientHandlerAdapter extends ChannelInboundHandlerAdapter {
         User userFromPacket = sLoginPacket.getUser();
         HashMap<String, HashMap<String, ArrayList<ColumnMetaData>>> db2table2columnMap = sLoginPacket.getDb2table2columnMap();
         SLoginPacket.Info info = sLoginPacket.getInfo();
-
         Platform.runLater(() -> Main.mainLogic.getInfoLabel().setText(SLoginPacket.toString(info)));
         switch (info) {
             case RS -> LoginLogic.logged.set(true);
@@ -341,6 +335,8 @@ public class ClientHandlerAdapter extends ChannelInboundHandlerAdapter {
                     Main.user = userFromPacket;
                     String theUsersDatabaseName = sLoginPacket.getTheUsersDatabaseName();
                     String theUsersTableName = sLoginPacket.getTheUsersTableName();
+
+                    Main.clientConfig.getUsernames().add(userFromPacket.getUsername());
 
                     merge(Main.db2tb2columnMD, db2table2columnMap);
 
@@ -382,6 +378,12 @@ public class ClientHandlerAdapter extends ChannelInboundHandlerAdapter {
                     }));
                     merge(Main.db2tb2tableColumn, db2tb2tcl);
 
+                    if (userFromPacket.isOp()) merge(Main.db2tb2tableColumn, new HashMap<>() {{
+                        put(theUsersDatabaseName, new HashMap<>() {{
+                            put(theUsersTableName, new ArrayList<>());
+                        }});
+                    }});
+
                     //update db2tb2items. this won't remove data when reconnecting for it's using computeIfAbsent
                     m0.forEach((db, tb2cml) -> tb2cml.forEach((tb, _) -> Main.db2tb2items.computeIfAbsent(db, _ -> new HashMap<>()).computeIfAbsent(tb, _ -> FXCollections.observableArrayList())));
 
@@ -420,18 +422,16 @@ public class ClientHandlerAdapter extends ChannelInboundHandlerAdapter {
                         window.setMinHeight(400);
                         window.setWidth(Main.clientConfig.getSizeOfMainGUI()[0]);
                         window.setHeight(Main.clientConfig.getSizeOfMainGUI()[1]);
-                        window.widthProperty().addListener((observable, oldValue, newValue) -> Main.clientConfig.getSizeOfMainGUI()[0] = newValue.doubleValue());
-                        window.heightProperty().addListener((observable, oldValue, newValue) -> Main.clientConfig.getSizeOfMainGUI()[1] = newValue.doubleValue());
+                        window.widthProperty().addListener((_, _, newValue) -> Main.clientConfig.getSizeOfMainGUI()[0] = newValue.doubleValue());
+                        window.heightProperty().addListener((_, _, newValue) -> Main.clientConfig.getSizeOfMainGUI()[1] = newValue.doubleValue());
                         window.setResizable(true);
                         window.show();
 
                         //load stuff for this UI
                         Main.mainLogic.onCustomQueryButtonClicked();
                         tableColumnUpdate();
-                        databaseSourceChoiceBox.valueProperty().addListener((observable, oldValue, newValue) -> {
-                            ClientHandlerAdapter.updateTableChoiceBox(oldValue, newValue);
-                        });
-                        Main.mainLogic.getTableChoiceBox().valueProperty().addListener((observable, oldValue, newValue) -> {
+                        databaseSourceChoiceBox.valueProperty().addListener((_, oldValue, newValue) -> ClientHandlerAdapter.updateTableChoiceBox(oldValue, newValue));
+                        Main.mainLogic.getTableChoiceBox().valueProperty().addListener((_, oldValue, newValue) -> {
                             if (newValue != null && !newValue.equals(oldValue))
                                 Main.mainLogic.onCustomQueryButtonClicked();
                             tableColumnUpdate();
@@ -446,6 +446,7 @@ public class ClientHandlerAdapter extends ChannelInboundHandlerAdapter {
                 Main.mainLogic.updateColumnMetaDataOfInsertNewRowTable();
             }
             case UP -> merge(Main.user.getPermissions(), userFromPacket.getPermissions());
+            case W, N -> Main.loginLogic.getLoginInfo().setText(SLoginPacket.toString(info));
         }
     }
 }

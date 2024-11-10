@@ -1,15 +1,12 @@
 package com.prohect.sql_frontend.main.newColumn;
 
 import com.prohect.sql_frontend.main.Main;
+import com.prohect.sql_frontend.main.MainLogic;
 import com.prohect.sql_frontend_common.Util;
-import com.prohect.sql_frontend_common.packet.CAlterPacket;
-import javafx.event.ActionEvent;
 import javafx.fxml.FXML;
 import javafx.scene.control.CheckBox;
 import javafx.scene.control.ChoiceBox;
 import javafx.scene.control.TextField;
-
-import java.util.concurrent.LinkedBlockingQueue;
 
 public class InsertNewColumnLogic {
     private boolean needUpdateMainTable = false;
@@ -59,7 +56,7 @@ public class InsertNewColumnLogic {
     }
 
     @FXML
-    void submit(ActionEvent event) {
+    void submit() {
         if (!Main.user.isOp()) {
             Main.mainLogic.getInfoLabel().setText("您的权限不足以执行此操作!");
             return;
@@ -78,7 +75,6 @@ public class InsertNewColumnLogic {
             if (isUniqueCheckBox.isSelected()) cmd.append(" UNIQUE");
         }
         if (isPrimaryKeyCheckBox.isSelected()) cmd.append(" PRIMARY KEY");
-        CAlterPacket cAlterPacket = new CAlterPacket(Main.user.getUuid(), cmd.toString(), Main.mainLogic.getDataBaseName4tableView());
-        Main.channel2packetsMap.computeIfAbsent(Main.ctx.channel(), c -> new LinkedBlockingQueue<>()).add(cAlterPacket);
+        MainLogic.sendSqlAlterCommands2targetDB(Main.mainLogic.getDataBaseName4tableView(), cmd.toString());
     }
 }

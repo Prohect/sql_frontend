@@ -7,14 +7,11 @@ import com.prohect.sql_frontend_common.Util;
 import com.prohect.sql_frontend_common.packet.CInsertPacket;
 import com.prohect.sql_frontend_common.packet.Packet;
 import javafx.collections.ObservableList;
-import javafx.event.ActionEvent;
 import javafx.fxml.FXML;
 import javafx.fxml.Initializable;
 import javafx.scene.control.Label;
 import javafx.scene.control.TableColumn;
-import javafx.scene.control.TablePosition;
 import javafx.scene.control.TableView;
-import javafx.scene.input.MouseEvent;
 import javafx.stage.FileChooser;
 
 import java.io.BufferedReader;
@@ -39,18 +36,40 @@ public class InsertNewRowLogic implements Initializable {
     public static String tableName = "";
     FileChooser fileChooser;
     boolean hasIdentifier = false;
+    /**
+     * for other logic  of UI don't use this and the one above, no getter for this two
+     */
     int identifierIndex = -1;
     private boolean needUpdateMainTable = false;
     @FXML
     private Label infoLabel;
     @FXML
     private TableView<Object[]> theInsertTableView;
-    private TableColumn selectedColumn;
     private int selectedRowIndex;
-    private int selectedColumnIndex;
 
     public InsertNewRowLogic() {
         Main.insertNewRowLogic = this;
+    }
+
+    /**
+     * if the tableData's first row contains something same(ignore case) with the column name of columns of tableView, map them.
+     * if nothing matches, return an empty map
+     */
+    private static HashMap<Integer, Integer> mapColumnIndex(List<String[]> tableData, TableView<Object[]> tableView) {
+        String[] columnsFromCsv = tableData.getFirst();
+        HashMap<Integer, Integer> listFromCsv2columnMap = new HashMap<>();
+        ObservableList<TableColumn<Object[], ?>> columnsFromTableView = tableView.getColumns();
+        for (int i = 0; i < columnsFromTableView.size(); i++) {
+            String columnFromTableView = columnsFromTableView.get(i).getText();
+            for (int i1 = 0; i1 < columnsFromCsv.length; i1++) {
+                String columnFromCsv = columnsFromCsv[i1];
+                if (columnFromTableView.equalsIgnoreCase(columnFromCsv)) {
+                    listFromCsv2columnMap.put(i1, i);//在map中映射两类index
+                    break;
+                }
+            }
+        }
+        return listFromCsv2columnMap;
     }
 
     public boolean isNeedUpdateMainTable() {
@@ -59,10 +78,6 @@ public class InsertNewRowLogic implements Initializable {
 
     public void setNeedUpdateMainTable(boolean needUpdateMainTable) {
         this.needUpdateMainTable = needUpdateMainTable;
-    }
-
-    public int getIdentifierIndex() {
-        return identifierIndex;
     }
 
     public void setIdentifierIndex(int identifierIndex) {
@@ -77,25 +92,13 @@ public class InsertNewRowLogic implements Initializable {
      * @param tableView   the target table which tells the information of the column order
      */
     private List<Object[]> getFormattedItems(List<String[]> listFromCsv, TableView<Object[]> tableView) {
-        String[] columnsFromCsv = listFromCsv.getFirst();
-        HashMap<Integer, Integer> listFromCsv2columnMap = new HashMap<>();
-        ObservableList<TableColumn<Object[], ?>> columnsFromTableView = tableView.getColumns();
-        for (int i = 0; i < columnsFromTableView.size(); i++) {
-            String columnFromTableView = columnsFromTableView.get(i).getText();
-            for (int i1 = 0; i1 < columnsFromCsv.length; i1++) {
-                String columnFromCsv = columnsFromCsv[i1];
-                if (columnFromTableView.equalsIgnoreCase(columnFromCsv)) {
-                    listFromCsv2columnMap.put(i1, i);//在map中映射两类index
-                    break;
-                }
-            }
-        }
+        HashMap<Integer, Integer> listFromCsv2tableColumn = mapColumnIndex(listFromCsv, tableView);
         List<Object[]> formattedItems = new ArrayList<>();
-        if (!listFromCsv2columnMap.isEmpty()) {
+        if (!listFromCsv2tableColumn.isEmpty()) {
             listFromCsv.removeFirst();
             for (Object[] originItem : listFromCsv) {
                 Object[] formattedItem = getNewItem();
-                listFromCsv2columnMap.forEach((k, v) -> formattedItem[v] = originItem[k]);
+                listFromCsv2tableColumn.forEach((k, v) -> formattedItem[v] = originItem[k]);
                 formattedItems.add(formattedItem);
             }
         } else {
@@ -159,26 +162,17 @@ public class InsertNewRowLogic implements Initializable {
         return objects;
     }
 
-    public boolean isHasIdentifier() {
-        return hasIdentifier;
-    }
-
     public void setHasIdentifier(boolean hasIdentifier) {
         this.hasIdentifier = hasIdentifier;
     }
 
     @FXML
-    void tableViewOnMouseClicked(MouseEvent event) {
+    void tableViewOnMouseClicked() {
         selectedRowIndex = theInsertTableView.getSelectionModel().getSelectedIndex();
-        ObservableList<TablePosition> selectedCells = theInsertTableView.getSelectionModel().getSelectedCells();
-        if (selectedCells.isEmpty()) return;
-        TablePosition position = selectedCells.get(0);
-        selectedColumnIndex = position.getColumn();
-        selectedColumn = position.getTableColumn();
     }
 
     @FXML
-    void removeSelectedRow(ActionEvent event) {
+    void removeSelectedRow() {
         try {
             theInsertTableView.getItems().remove(selectedRowIndex);
             this.infoLabel.setText("删除成功");
@@ -188,7 +182,7 @@ public class InsertNewRowLogic implements Initializable {
     }
 
     @FXML
-    void submitTheChanges(MouseEvent event) {
+    void submitTheChanges() {
         try {
             ArrayList<ColumnMetaData> columnMetaDataList = Main.db2tb2columnMD.get(Main.mainLogic.getDataBaseName4tableView()).get(Main.mainLogic.getTableName4tableView());
             ObservableList<Object[]> items = this.getTheInsertTableView().getItems();
@@ -261,7 +255,7 @@ public class InsertNewRowLogic implements Initializable {
 
             }
             for (Packet packet : packets) {
-                Main.channel2packetsMap.computeIfAbsent(Main.ctx.channel(), c -> new LinkedBlockingQueue<>()).add(packet);
+                Main.channel2packetsMap.computeIfAbsent(Main.ctx.channel(), _ -> new LinkedBlockingQueue<>()).add(packet);
             }
         } catch (Exception e) {
             Main.logger.log(e);
@@ -269,13 +263,13 @@ public class InsertNewRowLogic implements Initializable {
     }
 
     @FXML
-    void removeAllRow(ActionEvent event) {
+    void removeAllRow() {
         theInsertTableView.getItems().clear();
         this.infoLabel.setText("删除所有行成功");
     }
 
     @FXML
-    void loadFromCsv2tableViewOnAction(ActionEvent event) {
+    void loadFromCsv2tableViewOnAction() {
         if (fileChooser == null) fileChooser = new FileChooser();
 
         // 可以设置初始目录（可选）

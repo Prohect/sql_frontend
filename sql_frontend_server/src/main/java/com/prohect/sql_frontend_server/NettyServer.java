@@ -28,7 +28,7 @@ public class NettyServer {
         ServerBootstrap bootstrap = b.group(bossGroup, workerGroup).channel(NioServerSocketChannel.class); // (3)
         bootstrap.childHandler(new ChannelInitializer<SocketChannel>() { // (4)
                     @Override
-                    public void initChannel(SocketChannel ch) throws Exception {
+                    public void initChannel(SocketChannel ch) {
                         for (ChannelInboundHandlerAdapter channelInboundHandlerAdapter : channelInboundHandlerAdapters) {
                             ch.pipeline().addLast(channelInboundHandlerAdapter);
                         }

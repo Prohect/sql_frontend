@@ -2,6 +2,7 @@ package com.prohect.sql_frontend_common;
 
 import java.io.Serializable;
 
+@SuppressWarnings("unused")
 public class ColumnMetaData implements Serializable, Comparable<ColumnMetaData> {
     String columnName;
     String columnType;

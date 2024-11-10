@@ -32,21 +32,22 @@ public class MainUi extends Application {
         return window;
     }
 
-    public static void main(String[] args) {
+    public static void main() {
         Application.launch();
     }
 
     @Override
     public void start(Stage stage) throws IOException {
+        Main.clientConfig = ClientConfig.readConfig();
         window = stage;
-        stage.setTitle("Hello!");
+        stage.setTitle("登录!");
         stage.setScene(loginScene);
         stage.setResizable(false);
         stage.show();
     }
 
     @Override
-    public void stop() throws Exception {
+    public void stop() {
         if (Main.clientConfig != null) {
             Main.clientConfig.setLastDB(Main.mainLogic.getDataBaseName4tableView());
             Main.clientConfig.setLastTB(Main.mainLogic.getTableName4tableView());

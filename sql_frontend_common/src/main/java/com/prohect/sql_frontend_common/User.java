@@ -6,6 +6,7 @@ import java.io.InputStreamReader;
 import java.net.*;
 import java.util.HashMap;
 
+@SuppressWarnings("unused")
 public class User {
     private String username;
     private String password;
@@ -154,13 +155,7 @@ public class User {
 
             // 将字符串形式的IP地址转换为整数
             this.ip = ipToInteger(ipAddress.toString());
-        } catch (ProtocolException e) {
-            throw new RuntimeException(e);
-        } catch (MalformedURLException e) {
-            throw new RuntimeException(e);
-        } catch (URISyntaxException e) {
-            throw new RuntimeException(e);
-        } catch (IOException e) {
+        } catch (URISyntaxException | IOException e) {
             throw new RuntimeException(e);
         }
     }

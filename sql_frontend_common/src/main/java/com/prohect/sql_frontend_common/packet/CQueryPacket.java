@@ -2,6 +2,8 @@ package com.prohect.sql_frontend_common.packet;
 
 import java.io.Serializable;
 
+
+@SuppressWarnings("unused")
 public class CQueryPacket extends AbstractPacket implements Serializable {
     long uuid;
     String query;

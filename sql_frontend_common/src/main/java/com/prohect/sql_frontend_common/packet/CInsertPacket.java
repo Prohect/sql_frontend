@@ -5,6 +5,8 @@ import java.io.Serializable;
 /**
  * insert a new row for a certain table
  */
+
+@SuppressWarnings("unused")
 public class CInsertPacket extends AbstractPacket implements Serializable {
     long uuid;
     String cmd;
