@@ -61,25 +61,6 @@ public class LoginLogic implements Initializable {
     }
 
     @FXML
-    public void tryAutoComplete() {
-        String text = getUsernameField().getText();
-        var tip = text;
-        boolean flag = false;
-        if (!text.isBlank()) {
-            for (String username : Main.clientConfig.getUsernames()) {
-                if (username.startsWith(text)) {
-                    tip = username;
-                    flag = true;
-                    break;
-                }
-            }
-        }
-        if (flag)
-            usernameTipLabel.setText(tip);
-        else usernameTipLabel.setText("");
-    }
-
-    @FXML
     void passwordFieldOnKeyPressed(KeyEvent event) {
         if (event.getCode() == KeyCode.ENTER) login();
     }
@@ -94,10 +75,33 @@ public class LoginLogic implements Initializable {
 
     @Override
     public void initialize(URL location, ResourceBundle resources) {
-        getUsernameField().addEventFilter(KeyEvent.KEY_PRESSED, event -> {
-            if (!Character.isLetterOrDigit(event.getCharacter().charAt(0)))//不是字母或数字
-                if (event.getCode() != KeyCode.TAB && event.getCode() != KeyCode.BACK_SPACE && event.getCode() != KeyCode.ENTER)//不是tab或者backspace则无视event
-                    event.consume();
+        getUsernameField().textProperty().addListener((_, oldValue, newValue) -> {
+            if (newValue.length() > oldValue.length()) {
+                char[] chars = newValue.substring(oldValue.length()).toCharArray();
+                StringBuilder stringBuilder = new StringBuilder(oldValue);
+                for (char c : chars) {
+                    if (!Character.isLetter(c)) continue;
+                    else if (Character.isDigit(c)) continue;
+                    stringBuilder.append(c);
+                }
+                usernameField.setText(stringBuilder.toString());
+            }
+
+            String text = getUsernameField().getText();
+            var tip = text;
+            boolean flag = false;
+            if (!text.isBlank()) {
+                for (String username : Main.clientConfig.getUsernames()) {
+                    if (username.startsWith(text)) {
+                        tip = username;
+                        flag = true;
+                        break;
+                    }
+                }
+            }
+            if (flag)
+                usernameTipLabel.setText(tip);
+            else usernameTipLabel.setText("");
         });
         usernameTipLabel.setMouseTransparent(true);
     }

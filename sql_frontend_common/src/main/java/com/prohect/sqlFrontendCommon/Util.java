@@ -111,7 +111,7 @@ public class Util {
     }
 
     public static Object isNumber(String str) {
-        if (str == null) return false;
+        if (str == null) return null;
         try {
             return Long.parseLong(str);
         } catch (NumberFormatException e) {

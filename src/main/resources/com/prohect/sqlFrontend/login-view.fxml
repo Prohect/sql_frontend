@@ -46,8 +46,8 @@
             <Label layoutX="88.0" layoutY="105.0" text=":"/>
         </Pane>
         <Pane layoutX="125.0" layoutY="173.0" prefHeight="202.0" prefWidth="197.0">
-            <TextField fx:id="usernameField" layoutY="14.0" onKeyPressed="#autoComplete4Username"
-                       onKeyTyped="#tryAutoComplete" prefHeight="23.0" prefWidth="171.0"/>
+            <TextField fx:id="usernameField" layoutY="14.0" onKeyPressed="#autoComplete4Username" prefHeight="23.0"
+                       prefWidth="171.0"/>
 
             <PasswordField fx:id="passwordField" layoutY="101.0" onKeyPressed="#passwordFieldOnKeyPressed"
                            prefHeight="23.0" prefWidth="171.0"/>
