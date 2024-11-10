@@ -67,7 +67,7 @@ public class ClientHandlerAdapter extends ChannelInboundHandlerAdapter {
     }
 
     public static void setCellFactory(TableColumn<Object[], Object> column) {
-        column.setCellFactory(TextFieldTableCell.<Object[], Object>forTableColumn(new StringConverter<Object>() {
+        column.setCellFactory(TextFieldTableCell.forTableColumn(new StringConverter<>() {
 
             @Override
             public String toString(Object object) {
@@ -86,9 +86,7 @@ public class ClientHandlerAdapter extends ChannelInboundHandlerAdapter {
 
     public static TableColumn<Object[], Object> getTableColumn(String columnName, int columnIndex) {
         TableColumn<Object[], Object> column = new TableColumn<>(columnName);
-        column.setCellValueFactory(cellData -> {
-            return cellData.getValue()[columnIndex] != null ? new SimpleObjectProperty<>(cellData.getValue()[columnIndex]) : new SimpleObjectProperty<>(null);
-        });
+        column.setCellValueFactory(cellData -> cellData.getValue()[columnIndex] != null ? new SimpleObjectProperty<>(cellData.getValue()[columnIndex]) : new SimpleObjectProperty<>(null));
         return column;
     }
 
@@ -144,7 +142,7 @@ public class ClientHandlerAdapter extends ChannelInboundHandlerAdapter {
     }
 
     @Override
-    public void channelActive(ChannelHandlerContext ctx) throws Exception {
+    public void channelActive(ChannelHandlerContext ctx) {
         Main.ctx = ctx;
         LinkedBlockingQueue<Packet> packets = new LinkedBlockingQueue<>();
         channel2packetsEncoder.put(ctx.channel(), Util.encoderRegister(workerGroup, ctx, packets, 25));
@@ -290,8 +288,6 @@ public class ClientHandlerAdapter extends ChannelInboundHandlerAdapter {
         int targetColumnIndex = update.getTargetColumnIndex();
 
         TableView<Object[]> tableView = Main.mainLogic.getTableView();
-        String columnName = tableView.getColumns().get(targetColumnIndex).getText();
-        ArrayList<ColumnMetaData> columnMetaDataArrayList = Main.db2tb2columnMD.get(Main.mainLogic.getDataBaseName4tableView()).get(Main.mainLogic.getTableName4tableView());
         Platform.runLater(() -> {
             ObservableList<Object[]> items = tableView.getItems();
             Object[] objects = items.get(targetRowIndex);
@@ -426,18 +422,16 @@ public class ClientHandlerAdapter extends ChannelInboundHandlerAdapter {
                         window.setMinHeight(400);
                         window.setWidth(Main.clientConfig.getSizeOfMainGUI()[0]);
                         window.setHeight(Main.clientConfig.getSizeOfMainGUI()[1]);
-                        window.widthProperty().addListener((observable, oldValue, newValue) -> Main.clientConfig.getSizeOfMainGUI()[0] = newValue.doubleValue());
-                        window.heightProperty().addListener((observable, oldValue, newValue) -> Main.clientConfig.getSizeOfMainGUI()[1] = newValue.doubleValue());
+                        window.widthProperty().addListener((_, _, newValue) -> Main.clientConfig.getSizeOfMainGUI()[0] = newValue.doubleValue());
+                        window.heightProperty().addListener((_, _, newValue) -> Main.clientConfig.getSizeOfMainGUI()[1] = newValue.doubleValue());
                         window.setResizable(true);
                         window.show();
 
                         //load stuff for this UI
                         Main.mainLogic.onCustomQueryButtonClicked();
                         tableColumnUpdate();
-                        databaseSourceChoiceBox.valueProperty().addListener((observable, oldValue, newValue) -> {
-                            ClientHandlerAdapter.updateTableChoiceBox(oldValue, newValue);
-                        });
-                        Main.mainLogic.getTableChoiceBox().valueProperty().addListener((observable, oldValue, newValue) -> {
+                        databaseSourceChoiceBox.valueProperty().addListener((_, oldValue, newValue) -> ClientHandlerAdapter.updateTableChoiceBox(oldValue, newValue));
+                        Main.mainLogic.getTableChoiceBox().valueProperty().addListener((_, oldValue, newValue) -> {
                             if (newValue != null && !newValue.equals(oldValue))
                                 Main.mainLogic.onCustomQueryButtonClicked();
                             tableColumnUpdate();
