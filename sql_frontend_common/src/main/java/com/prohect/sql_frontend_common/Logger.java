@@ -16,12 +16,13 @@ public class Logger {
     private static final String logFileName = "Log-";
     private final FileChannel logFileChannel;
 
-    @SuppressWarnings("all")
     public Logger(String logFilePrefix) throws IOException {
         File logRoot = new File("log");
-        if (!logRoot.exists()) logRoot.mkdir();
+        if (!logRoot.exists()) {
+            @SuppressWarnings("unused") boolean mkdir = logRoot.mkdir();
+        }
         File logFile = new File(logRoot, logFilePrefix + logFileName + logFileSuffix);
-        logFile.createNewFile();
+        @SuppressWarnings("unused") boolean newFile = logFile.createNewFile();
         logFileChannel = FileChannel.open(logFile.toPath(), StandardOpenOption.WRITE);
     }
 
@@ -30,19 +31,19 @@ public class Logger {
     }
 
     /**
-     * automatically add time
+     * because this is the logger's log method, if there's exception, cannot try logging it, which may cause stack overflow
      */
-    @SuppressWarnings("all")
+    @SuppressWarnings("CallToPrintStackTrace")
     public void log(String... message) {
         String datetime = datetime();
-        StringBuilder builder = new StringBuilder("[%s]".formatted(datetime));
+        StringBuilder builder = new StringBuilder("[%s]".formatted(datetime));//automatically add time
         for (String string : message) {
             builder.append(string);
         }
         builder.append("\r\n");
         System.out.print(builder);
         try {
-            logFileChannel.write(ByteBuffer.wrap(builder.toString().getBytes()));
+            @SuppressWarnings("unused") int write = logFileChannel.write(ByteBuffer.wrap(builder.toString().getBytes()));
             logFileChannel.force(false);
         } catch (IOException e) {
             e.printStackTrace();
