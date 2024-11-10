@@ -6,16 +6,19 @@ import com.prohect.sql_frontend.main.Main;
 import io.netty.bootstrap.Bootstrap;
 import io.netty.channel.nio.NioEventLoopGroup;
 import javafx.fxml.FXML;
+import javafx.fxml.Initializable;
 import javafx.scene.control.Button;
 import javafx.scene.control.Label;
 import javafx.scene.control.PasswordField;
 import javafx.scene.control.TextField;
 import javafx.scene.input.KeyEvent;
 
+import java.net.URL;
+import java.util.ResourceBundle;
 import java.util.concurrent.atomic.AtomicBoolean;
 
 
-public class LoginLogic {
+public class LoginLogic implements Initializable {
 
     public static AtomicBoolean logged = new AtomicBoolean(false);
     @FXML
@@ -63,4 +66,10 @@ public class LoginLogic {
 
     }
 
+    @Override
+    public void initialize(URL location, ResourceBundle resources) {
+        getUsernameField().addEventFilter(KeyEvent.KEY_PRESSED, event -> {
+            if (!Character.isLetterOrDigit(event.getCharacter().charAt(0))) event.consume();
+        });
+    }
 }
