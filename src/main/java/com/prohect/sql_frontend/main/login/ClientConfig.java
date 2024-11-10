@@ -22,6 +22,7 @@ public class ClientConfig {
     private String lastDB;
     private String lastTB;
     private HashSet<String> usernames;
+    private String loadFromCsvPath;
 
     public ClientConfig(String serverHost, int port, String theUsersTableName, String theUsersDatabaseName) {
         this.serverHost = serverHost;
@@ -71,6 +72,14 @@ public class ClientConfig {
             fos.close();
         } catch (IOException ignored) {
         }
+    }
+
+    public String getLoadFromCsvPath() {
+        return loadFromCsvPath;
+    }
+
+    public void setLoadFromCsvPath(String loadFromCsvPath) {
+        this.loadFromCsvPath = loadFromCsvPath;
     }
 
     /**

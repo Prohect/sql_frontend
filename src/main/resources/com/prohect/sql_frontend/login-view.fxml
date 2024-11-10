@@ -33,38 +33,37 @@
 -->
 
 <?import javafx.geometry.Insets?>
-<?import javafx.scene.control.Button?>
-<?import javafx.scene.control.Label?>
-<?import javafx.scene.control.PasswordField?>
-<?import javafx.scene.control.TextField?>
-<?import javafx.scene.layout.AnchorPane?>
-<?import javafx.scene.layout.Pane?>
-<?import javafx.scene.layout.VBox?>
+<?import javafx.scene.control.*?>
+<?import javafx.scene.layout.*?>
 <?import javafx.scene.text.Font?>
-
-<VBox fx:id="vBox" prefHeight="375.0" prefWidth="322.0" xmlns="http://javafx.com/javafx/23.0.1" xmlns:fx="http://javafx.com/fxml/1" fx:controller="com.prohect.sql_frontend.main.login.LoginLogic">
+<VBox xmlns:fx="http://javafx.com/fxml/1" prefHeight="375.0" prefWidth="322.0" xmlns="http://javafx.com/javafx/23.0.1"
+      fx:controller="com.prohect.sql_frontend.main.login.LoginLogic">
     <AnchorPane prefHeight="375.0" prefWidth="322.0" VBox.vgrow="ALWAYS">
         <Pane layoutY="173.0" prefHeight="202.0" prefWidth="125.0">
-            <Label alignment="CENTER" layoutX="36.0" layoutY="14.0" prefHeight="23.0" prefWidth="54.0" text="用户名" />
-            <Label alignment="CENTER" layoutX="36.0" layoutY="101.0" prefHeight="23.0" prefWidth="54.0" text="密码" />
-            <Label layoutX="89.0" layoutY="18.0" text=":" />
-            <Label layoutX="88.0" layoutY="105.0" text=":" />
+            <Label alignment="CENTER" layoutX="36.0" layoutY="14.0" prefHeight="23.0" prefWidth="54.0" text="用户名"/>
+            <Label alignment="CENTER" layoutX="36.0" layoutY="101.0" prefHeight="23.0" prefWidth="54.0" text="密码"/>
+            <Label layoutX="89.0" layoutY="18.0" text=":"/>
+            <Label layoutX="88.0" layoutY="105.0" text=":"/>
         </Pane>
         <Pane layoutX="125.0" layoutY="173.0" prefHeight="202.0" prefWidth="197.0">
-            <TextField fx:id="usernameField" layoutY="14.0" onKeyPressed="#autoComplete4Username" onKeyTyped="#tryAutoComplete" prefHeight="23.0" prefWidth="171.0" />
+            <TextField fx:id="usernameField" layoutY="14.0" onKeyPressed="#autoComplete4Username"
+                       onKeyTyped="#tryAutoComplete" prefHeight="23.0" prefWidth="171.0"/>
 
-            <PasswordField fx:id="passwordField" layoutY="101.0" prefHeight="23.0" prefWidth="171.0" />
+            <PasswordField fx:id="passwordField" layoutY="101.0" onKeyPressed="#passwordFieldOnKeyPressed"
+                           prefHeight="23.0" prefWidth="171.0"/>
 
-            <Button layoutX="131.0" layoutY="154.0" mnemonicParsing="false" onAction="#login" text="登录" />
-            <Label fx:id="loginInfo" layoutX="14.0" layoutY="170.0" prefHeight="20.0" prefWidth="100.0" />
-         <Label fx:id="usernameTipLable" graphicTextGap="10.0" layoutX="7.0" layoutY="14.0" prefHeight="23.0" prefWidth="153.0" textFill="#0000004e">
-            <opaqueInsets>
-               <Insets />
-            </opaqueInsets></Label>
+            <Button layoutX="131.0" layoutY="154.0" mnemonicParsing="false" onAction="#login" text="登录"/>
+            <Label fx:id="loginInfo" layoutX="14.0" layoutY="170.0" prefHeight="20.0" prefWidth="100.0"/>
+            <Label fx:id="usernameTipLabel" graphicTextGap="10.0" layoutX="7.0" layoutY="14.0" prefHeight="23.0"
+                   prefWidth="153.0" textFill="#0000004e">
+                <opaqueInsets>
+                    <Insets/>
+                </opaqueInsets>
+            </Label>
         </Pane>
         <Label layoutX="119.0" layoutY="77.0" text="欢迎">
             <font>
-                <Font size="42.0" />
+                <Font size="42.0"/>
             </font>
         </Label>
     </AnchorPane>
