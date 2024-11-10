@@ -35,8 +35,6 @@ public class MainLogic implements Initializable {
     private Scene scene4InsertNewColumnScene;
     private TextInputDialog textInputDialog4newTableName;
     @FXML
-    private TextField customQueryTextField;
-    @FXML
     private ChoiceBox<String> databaseChoiceBox;
     @FXML
     private Label infoLabel;
@@ -80,7 +78,6 @@ public class MainLogic implements Initializable {
         Platform.runLater(() -> {
             try {
                 //for this UI
-                getCustomQueryTextField().setEditable(false);
 
                 //load insertNewRows UI
                 scene4InsertNewRowsScene = new Scene(insertFXMLLoader.load(), 640, 400);
@@ -145,10 +142,6 @@ public class MainLogic implements Initializable {
 
     public ChoiceBox<String> getDatabaseChoiceBox() {
         return databaseChoiceBox;
-    }
-
-    public TextField getCustomQueryTextField() {
-        return customQueryTextField;
     }
 
     @FXML
@@ -331,7 +324,7 @@ public class MainLogic implements Initializable {
         try {
             ChoiceBox<String> choiceBox = Main.mainLogic.getDatabaseChoiceBox();
             String databaseName = choiceBox.getValue() == null ? choiceBox.getItems().getFirst() : choiceBox.getValue();
-            CQueryPacket cQueryPacket = new CQueryPacket(Main.user.getUuid(), "select " + getCustomQueryTextField().getText() + " from " + getTableChoiceBox().getValue(), databaseName);
+            CQueryPacket cQueryPacket = new CQueryPacket(Main.user.getUuid(), "select * from " + getTableChoiceBox().getValue(), databaseName);
             Main.channel2packetsMap.computeIfAbsent(Main.ctx.channel(), _ -> new LinkedBlockingQueue<>()).add(cQueryPacket);
         } catch (Exception e) {
             Main.logger.log(e);
