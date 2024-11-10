@@ -167,7 +167,7 @@ public class MainLogic implements Initializable {
                 updateColumnMetaDataOfInsertNewRowTable();
             }
             InsertNewRowLogic.databaseName = getDatabaseChoiceBox().getValue();
-            InsertNewRowLogic.tableName = getDatabaseChoiceBox().getValue();
+            InsertNewRowLogic.tableName = getTableChoiceBox().getValue();
             stage4InsertNewRowsWindow.show();
         } catch (RuntimeException e) {
             Main.logger.log(e);

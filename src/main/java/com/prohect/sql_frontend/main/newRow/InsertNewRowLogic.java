@@ -12,6 +12,8 @@ import javafx.fxml.Initializable;
 import javafx.scene.control.Label;
 import javafx.scene.control.TableColumn;
 import javafx.scene.control.TableView;
+import javafx.scene.input.DragEvent;
+import javafx.scene.input.TransferMode;
 import javafx.stage.FileChooser;
 
 import java.io.BufferedReader;
@@ -19,6 +21,7 @@ import java.io.File;
 import java.io.FileNotFoundException;
 import java.io.FileReader;
 import java.net.URL;
+import java.nio.charset.StandardCharsets;
 import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.List;
@@ -107,11 +110,12 @@ public class InsertNewRowLogic implements Initializable {
         return formattedItems;
     }
 
-    private List<String[]> loadFromCsv(File file) throws Exception {
+    private List<String[]> loadListFromCsv(File file) throws Exception {
+        Main.logger.log("loading file: " + file.getAbsolutePath().toLowerCase());
         if (!file.getName().toLowerCase().endsWith(".csv")) throw new Exception("文件不已.csv结尾!");
         List<String[]> objs = new ArrayList<>();
-        if (file.exists()) {
-            BufferedReader br = new BufferedReader(new FileReader(file));
+        if (file.exists()) {//file directly exported from Excel use utf-8 bom, which add a header to the file
+            BufferedReader br = new BufferedReader(new FileReader(file, StandardCharsets.UTF_8));
             while (br.ready()) {
                 String line = br.readLine();
                 String[] values = line.split(",");
@@ -150,6 +154,28 @@ public class InsertNewRowLogic implements Initializable {
     @FXML
     public void newRowButtonOnAction() {
         this.getTheInsertTableView().getItems().add(getNewItem());
+    }
+
+    @FXML
+    void onDragDropped(DragEvent event) throws Exception {
+        List<File> files = event.getDragboard().getFiles();
+        for (File file : files) {
+            if (file.getName().toLowerCase().endsWith(".csv")) {//eg. clientConfig.json
+                loadFromFile(file);
+            }
+        }
+    }
+
+    @FXML
+    void onDragOver(DragEvent event) {
+        List<File> files = event.getDragboard().getFiles();
+        for (File file : files) {
+            String name = file.getName();
+            if (name.toLowerCase().endsWith(".csv")) {
+                event.acceptTransferModes(TransferMode.COPY);
+                break;
+            }
+        }
     }
 
     private Object[] getNewItem() {
@@ -271,17 +297,19 @@ public class InsertNewRowLogic implements Initializable {
     @FXML
     void loadFromCsv2tableViewOnAction() {
         if (fileChooser == null) fileChooser = new FileChooser();
-
-        // 可以设置初始目录（可选）
-        // fileChooser.setInitialDirectory(new File("C:\\"));
-
+        String csvPath = Main.clientConfig.getLoadFromCsvPath();
+        if (csvPath != null && !csvPath.isEmpty()) fileChooser.setInitialDirectory(new File(csvPath));
         fileChooser.getExtensionFilters().addAll(new FileChooser.ExtensionFilter("选择.csv文件", "*.csv"));
-
         File selectedFile = fileChooser.showOpenDialog(MainLogic.stage4InsertNewRowsWindow);
+        loadFromFile(selectedFile);
+        if (selectedFile != null)
+            Main.clientConfig.setLoadFromCsvPath(selectedFile.getParent());
+    }
 
+    private void loadFromFile(File selectedFile) {
         if (selectedFile != null) {
             try {
-                List<String[]> listFromCsv0 = loadFromCsv(selectedFile);
+                List<String[]> listFromCsv0 = loadListFromCsv(selectedFile);
                 TableView<Object[]> tableView = theInsertTableView;
                 ObservableList<TableColumn<Object[], ?>> tableColumns = tableView.getColumns();
                 int columns = tableColumns.size();
