@@ -6,13 +6,13 @@
 
     <groupId>com.prohect</groupId>
     <artifactId>sql_frontend_server</artifactId>
-    <version>0.0.7</version>
+    <version>0.0.9</version>
 
     <dependencies>
         <dependency>
             <groupId>com.prohect</groupId>
             <artifactId>sql_frontend_common</artifactId>
-            <version>0.0.7</version>
+            <version>0.0.9</version>
         </dependency>
         <dependency>
             <groupId>com.microsoft.sqlserver</groupId>
@@ -54,7 +54,7 @@
                     <target>23</target>
                     <release>23</release>
                     <compilerArgs>
-                        <arg></arg>
+                        <arg/>
                     </compilerArgs>
                 </configuration>
             </plugin>
