@@ -15,6 +15,4 @@ public class SqlUtil {
         }
         return DriverManager.getConnection("jdbc:sqlserver://127.0.0.1:1433;database=" + theTargetDatabaseName + ";trustServerCertificate=true", dataBaseAdmin.getUsername(), dataBaseAdmin.getPassword());
     }
-
-
 }
