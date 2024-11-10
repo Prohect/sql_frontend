@@ -47,7 +47,7 @@
                 </Menu>
             </menus>
         </MenuBar>
-        <AnchorPane fx:id="pane4TableView" maxHeight="-1.0" maxWidth="-1.0" style="-fx-background-color: gray;"
+        <AnchorPane maxHeight="-1.0" maxWidth="-1.0" style="-fx-background-color: gray;"
                     VBox.vgrow="ALWAYS">
             <TableView fx:id="tableView" editable="true" onMouseClicked="#mainTableOnMouseClicked"
                        AnchorPane.bottomAnchor="0.0" AnchorPane.leftAnchor="0.0" AnchorPane.rightAnchor="0.0"
