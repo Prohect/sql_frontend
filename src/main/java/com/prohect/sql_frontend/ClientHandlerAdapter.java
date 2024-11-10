@@ -109,9 +109,14 @@ public class ClientHandlerAdapter extends ChannelInboundHandlerAdapter {
             int targetColumnIndex = event.getTablePosition().getColumn();
             Object[] row = event.getTableView().getItems().get(targetRowIndex);
             String newValue = (String) event.getNewValue();
+            Object newValueAsNumber = Util.isNumber(newValue);
+            if (newValue != null) {
+                if (newValue.equals(row[targetColumnIndex].toString())) return;
+                else if (row[targetColumnIndex] instanceof Number number && number.equals(newValueAsNumber)) return;
+            }
             Object o1 = row[(targetColumnIndex == 0) ? 1 : 0];
             ObservableList<TableColumn<Object[], ?>> columns = Main.mainLogic.getTableView().getColumns();
-            StringBuilder condition = new StringBuilder("UPDATE " + Main.mainLogic.getTableName4tableView() + " SET [" + columns.get(targetColumnIndex).getText() + "] = " + (Util.isNumber(newValue) ? newValue : "'" + newValue + "'") + " WHERE [" + (columns.get(targetColumnIndex == 0 ? 1 : 0)).getText() + "] = " + Util.convert2SqlServerContextString(o1));
+            StringBuilder condition = new StringBuilder("UPDATE " + Main.mainLogic.getTableName4tableView() + " SET [" + columns.get(targetColumnIndex).getText() + "] = " + (newValueAsNumber != null ? newValue : "'" + newValue + "'") + " WHERE [" + (columns.get(targetColumnIndex == 0 ? 1 : 0)).getText() + "] = " + Util.convert2SqlServerContextString(o1));
             for (int i = 1; i < row.length; i++) {
                 if (i == targetColumnIndex) continue;
                 if (row[i] == null) continue;
@@ -136,8 +141,7 @@ public class ClientHandlerAdapter extends ChannelInboundHandlerAdapter {
         String tb = Main.mainLogic.getTableChoiceBox().getValue();
         ArrayList<TableColumn<Object[], ?>> c = Main.db2tb2tableColumn.get(db).get(tb);
         if (c != null) currentColumns.addAll(c);
-        else
-            Main.logger.log("mainUI.tableChoiceBox.valueProperty().Listener(): c = null ", "db = ", db, " tb = ", tb);
+        else Main.logger.log("mainUI.tableChoiceBox.valueProperty().Listener(): c = null ", "db = ", db, " tb = ", tb);
         Main.mainLogic.getTableView().setItems(Main.db2tb2items.get(db).get(tb));
     }
 
@@ -159,10 +163,10 @@ public class ClientHandlerAdapter extends ChannelInboundHandlerAdapter {
                     if (packet == null) break;
                     Main.logger.log("接收%s".formatted(packet));
                     switch (packet) {
-                        case SQueryReplyPacket sQueryReplyPacket -> processSQueryReplyPacket(sQueryReplyPacket);
-                        case SInfoPacket sInfoPacket -> processSInfoPacket(sInfoPacket);
-                        case SLoginPacket sLoginPacket -> processSLoginPacket(sLoginPacket);
-                        case SUpdatePacket sUpdatePacket -> processSUpdatePacket(sUpdatePacket);
+                        case SQueryReplyPacket sQueryReplyPacket -> processQueryReplyPacket(sQueryReplyPacket);
+                        case SInfoPacket sInfoPacket -> processInfoPacket(sInfoPacket);
+                        case SLoginPacket sLoginPacket -> processLoginPacket(sLoginPacket);
+                        case SUpdatePacket sUpdatePacket -> processUpdatePacket(sUpdatePacket);
                         case SInsertPacket sInsertPacket -> processInsertPacket(sInsertPacket);
                         case SDeletePacket sDeletePacket -> processDeletePacket(sDeletePacket);
                         default -> {
@@ -240,7 +244,7 @@ public class ClientHandlerAdapter extends ChannelInboundHandlerAdapter {
         Main.mainLogic.getTableView().getItems().remove(object);
     }
 
-    private void processSQueryReplyPacket(SQueryReplyPacket sQueryReplyPacket) {
+    private void processQueryReplyPacket(SQueryReplyPacket sQueryReplyPacket) {
         Platform.runLater(() -> {
             try {
                 String databaseName = sQueryReplyPacket.getDatabaseName();
@@ -263,6 +267,7 @@ public class ClientHandlerAdapter extends ChannelInboundHandlerAdapter {
                         tableColumns.addAll(tableView.getColumns());
                     }
                 }
+
                 ObservableList<Object[]> items = Main.db2tb2items.get(databaseName).get(tableName);
                 items.clear();
                 items.addAll(itemsFromPacket);
@@ -276,11 +281,11 @@ public class ClientHandlerAdapter extends ChannelInboundHandlerAdapter {
         });
     }
 
-    private void processSInfoPacket(SInfoPacket sInfoPacket) {
+    private void processInfoPacket(SInfoPacket sInfoPacket) {
         Platform.runLater(() -> Main.mainLogic.getInfoLabel().setText(sInfoPacket.getInfo()));
     }
 
-    private void processSUpdatePacket(SUpdatePacket sUpdatePacket) {
+    private void processUpdatePacket(SUpdatePacket sUpdatePacket) {
         long id = sUpdatePacket.getTheID();
         UpdateOfCellOfTable update = Main.packetID2updatedValueMap.get(id);
         int targetRowIndex = update.getTargetRowIndex();
@@ -297,11 +302,11 @@ public class ClientHandlerAdapter extends ChannelInboundHandlerAdapter {
                 Main.logger.log("oldValue.getClass().getSimpleName() = " + clazzName);
                 switch (clazzName) {
                     case "Integer":
-                        if (Util.isNumber((String) newValue)) newValue = Integer.parseInt((String) newValue);
+                        if (Util.isNumber((String) newValue) != null) newValue = Integer.parseInt((String) newValue);
                         else newValue = (int) Double.parseDouble((String) newValue);
                         break;
                     case "Long":
-                        if (Util.isNumber((String) newValue)) newValue = Long.parseLong((String) newValue);
+                        if (Util.isNumber((String) newValue) != null) newValue = Long.parseLong((String) newValue);
                         else newValue = (long) Double.parseDouble((String) newValue);
                         break;
                     case "Double":
@@ -323,7 +328,7 @@ public class ClientHandlerAdapter extends ChannelInboundHandlerAdapter {
         });
     }
 
-    private void processSLoginPacket(SLoginPacket sLoginPacket) {
+    private void processLoginPacket(SLoginPacket sLoginPacket) {
         User userFromPacket = sLoginPacket.getUser();
         HashMap<String, HashMap<String, ArrayList<ColumnMetaData>>> db2table2columnMap = sLoginPacket.getDb2table2columnMap();
         SLoginPacket.Info info = sLoginPacket.getInfo();

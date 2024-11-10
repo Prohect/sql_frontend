@@ -110,17 +110,15 @@ public class Util {
         return o instanceof String string ? "'%s'".formatted(string) : (o instanceof Boolean b) ? b ? "1" : "0" : o.toString();
     }
 
-    public static boolean isNumber(String str) {
+    public static Object isNumber(String str) {
         if (str == null) return false;
         try {
-            Long.parseLong(str);
-            return true;
+            return Long.parseLong(str);
         } catch (NumberFormatException e) {
             try {
-                Double.parseDouble(str);
-                return true;
+                return Double.parseDouble(str);
             } catch (NumberFormatException e1) {
-                return false;
+                return null;
             }
         }
     }
