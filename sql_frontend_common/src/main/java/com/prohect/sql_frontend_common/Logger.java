@@ -45,6 +45,7 @@ public class Logger {
         System.out.print(builder);
         try {
             logFileChannel.write(ByteBuffer.wrap(builder.toString().getBytes()));
+            logFileChannel.force(false);
         } catch (IOException e) {
             e.printStackTrace();
         }

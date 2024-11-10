@@ -59,6 +59,8 @@ public class ClientConfig {
             configFile.createNewFile();
             FileOutputStream fos = new FileOutputStream(configFile);
             fos.write(JSON.toJSONBytes(clientConfig));
+            fos.flush();
+            fos.close();
         } catch (IOException ignored) {
         }
     }
