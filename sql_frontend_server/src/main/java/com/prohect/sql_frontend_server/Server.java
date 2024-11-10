@@ -267,7 +267,7 @@ public class Server {
                 m1(ctx, cQueryPacket);
             } catch (SQLException ex) {
                 logger.log(ex);
-                logger.log("failed cmd = +" + cQueryPacket.getQuery());
+                logger.log("failed cmd = " + cQueryPacket.getQuery());
             }
         }
     }
