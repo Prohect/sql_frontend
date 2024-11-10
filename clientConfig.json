@@ -1,14 +1,17 @@
 {
-	"lastDB":"testdatabase1",
-	"lastTB":"ziioo",
-	"loadFromCsvPath":"E:\\temp\\sql_frontend",
-	"port":45931,
-	"serverHost":"122.228.26.226",
-	"sizeOfMainGUI":[1369.0,806.0],
-	"theUsersDatabaseName":"usersofmysqlfrontend",
-	"theUsersTableName":"usersofmysqlfrontend",
-	"usernames":[
-		"2",
-		"prohect"
-	]
+  "lastDB": "testdatabase1",
+  "lastTB": "ziioo",
+  "loadFromCsvPath": "E:\\temp\\sql_frontend",
+  "port": 45931,
+  "serverHost": "122.228.26.226",
+  "sizeOfMainGUI": [
+    1369.0,
+    806.0
+  ],
+  "theUsersDatabaseName": "usersofmysqlfrontend",
+  "theUsersTableName": "usersofmysqlfrontend",
+  "usernames": [
+    "2",
+    "prohect"
+  ]
 }
