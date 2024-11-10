@@ -300,13 +300,14 @@ public class ClientHandlerAdapter extends ChannelInboundHandlerAdapter {
             if (oldValue != null) {
                 String clazzName = oldValue.getClass().getSimpleName();
                 Main.logger.log("oldValue.getClass().getSimpleName() = " + clazzName);
+                Object numObject = Util.isNumber((String) newValue);
                 switch (clazzName) {
                     case "Integer":
-                        if (Util.isNumber((String) newValue) != null) newValue = Integer.parseInt((String) newValue);
+                        if (numObject != null) newValue = Integer.parseInt((String) newValue);
                         else newValue = (int) Double.parseDouble((String) newValue);
                         break;
                     case "Long":
-                        if (Util.isNumber((String) newValue) != null) newValue = Long.parseLong((String) newValue);
+                        if (numObject != null) newValue = Long.parseLong((String) newValue);
                         else newValue = (long) Double.parseDouble((String) newValue);
                         break;
                     case "Double":
