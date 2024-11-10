@@ -56,9 +56,14 @@ public class MainLogic implements Initializable {
         Main.mainLogic = this;
     }
 
-    private static void sendSqlAlter(String... commands) {
+    /**
+     * need at least two args, so is not (String db, String... commands),
+     * not allowing sendSqlAlterCommands2targetDB(String db) which do nothing.
+     */
+    public static void sendSqlAlterCommands2targetDB(String db, String cmd, String... commands) {
+        Main.channel2packetsMap.computeIfAbsent(Main.ctx.channel(), _ -> new LinkedBlockingQueue<>()).add(new CAlterPacket(Main.user.getUuid(), cmd, db));
         for (String command : commands)
-            Main.channel2packetsMap.computeIfAbsent(Main.ctx.channel(), _ -> new LinkedBlockingQueue<>()).add(new CAlterPacket(Main.user.getUuid(), command, Main.clientConfig.getTheUsersDatabaseName()));
+            Main.channel2packetsMap.computeIfAbsent(Main.ctx.channel(), _ -> new LinkedBlockingQueue<>()).add(new CAlterPacket(Main.user.getUuid(), command, db));
     }
 
     public String getDataBaseName4tableView() {
@@ -214,7 +219,7 @@ public class MainLogic implements Initializable {
             }
             String cmd;
             cmd = "CREATE TABLE " + tableName + " (" + "ID INT IDENTITY(1,1) NOT NULL, " + "PRIMARY KEY (ID))";
-            Main.channel2packetsMap.computeIfAbsent(Main.ctx.channel(), _ -> new LinkedBlockingQueue<>()).add(new CAlterPacket(Main.user.getUuid(), cmd, Main.mainLogic.getDatabaseChoiceBox().getValue()));
+            sendSqlAlterCommands2targetDB(Main.mainLogic.getDatabaseChoiceBox().getValue(), cmd);
         });
     }
 
@@ -287,7 +292,7 @@ public class MainLogic implements Initializable {
         if (cantModifyPermission(columnName)) return;
         String sql1 = String.format("ALTER TABLE " + Main.clientConfig.getTheUsersTableName() + " ADD %s BIT NOT NULL DEFAULT 1", Util.permissionColumnNameEncode(getDatabaseChoiceBox().getValue(), getDatabaseChoiceBox().getValue(), columnName, false));
         String sql2 = String.format("ALTER TABLE " + Main.clientConfig.getTheUsersTableName() + " ADD %s BIT NOT NULL DEFAULT 1", Util.permissionColumnNameEncode(getDatabaseChoiceBox().getValue(), getDatabaseChoiceBox().getValue(), columnName, true));
-        sendSqlAlter(sql1, sql2);
+        sendSqlAlterCommands2targetDB(Main.clientConfig.getTheUsersDatabaseName(), sql1, sql2);
     }
 
     @FXML
@@ -296,7 +301,7 @@ public class MainLogic implements Initializable {
         if (cantModifyPermission(columnName)) return;
         String sql1 = String.format("ALTER TABLE " + Main.clientConfig.getTheUsersTableName() + " ADD %s BIT NOT NULL DEFAULT 1", Util.permissionColumnNameEncode(getDatabaseChoiceBox().getValue(), getDatabaseChoiceBox().getValue(), columnName, false));
         String sql2 = String.format("ALTER TABLE " + Main.clientConfig.getTheUsersTableName() + " ADD %s BIT NOT NULL DEFAULT 0", Util.permissionColumnNameEncode(getDatabaseChoiceBox().getValue(), getDatabaseChoiceBox().getValue(), columnName, true));
-        sendSqlAlter(sql1, sql2);
+        sendSqlAlterCommands2targetDB(Main.clientConfig.getTheUsersDatabaseName(), sql1, sql2);
     }
 
     @FXML
@@ -305,7 +310,7 @@ public class MainLogic implements Initializable {
         if (cantModifyPermission(columnName)) return;
         String sql1 = String.format("ALTER TABLE " + Main.clientConfig.getTheUsersTableName() + " ADD %s BIT NOT NULL DEFAULT 0", Util.permissionColumnNameEncode(getDatabaseChoiceBox().getValue(), getDatabaseChoiceBox().getValue(), columnName, false));
         String sql2 = String.format("ALTER TABLE " + Main.clientConfig.getTheUsersTableName() + " ADD %s BIT NOT NULL DEFAULT 0", Util.permissionColumnNameEncode(getDatabaseChoiceBox().getValue(), getDatabaseChoiceBox().getValue(), columnName, true));
-        sendSqlAlter(sql1, sql2);
+        sendSqlAlterCommands2targetDB(Main.clientConfig.getTheUsersDatabaseName(), sql1, sql2);
     }
 
     @FXML
