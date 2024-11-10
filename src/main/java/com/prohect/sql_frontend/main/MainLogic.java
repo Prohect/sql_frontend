@@ -16,6 +16,7 @@ import javafx.fxml.FXMLLoader;
 import javafx.fxml.Initializable;
 import javafx.scene.Scene;
 import javafx.scene.control.*;
+import javafx.scene.input.DragEvent;
 import javafx.stage.Modality;
 import javafx.stage.Stage;
 
@@ -176,34 +177,32 @@ public class MainLogic implements Initializable {
     }
 
     public void updateColumnMetaDataOfInsertNewRowTable() {
-        Platform.runLater(() -> {
-            Main.insertNewRowLogic.getTheInsertTableView().setItems(FXCollections.observableArrayList());
-            ObservableList<TableColumn<Object[], ?>> columnObservableList = Main.insertNewRowLogic.getTheInsertTableView().getColumns();
-            columnObservableList.clear();
-            ArrayList<ColumnMetaData> columnMetaDataList = Main.db2tb2columnMD.get(getDatabaseChoiceBox().getValue()).get(getTableChoiceBox().getValue());
-            Main.insertNewRowLogic.setHasIdentifier(false);
-            Main.insertNewRowLogic.setIdentifierIndex(-1);
-            for (int i = 0; i < columnMetaDataList.size(); i++) {
-                ColumnMetaData columnMetaData = columnMetaDataList.get(i);
-                String columnName = columnMetaData.getColumnName();
-                TableColumn<Object[], Object> tableColumn = ClientHandlerAdapter.getTableColumn(columnName, i);
-                columnObservableList.add(tableColumn);
-                if (columnMetaData.isAutoIncrement()) {
-                    Main.insertNewRowLogic.setHasIdentifier(true);
-                    Main.insertNewRowLogic.setIdentifierIndex(i);
-                    continue;
-                }
-                ClientHandlerAdapter.setCellFactory(tableColumn);
-                tableColumn.setOnEditCommit(event -> {
-                    // 直接更新数据，点击提交按钮时再处理
-                    int targetRowIndex = event.getTablePosition().getRow();
-                    int targetColumnIndex = event.getTablePosition().getColumn();
-                    Object[] row = event.getTableView().getItems().get(targetRowIndex);
-                    String newValue = (String) event.getNewValue();
-                    row[targetColumnIndex] = newValue;
-                });
+        Main.insertNewRowLogic.getTheInsertTableView().setItems(FXCollections.observableArrayList());
+        ObservableList<TableColumn<Object[], ?>> columnObservableList = Main.insertNewRowLogic.getTheInsertTableView().getColumns();
+        columnObservableList.clear();
+        ArrayList<ColumnMetaData> columnMetaDataList = Main.db2tb2columnMD.get(getDatabaseChoiceBox().getValue()).get(getTableChoiceBox().getValue());
+        Main.insertNewRowLogic.setHasIdentifier(false);
+        Main.insertNewRowLogic.setIdentifierIndex(-1);
+        for (int i = 0; i < columnMetaDataList.size(); i++) {
+            ColumnMetaData columnMetaData = columnMetaDataList.get(i);
+            String columnName = columnMetaData.getColumnName();
+            TableColumn<Object[], Object> tableColumn = ClientHandlerAdapter.getTableColumn(columnName, i);
+            columnObservableList.add(tableColumn);
+            if (columnMetaData.isAutoIncrement()) {
+                Main.insertNewRowLogic.setHasIdentifier(true);
+                Main.insertNewRowLogic.setIdentifierIndex(i);
+                continue;
             }
-        });
+            ClientHandlerAdapter.setCellFactory(tableColumn);
+            tableColumn.setOnEditCommit(event -> {
+                // 直接更新数据，点击提交按钮时再处理
+                int targetRowIndex = event.getTablePosition().getRow();
+                int targetColumnIndex = event.getTablePosition().getColumn();
+                Object[] row = event.getTableView().getItems().get(targetRowIndex);
+                String newValue = (String) event.getNewValue();
+                row[targetColumnIndex] = newValue;
+            });
+        }
     }
 
     @FXML
@@ -236,6 +235,17 @@ public class MainLogic implements Initializable {
             setThisColumnCouldInspectNoChangePermissionAsDefaultMenuItem.setVisible(true);
             setThisColumnCouldInspectCouldChangePermissionAsDefaultMenuItem.setVisible(true);
         }
+    }
+
+    @FXML
+    void onDragDropped(DragEvent event) {
+        insertNewRowMenuItemOnAction();
+        Main.insertNewRowLogic.onDragDropped(event);
+    }
+
+    @FXML
+    void onDragOver(DragEvent event) {
+        Main.insertNewRowLogic.onDragOver(event);
     }
 
     @FXML

@@ -47,11 +47,10 @@
                 </Menu>
             </menus>
         </MenuBar>
-        <AnchorPane maxHeight="-1.0" maxWidth="-1.0" style="-fx-background-color: gray;"
-                    VBox.vgrow="ALWAYS">
-            <TableView fx:id="tableView" editable="true" onMouseClicked="#mainTableOnMouseClicked"
-                       AnchorPane.bottomAnchor="0.0" AnchorPane.leftAnchor="0.0" AnchorPane.rightAnchor="0.0"
-                       AnchorPane.topAnchor="0.0">
+        <AnchorPane maxHeight="-1.0" maxWidth="-1.0" style="-fx-background-color: gray;" VBox.vgrow="ALWAYS">
+            <TableView fx:id="tableView" editable="true" onDragDropped="#onDragDropped" onDragOver="#onDragOver"
+                       onMouseClicked="#mainTableOnMouseClicked" AnchorPane.bottomAnchor="0.0"
+                       AnchorPane.leftAnchor="0.0" AnchorPane.rightAnchor="0.0" AnchorPane.topAnchor="0.0">
                 <contextMenu>
                     <ContextMenu>
                         <items>

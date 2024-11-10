@@ -166,7 +166,7 @@ public class InsertNewRowLogic implements Initializable {
     }
 
     @FXML
-    void onDragDropped(DragEvent event) {
+    public void onDragDropped(DragEvent event) {
         List<File> files = event.getDragboard().getFiles();
         for (File file : files) {
             if (file.getName().toLowerCase().endsWith(".csv")) {//eg. clientConfig.json
@@ -176,7 +176,7 @@ public class InsertNewRowLogic implements Initializable {
     }
 
     @FXML
-    void onDragOver(DragEvent event) {
+    public void onDragOver(DragEvent event) {
         List<File> files = event.getDragboard().getFiles();
         for (File file : files) {
             String name = file.getName();
@@ -332,8 +332,10 @@ public class InsertNewRowLogic implements Initializable {
                 List<String[]> listFromCsv = new ArrayList<>();//load and format it to match the column numbers
                 for (String[] strings : loadListFromCsv(selectedFile)) {
                     String[] newRow = new String[columns];
-                    for (int i = 0; i < strings.length; i++)
-                        newRow[identifierIndex == -1 ? i : i < identifierIndex ? i : i + 1] = strings[i];
+                    for (int i = 0; i < strings.length; i++) {
+                        String string = strings[i];
+                        newRow[identifierIndex == -1 ? i : i < identifierIndex ? i : i + 1] = string;
+                    }
                     listFromCsv.add(newRow);
                 }
                 tableView.getItems().addAll(getFormattedItems(listFromCsv, tableView, identifierIndex));

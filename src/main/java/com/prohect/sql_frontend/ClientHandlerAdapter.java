@@ -442,8 +442,10 @@ public class ClientHandlerAdapter extends ChannelInboundHandlerAdapter {
             case UM -> {
                 String value = Main.mainLogic.getTableChoiceBox().getValue();
                 merge(Main.db2tb2columnMD, db2table2columnMap);
-                Platform.runLater(() -> updateTableChoiceBox(value, value));
-                Main.mainLogic.updateColumnMetaDataOfInsertNewRowTable();
+                Platform.runLater(() -> {
+                    updateTableChoiceBox(value, value);
+                    Main.mainLogic.updateColumnMetaDataOfInsertNewRowTable();
+                });
             }
             case UP -> merge(Main.user.getPermissions(), userFromPacket.getPermissions());
             case W, N -> Main.loginLogic.getLoginInfo().setText(SLoginPacket.toString(info));
