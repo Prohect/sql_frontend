@@ -8,11 +8,14 @@ module com.prohect.sql_frontend {
     requires sql.frontend.common;
 
 
-    opens com.prohect.sql_frontend to javafx.fxml;
-    opens com.prohect.sql_frontend.main.login to javafx.fxml;
-    opens com.prohect.sql_frontend.main to javafx.fxml;
-    opens com.prohect.sql_frontend.main.newRow to javafx.fxml;
-    opens com.prohect.sql_frontend.main.newColumn to javafx.fxml;
-    exports com.prohect.sql_frontend;
-    exports com.prohect.sql_frontend.main.login;
+    opens com.prohect.sqlFrontend to javafx.fxml;
+    opens com.prohect.sqlFrontend.main to javafx.fxml;
+    opens com.prohect.sqlFrontend.main.login to javafx.fxml;
+    opens com.prohect.sqlFrontend.main.newRow to javafx.fxml;
+    opens com.prohect.sqlFrontend.main.newColumn to javafx.fxml;
+    exports com.prohect.sqlFrontend;
+    exports com.prohect.sqlFrontend.main;
+    exports com.prohect.sqlFrontend.main.login;
+    exports com.prohect.sqlFrontend.main.newRow;
+    exports com.prohect.sqlFrontend.main.newColumn;
 }

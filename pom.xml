@@ -126,7 +126,7 @@
                         <manifest>
                             <addClasspath>true</addClasspath>
                             <classpathPrefix>lib/</classpathPrefix>
-                            <mainClass>com.prohect.sql_frontend.MainUi</mainClass>
+                            <mainClass>com.prohect.sqlFrontend.MainUi</mainClass>
                         </manifest>
                     </archive>
                     <excludes>
@@ -145,7 +145,7 @@
                         <!-- Default configuration for running with: mvn clean javafx:run -->
                         <id>default-cli</id>
                         <configuration>
-                            <mainClass>com.prohect.sql_frontend/com.prohect.sql_frontend.HelloApplication</mainClass>
+                            <mainClass>com.prohect.sql_frontend/com.prohect.sqlFrontend.HelloApplication</mainClass>
                             <launcher>app</launcher>
                             <jlinkZipName>app</jlinkZipName>
                             <jlinkImageName>app</jlinkImageName>

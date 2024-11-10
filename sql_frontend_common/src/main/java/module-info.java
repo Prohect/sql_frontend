@@ -1,6 +1,6 @@
 module sql.frontend.common {
-    exports com.prohect.sql_frontend_common;
-    exports com.prohect.sql_frontend_common.packet;
+    exports com.prohect.sqlFrontendCommon;
+    exports com.prohect.sqlFrontendCommon.packet;
     requires com.alibaba.fastjson2;
     requires io.netty.buffer;
     requires io.netty.common;
