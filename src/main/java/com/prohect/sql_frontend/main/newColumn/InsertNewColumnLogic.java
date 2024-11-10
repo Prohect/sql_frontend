@@ -3,7 +3,6 @@ package com.prohect.sql_frontend.main.newColumn;
 import com.prohect.sql_frontend.main.Main;
 import com.prohect.sql_frontend_common.Util;
 import com.prohect.sql_frontend_common.packet.CAlterPacket;
-import javafx.event.ActionEvent;
 import javafx.fxml.FXML;
 import javafx.scene.control.CheckBox;
 import javafx.scene.control.ChoiceBox;
@@ -59,7 +58,7 @@ public class InsertNewColumnLogic {
     }
 
     @FXML
-    void submit(ActionEvent event) {
+    void submit() {
         if (!Main.user.isOp()) {
             Main.mainLogic.getInfoLabel().setText("您的权限不足以执行此操作!");
             return;
@@ -79,6 +78,6 @@ public class InsertNewColumnLogic {
         }
         if (isPrimaryKeyCheckBox.isSelected()) cmd.append(" PRIMARY KEY");
         CAlterPacket cAlterPacket = new CAlterPacket(Main.user.getUuid(), cmd.toString(), Main.mainLogic.getDataBaseName4tableView());
-        Main.channel2packetsMap.computeIfAbsent(Main.ctx.channel(), c -> new LinkedBlockingQueue<>()).add(cAlterPacket);
+        Main.channel2packetsMap.computeIfAbsent(Main.ctx.channel(), _ -> new LinkedBlockingQueue<>()).add(cAlterPacket);
     }
 }

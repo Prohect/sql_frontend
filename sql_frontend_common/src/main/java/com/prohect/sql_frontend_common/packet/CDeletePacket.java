@@ -5,6 +5,8 @@ import java.io.Serializable;
 /**
  * delete a row from a certain table
  */
+
+@SuppressWarnings("unused")
 public class CDeletePacket extends AbstractPacket implements Serializable {
     long uuid;
     String cmd;

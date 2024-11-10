@@ -7,7 +7,6 @@ import io.netty.bootstrap.Bootstrap;
 import io.netty.channel.nio.NioEventLoopGroup;
 import javafx.fxml.FXML;
 import javafx.fxml.Initializable;
-import javafx.scene.control.Button;
 import javafx.scene.control.Label;
 import javafx.scene.control.PasswordField;
 import javafx.scene.control.TextField;
@@ -22,9 +21,7 @@ public class LoginLogic implements Initializable {
 
     public static AtomicBoolean logged = new AtomicBoolean(false);
     @FXML
-    private Button loginButton;
-    @FXML
-    private Label loginInfo;
+    public Label loginInfo;
     @FXML
     private TextField usernameField;
     @FXML
@@ -44,13 +41,13 @@ public class LoginLogic implements Initializable {
         Main.setAndRunNewNettyClient(new NettyClient(serverHost, port, b, workerGroup, new ClientHandlerAdapter(serverHost, port, b, workerGroup)));
     }
 
+    public Label getLoginInfo() {
+        return loginInfo;
+    }
+
     @FXML
     public void login() throws Exception {
         login1();
-    }
-
-    public Label getLoginInfo() {
-        return loginInfo;
     }
 
     public TextField getUsernameField() {
@@ -62,7 +59,8 @@ public class LoginLogic implements Initializable {
     }
 
     @FXML
-    void autoComplete4Username(KeyEvent event) {
+    @SuppressWarnings("unused")
+    void autoComplete4Username(KeyEvent event) {//TODO:
 
     }
 

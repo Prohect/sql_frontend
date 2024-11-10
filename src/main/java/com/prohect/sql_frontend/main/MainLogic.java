@@ -11,13 +11,11 @@ import com.prohect.sql_frontend_common.packet.CQueryPacket;
 import javafx.application.Platform;
 import javafx.collections.FXCollections;
 import javafx.collections.ObservableList;
-import javafx.event.ActionEvent;
 import javafx.fxml.FXML;
 import javafx.fxml.FXMLLoader;
 import javafx.fxml.Initializable;
 import javafx.scene.Scene;
 import javafx.scene.control.*;
-import javafx.scene.input.MouseEvent;
 import javafx.stage.Modality;
 import javafx.stage.Stage;
 
@@ -53,10 +51,14 @@ public class MainLogic implements Initializable {
     private ChoiceBox<String> tableChoiceBox;
     private TableColumn<?, ?> selectedColumn;
     private int selectedRowIndex;
-    private int selectedColumnIndex;
 
     public MainLogic() {
         Main.mainLogic = this;
+    }
+
+    private static void sendSqlAlter(String... commands) {
+        for (String command : commands)
+            Main.channel2packetsMap.computeIfAbsent(Main.ctx.channel(), _ -> new LinkedBlockingQueue<>()).add(new CAlterPacket(Main.user.getUuid(), command, Main.clientConfig.getTheUsersDatabaseName()));
     }
 
     public String getDataBaseName4tableView() {
@@ -81,7 +83,7 @@ public class MainLogic implements Initializable {
                 stage4InsertNewRowsWindow.setMinWidth(520);
                 stage4InsertNewRowsWindow.setMinHeight(260);
                 Main.insertNewRowLogic.getTheInsertTableView().setEditable(true);
-                stage4InsertNewRowsWindow.setOnCloseRequest(event -> {
+                stage4InsertNewRowsWindow.setOnCloseRequest(_ -> {
                     if (Main.insertNewRowLogic.isNeedUpdateMainTable()) {
                         onCustomQueryButtonClicked();
                         Main.insertNewRowLogic.setNeedUpdateMainTable(false);
@@ -94,15 +96,15 @@ public class MainLogic implements Initializable {
                 stage4InsertNewColumnWindow.setTitle("Alter New Column");
                 stage4InsertNewColumnWindow.setScene(scene4InsertNewColumnScene);
                 stage4InsertNewColumnWindow.setResizable(false);
-                Main.insertNewColumnLogic.getNotNullCheckBox().selectedProperty().addListener((observable, oldValue, newValue) -> {
+                Main.insertNewColumnLogic.getNotNullCheckBox().selectedProperty().addListener((_, _, newValue) -> {
                     if (!newValue) Main.insertNewColumnLogic.getHasDefaultCheckBox().selectedProperty().set(false);
                 });
-                Main.insertNewColumnLogic.getHasDefaultCheckBox().selectedProperty().addListener((observableValue, oldValue, newValue) -> {
+                Main.insertNewColumnLogic.getHasDefaultCheckBox().selectedProperty().addListener((_, _, newValue) -> {
                     if (newValue) Main.insertNewColumnLogic.getNotNullCheckBox().selectedProperty().set(true);
                 });
                 ObservableList<String> list = FXCollections.observableArrayList(List.of("int", "bigint", "decimal(38, 15)", "float(8)", "REAL", "nchar(20)", "varchar(50)", "nvarchar(max)", "bit", "money", "date", "time", "datetime2", "datetimeOffset"));
                 Main.insertNewColumnLogic.getColumnTypeChoiceBox().setItems(list);
-                stage4InsertNewColumnWindow.setOnCloseRequest(event -> {
+                stage4InsertNewColumnWindow.setOnCloseRequest(_ -> {
                     if (Main.insertNewColumnLogic.isNeedUpdateMainTable()) {
                         onCustomQueryButtonClicked();
                         Main.insertNewColumnLogic.setNeedUpdateMainTable(false);
@@ -141,7 +143,7 @@ public class MainLogic implements Initializable {
     }
 
     @FXML
-    void insertNewColumnMenuItemOnAction(ActionEvent event) {
+    void insertNewColumnMenuItemOnAction() {
         if (getTableView().getColumns().isEmpty()) {
             infoLabel.setText("请先选择表并查询以获取列的元数据");
             return;
@@ -200,7 +202,7 @@ public class MainLogic implements Initializable {
     }
 
     @FXML
-    void insertNewTableMenuItemOnAction(ActionEvent event) {
+    void insertNewTableMenuItemOnAction() {
         textInputDialog4newTableName.showAndWait().ifPresent(tableName -> {
             if (!Main.user.isOp()) {
                 Main.mainLogic.getInfoLabel().setText("您没有足够的权限");
@@ -217,12 +219,12 @@ public class MainLogic implements Initializable {
     }
 
     @FXML
-    void mainTableOnMouseClicked(MouseEvent event) {
+    @SuppressWarnings("all")
+    void mainTableOnMouseClicked() {
         selectedRowIndex = getTableView().getSelectionModel().getSelectedIndex();
         ObservableList<TablePosition> selectedCells = getTableView().getSelectionModel().getSelectedCells();
         if (selectedCells.isEmpty()) return;
-        TablePosition position = selectedCells.get(0);
-        selectedColumnIndex = position.getColumn();
+        TablePosition position = selectedCells.getFirst();
         selectedColumn = position.getTableColumn();
         if (Main.user.isOp()) {
             setThisColumnNoInspectNoChangePermissionAsDefaultMenuItem.setVisible(true);
@@ -232,13 +234,13 @@ public class MainLogic implements Initializable {
     }
 
     @FXML
-    void deleteRowMenuItemOnAction(ActionEvent event) {
+    void deleteRowMenuItemOnAction() {
         if (!Main.user.isOp()) {
             List<ColumnMetaData> columnMetaDataList = Main.db2tb2columnMD.get(getDatabaseChoiceBox().getValue()).get(getDatabaseChoiceBox().getValue());
             HashMap<String, Boolean[]> column2permissions = Main.user.getPermissions().get(getDatabaseChoiceBox().getValue()).get(getDatabaseChoiceBox().getValue());
-            for (int i = 0; i < columnMetaDataList.size(); i++) {
-                if (column2permissions.containsKey(columnMetaDataList.get(i).getColumnName())) {
-                    if (column2permissions.get(columnMetaDataList.get(i).getColumnName())[1]) {
+            for (ColumnMetaData columnMetaData : columnMetaDataList) {
+                if (column2permissions.containsKey(columnMetaData.getColumnName())) {
+                    if (column2permissions.get(columnMetaData.getColumnName())[1]) {
                         infoLabel.setText("您没有足够的写入权限这么做！");
                         return;
                     }
@@ -255,7 +257,7 @@ public class MainLogic implements Initializable {
         }
         CDeletePacket cDeletePacket = new CDeletePacket(Main.user.getUuid(), cmd.toString(), getDatabaseChoiceBox().getValue());
         Main.packetID2DeletedValueMap.put(cDeletePacket.getId(), tableView.getItems().get(selectedRowIndex));
-        Main.channel2packetsMap.computeIfAbsent(Main.ctx.channel(), c -> new LinkedBlockingQueue<>()).add(cDeletePacket);
+        Main.channel2packetsMap.computeIfAbsent(Main.ctx.channel(), _ -> new LinkedBlockingQueue<>()).add(cDeletePacket);
     }
 
     private boolean cantModifyPermission(String columnName) {
@@ -280,33 +282,30 @@ public class MainLogic implements Initializable {
     }
 
     @FXML
-    void setThisColumnCouldInspectCouldChangePermissionAsDefault(ActionEvent event) {
+    void setThisColumnCouldInspectCouldChangePermissionAsDefault() {
         String columnName = selectedColumn.getText().toLowerCase();
         if (cantModifyPermission(columnName)) return;
         String sql1 = String.format("ALTER TABLE " + Main.clientConfig.getTheUsersTableName() + " ADD %s BIT NOT NULL DEFAULT 1", Util.permissionColumnNameEncode(getDatabaseChoiceBox().getValue(), getDatabaseChoiceBox().getValue(), columnName, false));
         String sql2 = String.format("ALTER TABLE " + Main.clientConfig.getTheUsersTableName() + " ADD %s BIT NOT NULL DEFAULT 1", Util.permissionColumnNameEncode(getDatabaseChoiceBox().getValue(), getDatabaseChoiceBox().getValue(), columnName, true));
-        Main.channel2packetsMap.computeIfAbsent(Main.ctx.channel(), c -> new LinkedBlockingQueue<>()).add(new CAlterPacket(Main.user.getUuid(), sql1, Main.clientConfig.getTheUsersDatabaseName()));
-        Main.channel2packetsMap.computeIfAbsent(Main.ctx.channel(), c -> new LinkedBlockingQueue<>()).add(new CAlterPacket(Main.user.getUuid(), sql2, Main.clientConfig.getTheUsersDatabaseName()));
+        sendSqlAlter(sql1, sql2);
     }
 
     @FXML
-    void setThisColumnCouldInspectNoChangePermissionAsDefault(ActionEvent event) {
+    void setThisColumnCouldInspectNoChangePermissionAsDefault() {
         String columnName = selectedColumn.getText().toLowerCase();
         if (cantModifyPermission(columnName)) return;
         String sql1 = String.format("ALTER TABLE " + Main.clientConfig.getTheUsersTableName() + " ADD %s BIT NOT NULL DEFAULT 1", Util.permissionColumnNameEncode(getDatabaseChoiceBox().getValue(), getDatabaseChoiceBox().getValue(), columnName, false));
         String sql2 = String.format("ALTER TABLE " + Main.clientConfig.getTheUsersTableName() + " ADD %s BIT NOT NULL DEFAULT 0", Util.permissionColumnNameEncode(getDatabaseChoiceBox().getValue(), getDatabaseChoiceBox().getValue(), columnName, true));
-        Main.channel2packetsMap.computeIfAbsent(Main.ctx.channel(), c -> new LinkedBlockingQueue<>()).add(new CAlterPacket(Main.user.getUuid(), sql1, Main.clientConfig.getTheUsersDatabaseName()));
-        Main.channel2packetsMap.computeIfAbsent(Main.ctx.channel(), c -> new LinkedBlockingQueue<>()).add(new CAlterPacket(Main.user.getUuid(), sql2, Main.clientConfig.getTheUsersDatabaseName()));
+        sendSqlAlter(sql1, sql2);
     }
 
     @FXML
-    void setThisColumnNoInspectNoChangePermissionAsDefault(ActionEvent event) {
+    void setThisColumnNoInspectNoChangePermissionAsDefault() {
         String columnName = selectedColumn.getText().toLowerCase();
         if (cantModifyPermission(columnName)) return;
         String sql1 = String.format("ALTER TABLE " + Main.clientConfig.getTheUsersTableName() + " ADD %s BIT NOT NULL DEFAULT 0", Util.permissionColumnNameEncode(getDatabaseChoiceBox().getValue(), getDatabaseChoiceBox().getValue(), columnName, false));
         String sql2 = String.format("ALTER TABLE " + Main.clientConfig.getTheUsersTableName() + " ADD %s BIT NOT NULL DEFAULT 0", Util.permissionColumnNameEncode(getDatabaseChoiceBox().getValue(), getDatabaseChoiceBox().getValue(), columnName, true));
-        Main.channel2packetsMap.computeIfAbsent(Main.ctx.channel(), c -> new LinkedBlockingQueue<>()).add(new CAlterPacket(Main.user.getUuid(), sql1, Main.clientConfig.getTheUsersDatabaseName()));
-        Main.channel2packetsMap.computeIfAbsent(Main.ctx.channel(), c -> new LinkedBlockingQueue<>()).add(new CAlterPacket(Main.user.getUuid(), sql2, Main.clientConfig.getTheUsersDatabaseName()));
+        sendSqlAlter(sql1, sql2);
     }
 
     @FXML
@@ -315,7 +314,7 @@ public class MainLogic implements Initializable {
             ChoiceBox<String> choiceBox = Main.mainLogic.getDatabaseChoiceBox();
             String databaseName = choiceBox.getValue() == null ? choiceBox.getItems().getFirst() : choiceBox.getValue();
             CQueryPacket cQueryPacket = new CQueryPacket(Main.user.getUuid(), "select " + getCustomQueryTextField().getText() + " from " + getTableChoiceBox().getValue(), databaseName);
-            Main.channel2packetsMap.computeIfAbsent(Main.ctx.channel(), c -> new LinkedBlockingQueue<>()).add(cQueryPacket);
+            Main.channel2packetsMap.computeIfAbsent(Main.ctx.channel(), _ -> new LinkedBlockingQueue<>()).add(cQueryPacket);
         } catch (Exception e) {
             Main.logger.log(e);
         }

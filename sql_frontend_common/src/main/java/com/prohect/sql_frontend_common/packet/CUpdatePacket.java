@@ -5,6 +5,8 @@ import java.io.Serializable;
 /**
  * update a certain value for an exist row
  */
+
+@SuppressWarnings("unused")
 public class CUpdatePacket extends AbstractPacket implements Serializable {
     long uuid;
     String updateCMD;

@@ -148,8 +148,7 @@ public class ClientHandlerAdapter extends ChannelInboundHandlerAdapter {
         channel2packetsEncoder.put(ctx.channel(), Util.encoderRegister(workerGroup, ctx, packets, 25));
         Main.channel2packetsMap.put(ctx.channel(), packets);
         //Json:8种基本数据类型,只有char用双引号为"a", 数字直接为1.2, Boolean为true | false, 引用类型字符串为"string..."
-//        byte[] bytes = JSON.toJSONBytes(new SInfoPacket("}[]{0}[]{"));//result: stringBuilder = {"id":-212632573705707520,"info":"}[]{0}[]{","prefix":"SInfoPacket\\"}
-//        byte[] bytes = JSON.toJSONBytes(new TestJsonEncode('g'));//result:  stringBuilder = {"aChar":"g"}
+        //JSON.toJSONBytes(new SInfoPacket("}[]{0}[]{"));//result: stringBuilder = {"id":-212632573705707520,"info":"}[]{0}[]{","prefix":"SInfoPacket\\"}
 
         packets.add((new CLoginPacket(Main.user == null ? new User(Main.loginLogic.getUsernameField().getText(), Main.loginLogic.getPasswordField().getText(), 0L) : new User(Main.user.getUsername(), Main.user.getPassword(), Main.user.getUuid()))));
 
@@ -203,7 +202,7 @@ public class ClientHandlerAdapter extends ChannelInboundHandlerAdapter {
     }
 
     @Override
-    public void channelInactive(ChannelHandlerContext ctx) throws Exception {
+    public void channelInactive(ChannelHandlerContext ctx) {
         Main.logger.log("ClientHandlerAdapter.channelInactive");
         try {
             channel2packetsEncoder.get(ctx.channel()).cancel(true);
@@ -328,7 +327,6 @@ public class ClientHandlerAdapter extends ChannelInboundHandlerAdapter {
         User userFromPacket = sLoginPacket.getUser();
         HashMap<String, HashMap<String, ArrayList<ColumnMetaData>>> db2table2columnMap = sLoginPacket.getDb2table2columnMap();
         SLoginPacket.Info info = sLoginPacket.getInfo();
-
         Platform.runLater(() -> Main.mainLogic.getInfoLabel().setText(SLoginPacket.toString(info)));
         switch (info) {
             case RS -> LoginLogic.logged.set(true);
@@ -446,6 +444,7 @@ public class ClientHandlerAdapter extends ChannelInboundHandlerAdapter {
                 Main.mainLogic.updateColumnMetaDataOfInsertNewRowTable();
             }
             case UP -> merge(Main.user.getPermissions(), userFromPacket.getPermissions());
+            case W, N -> Main.loginLogic.getLoginInfo().setText(SLoginPacket.toString(info));
         }
     }
 }

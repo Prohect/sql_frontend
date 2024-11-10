@@ -16,6 +16,7 @@ public class Logger {
     private static final String logFileName = "Log-";
     private final FileChannel logFileChannel;
 
+    @SuppressWarnings("all")
     public Logger(String logFilePrefix) throws IOException {
         File logRoot = new File("log");
         if (!logRoot.exists()) logRoot.mkdir();
@@ -28,13 +29,10 @@ public class Logger {
         return LocalDateTime.now().format(DateTimeFormatter.ofPattern("yyyyMMdd.HHmmss"));
     }
 
-    public static String time() {
-        return LocalDateTime.now().format(DateTimeFormatter.ISO_LOCAL_TIME);
-    }
-
     /**
      * automatically add time
      */
+    @SuppressWarnings("all")
     public void log(String... message) {
         String datetime = datetime();
         StringBuilder builder = new StringBuilder("[%s]".formatted(datetime));

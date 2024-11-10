@@ -24,7 +24,7 @@ public class SqlUtil4Login {
     }
 
     public static User getUserByUsername(String theUsersTableName, String username, Statement statement) throws SQLException {
-        //in the login ui, we have limited the username could only contain letters and digits, no sql inject may happen
+        //in the login ui, we have limited the username could only contain letters and digits, no sql injection may happen
         @SuppressWarnings("all")
         var set = statement.executeQuery(getSelectQueryByUsername(theUsersTableName, username));
         if (set.next()) {

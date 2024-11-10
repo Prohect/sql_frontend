@@ -2,6 +2,7 @@ package com.prohect.sql_frontend_server;
 
 import java.util.List;
 
+@SuppressWarnings("unused")
 public class ServerConfig {
     private String theUsersTableName;
     private String theUsersDatabaseName;

@@ -7,6 +7,8 @@ import java.io.Serializable;
  * OR
  * create a new table on a certain database
  */
+
+@SuppressWarnings("unused")
 public class CAlterPacket extends AbstractPacket implements Serializable {//new column and new table both require OP, so the server logic is same
     long uuid;
     String cmd;

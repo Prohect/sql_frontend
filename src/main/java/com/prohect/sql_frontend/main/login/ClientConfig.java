@@ -8,6 +8,7 @@ import java.io.FileOutputStream;
 import java.io.IOException;
 import java.nio.file.Files;
 
+@SuppressWarnings("unused")
 public class ClientConfig {
     static final File configFile = new File("clientConfig.json");
 
@@ -31,27 +32,29 @@ public class ClientConfig {
 
     public static ClientConfig readConfig() throws IOException {
         if (configFile.createNewFile()) {
-            return resetConfig(configFile);
+            return resetConfig();
         } else {
             try {
                 ClientConfig clientConfig = JSON.parseObject(Files.readAllBytes(configFile.toPath()), ClientConfig.class);
-                return clientConfig == null ? resetConfig(configFile) : clientConfig;
+                return clientConfig == null ? resetConfig() : clientConfig;
             } catch (JSONException e) {
-                return resetConfig(configFile);
+                return resetConfig();
             }
         }
     }
 
-    private static ClientConfig resetConfig(File configFile) throws IOException {
+    @SuppressWarnings("all")
+    private static ClientConfig resetConfig() throws IOException {
         ClientConfig clientConfig = new ClientConfig("127.0.0.1", 19336, "users", "users");
-        configFile.delete();
-        configFile.createNewFile();
-        FileOutputStream fos = new FileOutputStream(configFile);
+        ClientConfig.configFile.delete();
+        ClientConfig.configFile.createNewFile();
+        FileOutputStream fos = new FileOutputStream(ClientConfig.configFile);
         fos.write(JSON.toJSONBytes(clientConfig));
         fos.close();
         return clientConfig;
     }
 
+    @SuppressWarnings("all")
     public static void saveConfig(ClientConfig clientConfig) {
         if (clientConfig == null) return;
         try {

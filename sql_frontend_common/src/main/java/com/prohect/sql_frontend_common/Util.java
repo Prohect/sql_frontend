@@ -35,8 +35,7 @@ public class Util {
                     ctx.write(Unpooled.copiedBuffer(jsonBytes));
                 }
                 ctx.flush();
-            } catch (Exception e) {
-                e.printStackTrace();
+            } catch (Exception ignored) {
             }
         }, 0, period, TimeUnit.MILLISECONDS);
     }
@@ -70,10 +69,7 @@ public class Util {
                         Packet packet = PacketManager.convertPacket(bytes);
                         out.offer(packet);
                         lastSuccessReaderIndex = in.readerIndex();
-                    } catch (IndexOutOfBoundsException ignored) {
-                        break;
-                    } catch (JSONException e) {
-                        e.printStackTrace();
+                    } catch (IndexOutOfBoundsException | JSONException ignored) {
                         break;
                     }
                 }
@@ -85,6 +81,7 @@ public class Util {
         }
     }
 
+    @SuppressWarnings("unused")
     private static void debug_nonPacketUnpacked(ByteBuf in, int lastSuccessReaderIndex) {
         byte[] bytes = new byte[in.readableBytes()];
         in.readBytes(bytes);

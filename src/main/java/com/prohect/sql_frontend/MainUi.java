@@ -32,12 +32,12 @@ public class MainUi extends Application {
         return window;
     }
 
-    public static void main(String[] args) {
+    public static void main() {
         Application.launch();
     }
 
     @Override
-    public void start(Stage stage) throws IOException {
+    public void start(Stage stage) {
         window = stage;
         stage.setTitle("Hello!");
         stage.setScene(loginScene);
@@ -46,7 +46,7 @@ public class MainUi extends Application {
     }
 
     @Override
-    public void stop() throws Exception {
+    public void stop() {
         if (Main.clientConfig != null) {
             Main.clientConfig.setLastDB(Main.mainLogic.getDataBaseName4tableView());
             Main.clientConfig.setLastTB(Main.mainLogic.getTableName4tableView());

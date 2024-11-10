@@ -4,6 +4,8 @@ import com.prohect.sql_frontend_common.User;
 
 import java.io.Serializable;
 
+
+@SuppressWarnings("unused")
 public class CLoginPacket extends AbstractPacket implements Serializable {
     User user;
 

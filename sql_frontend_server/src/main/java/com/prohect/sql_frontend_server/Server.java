@@ -56,7 +56,7 @@ public class Server {
         this.serverConfig = config;
     }
 
-    public static void main(String[] args) throws IOException {
+    public static void main() {
         try {
             new Server(loadConfig()).run();
         } catch (SQLException e) {
@@ -80,6 +80,7 @@ public class Server {
         }
     }
 
+    @SuppressWarnings("all")
     private static ServerConfig resetConfig() throws IOException {
         DatabaseAdmin databaseAdmin = new DatabaseAdmin("admin114", "114514");
         ServerConfig serverConfig = new ServerConfig("users", "users", List.of("projectsInfo"), List.of("sysdiagrams", "trace_xe_action_map", "trace_xe_event_map"), databaseAdmin, 19336);
@@ -94,9 +95,9 @@ public class Server {
     }
 
 
-    private HashMap<String, HashMap<String, ArrayList<ColumnMetaData>>> loadMetaDataFromConnection(HashMap<String, Connection> databaseName2connectionMap) {
+    private HashMap<String, HashMap<String, ArrayList<ColumnMetaData>>> loadMetaDataFromConnection() {
         HashMap<String, HashMap<String, ArrayList<ColumnMetaData>>> tempDatabase2Table2ColumnMap = new HashMap<>();
-        databaseName2connectionMap.forEach((databaseName, connection) -> {
+        Server.databaseName2connectionMap.forEach((databaseName, connection) -> {
             try {//note:db,table,column all names are lowercased before storing
                 DatabaseMetaData metaData = connection.getMetaData();
                 ResultSet tableMetaDataResultSet = metaData.getTables(null, null, "%", new String[]{"TABLE"});
@@ -105,11 +106,10 @@ public class Server {
                     String tableName = tableMetaDataResultSet.getString("TABLE_NAME").toLowerCase();
                     if (tableNameBlackList.contains(tableName)) continue;
                     ArrayList<String> primaryKeyList = new ArrayList<>();
-                    ArrayList<ColumnMetaData> columnList = tempDatabase2Table2ColumnMap.computeIfAbsent(databaseName.toLowerCase(), k -> new HashMap<>()).computeIfAbsent(tableName, k -> new ArrayList<>());
+                    ArrayList<ColumnMetaData> columnList = tempDatabase2Table2ColumnMap.computeIfAbsent(databaseName.toLowerCase(), _ -> new HashMap<>()).computeIfAbsent(tableName, _ -> new ArrayList<>());
                     ResultSet primaryKeys = metaData.getPrimaryKeys(null, null, tableName);
                     while (primaryKeys.next()) primaryKeyList.add(primaryKeys.getString("COLUMN_NAME").toLowerCase());
                     ResultSet columns = metaData.getColumns(null, null, tableName, "%");
-                    int i = 1;
                     while (columns.next()) {
                         String columnName = columns.getString("COLUMN_NAME").toLowerCase();
                         String columnType = columns.getString("TYPE_NAME").toLowerCase();
@@ -117,7 +117,6 @@ public class Server {
                         boolean isAutoIncrement = columns.getString("IS_AUTOINCREMENT").equals("YES");
                         boolean isNullable = columns.getString("IS_NULLABLE").equals("YES");
                         columnList.add(new ColumnMetaData(columnName, columnType, isPrimaryKey, isAutoIncrement, isNullable));
-                        ++i;
                     }
                 }
             } catch (SQLException e) {
@@ -137,7 +136,7 @@ public class Server {
             connection2UsersDB = SqlUtil4Login.getConnection4UsersDB(serverConfig);
             NioEventLoopGroup workerGroup = new NioEventLoopGroup();//workerGroup处理与sqlServer的通信和与client的通信
             checkConnection();
-            database2Table2ColumnMap = loadMetaDataFromConnection(databaseName2connectionMap);
+            database2Table2ColumnMap = loadMetaDataFromConnection();
             workerGroup.scheduleAtFixedRate(() -> {
                 for (Map.Entry<ChannelHandlerContext, LinkedBlockingQueue<Packet>> entry : ctx2packetReceivedMap.entrySet()) {
                     ChannelHandlerContext ctx = entry.getKey();
@@ -182,7 +181,7 @@ public class Server {
         int i = statement.executeUpdate(cmd);
         ctx2packetToBeSentMap.get(ctx).add(new SInfoPacket("成功, " + i + "行受影响"));
         statement.close();
-        HashMap<String, HashMap<String, ArrayList<ColumnMetaData>>> map = loadMetaDataFromConnection(databaseName2connectionMap);
+        HashMap<String, HashMap<String, ArrayList<ColumnMetaData>>> map = loadMetaDataFromConnection();
         HashMap<String, HashMap<String, ArrayList<ColumnMetaData>>> diffMap = diff(map, database2Table2ColumnMap);
         database2Table2ColumnMap = map;
         SLoginPacket updateMetadataPacket = new SLoginPacket(new User("", "", user.getUuid()), diffMap, SLoginPacket.Info.UM, "", "");
@@ -257,7 +256,7 @@ public class Server {
         try {
             m1(ctx, cQueryPacket);
         } catch (SQLException e) {
-            database2Table2ColumnMap = loadMetaDataFromConnection(databaseName2connectionMap);
+            database2Table2ColumnMap = loadMetaDataFromConnection();
             m1(ctx, cQueryPacket);
         }
     }
@@ -318,7 +317,7 @@ public class Server {
             selectedColumnList.removeAll(columnNamesWithNoPermission);
         }
         query = new StringBuilder("select ");//produce the query command to be performed
-        if (!selectedColumnList.isEmpty()) query.append(selectedColumnList.get(0));
+        if (!selectedColumnList.isEmpty()) query.append(selectedColumnList.getFirst());
         for (int i = 1; i < selectedColumnList.size(); i++) {
             query.append(",").append(selectedColumnList.get(i));
         }

@@ -7,6 +7,7 @@ import java.io.Serializable;
 import java.util.ArrayList;
 import java.util.HashMap;
 
+@SuppressWarnings("unused")
 public class SLoginPacket extends AbstractPacket implements Serializable {
     User user;
     HashMap<String, HashMap<String, ArrayList<ColumnMetaData>>> db2table2columnMap = new HashMap<>();
@@ -83,6 +84,6 @@ public class SLoginPacket extends AbstractPacket implements Serializable {
         W,//wrong password
         N,//no such one
         UM,//update metadata
-        UP,
+        UP,//update permission //TODO:
     }
 }

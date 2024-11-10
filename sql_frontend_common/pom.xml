@@ -34,12 +34,6 @@
         <dependency>
             <groupId>org.testng</groupId>
             <artifactId>testng</artifactId>
-            <version>RELEASE</version>
-            <scope>compile</scope>
-        </dependency>
-        <dependency>
-            <groupId>org.testng</groupId>
-            <artifactId>testng</artifactId>
             <version>7.10.2</version>
             <scope>compile</scope>
         </dependency>
@@ -55,7 +49,7 @@
                     <target>23</target>
                     <release>23</release>
                     <compilerArgs>
-                        <arg></arg>
+                        <arg/>
                     </compilerArgs>
                 </configuration>
             </plugin>

@@ -10,7 +10,6 @@ import com.prohect.sql_frontend_common.Logger;
 import com.prohect.sql_frontend_common.User;
 import com.prohect.sql_frontend_common.packet.Packet;
 import io.netty.channel.Channel;
-import io.netty.channel.ChannelFuture;
 import io.netty.channel.ChannelHandlerContext;
 import javafx.collections.ObservableList;
 import javafx.scene.control.TableColumn;
@@ -51,12 +50,12 @@ public class Main {
         }
     }
 
-    public static ChannelFuture setAndRunNewNettyClient(NettyClient client) throws Exception {
+    public static void setAndRunNewNettyClient(NettyClient client) {
         if (Main.client != null) {
             Main.client.close();
         }
         Main.client = client;
-        return Main.client.run();
+        Main.client.run();
     }
 
 }

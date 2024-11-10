@@ -35,7 +35,7 @@ public class ServerHandlerAdapter extends ChannelInboundHandlerAdapter {
     }
 
     @Override
-    public void exceptionCaught(ChannelHandlerContext ctx, Throwable cause) throws Exception {
+    public void exceptionCaught(ChannelHandlerContext ctx, Throwable cause) {
         ctx.close();
         channel2packetsEncoder.get(ctx.channel()).cancel(true);
         Server.ctx2packetReceivedMap.remove(ctx);
@@ -44,7 +44,7 @@ public class ServerHandlerAdapter extends ChannelInboundHandlerAdapter {
     }
 
     @Override
-    public void channelInactive(ChannelHandlerContext ctx) throws Exception {
+    public void channelInactive(ChannelHandlerContext ctx) {
         channel2packetsEncoder.get(ctx.channel()).cancel(true);
         Server.ctx2packetReceivedMap.remove(ctx);
         Server.ctx2packetToBeSentMap.remove(ctx);
@@ -52,7 +52,7 @@ public class ServerHandlerAdapter extends ChannelInboundHandlerAdapter {
     }
 
     @Override
-    public void channelActive(ChannelHandlerContext ctx) throws Exception {
+    public void channelActive(ChannelHandlerContext ctx) {
         LinkedBlockingQueue<Packet> packets = new LinkedBlockingQueue<>();
         channel2packetsEncoder.put(ctx.channel(), Util.encoderRegister(workerGroup, ctx, packets, 25));
         Server.ctx2packetToBeSentMap.put(ctx, packets);
@@ -60,7 +60,7 @@ public class ServerHandlerAdapter extends ChannelInboundHandlerAdapter {
     }
 
     @Override
-    public void channelRead(ChannelHandlerContext ctx, Object msg) throws Exception {
+    public void channelRead(ChannelHandlerContext ctx, Object msg) {
         channel2packetDecoderFuture.put(ctx.channel(), Util.getPackets_concurrent(workerGroup, channel2packetDecoderFuture.get(ctx.channel()), (ByteBuf) msg, channel2lockOfIn.computeIfAbsent(ctx.channel(), _ -> new ReentrantLock()), channel2in.computeIfAbsent(ctx.channel(), _ -> ctx.alloc().buffer(1048576)), Server.ctx2packetReceivedMap.get(ctx)));
     }
 
