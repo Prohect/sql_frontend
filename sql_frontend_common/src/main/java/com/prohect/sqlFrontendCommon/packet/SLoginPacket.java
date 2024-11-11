@@ -8,7 +8,7 @@ import java.util.ArrayList;
 import java.util.HashMap;
 
 @SuppressWarnings("unused")
-public class SLoginPacket extends AbstractPacket implements Serializable {
+public final class SLoginPacket extends AbstractPacket implements Serializable {
     User user;
     HashMap<String, HashMap<String, ArrayList<ColumnMetaData>>> db2table2columnMap = new HashMap<>();
     Info info;

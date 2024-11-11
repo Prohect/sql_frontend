@@ -7,7 +7,7 @@ import java.io.Serializable;
  */
 
 @SuppressWarnings("unused")
-public class CDeletePacket extends AbstractPacket implements Serializable {
+public final class CDeletePacket extends AbstractPacket implements Serializable {
     long uuid;
     String cmd;
     String databaseName;

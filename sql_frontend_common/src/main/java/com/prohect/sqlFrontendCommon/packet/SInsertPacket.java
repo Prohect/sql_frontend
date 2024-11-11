@@ -3,7 +3,7 @@ package com.prohect.sqlFrontendCommon.packet;
 import java.io.Serializable;
 
 @SuppressWarnings("unused")
-public class SInsertPacket extends AbstractPacket implements Serializable {
+public final class SInsertPacket extends AbstractPacket implements Serializable {
     long theID;
 
     public SInsertPacket(long theID) {

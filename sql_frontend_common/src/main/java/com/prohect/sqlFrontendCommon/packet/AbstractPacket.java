@@ -4,7 +4,7 @@ import java.io.Serializable;
 
 
 @SuppressWarnings("unused")
-public class AbstractPacket implements Packet, Serializable {
+public sealed abstract class AbstractPacket implements Packet, Serializable permits CAlterPacket, CDeletePacket, CInsertPacket, CLoginPacket, CQueryPacket, CUpdatePacket, SDeletePacket, SInfoPacket, SInsertPacket, SLoginPacket, SQueryReplyPacket, SUpdatePacket {
     private long id;
 
     public AbstractPacket() {
