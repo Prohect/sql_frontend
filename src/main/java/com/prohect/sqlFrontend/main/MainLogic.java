@@ -18,7 +18,6 @@ import javafx.fxml.Initializable;
 import javafx.scene.Scene;
 import javafx.scene.control.*;
 import javafx.scene.input.DragEvent;
-import javafx.scene.layout.Pane;
 import javafx.scene.paint.Color;
 import javafx.stage.Modality;
 import javafx.stage.Stage;
@@ -38,8 +37,6 @@ public class MainLogic implements Initializable {
     private Stage stage4InsertNewColumnWindow;
     private Scene scene4InsertNewColumnScene;
     private TextInputDialog textInputDialog4newTableName;
-    @FXML
-    private Pane pane4infoLabel;
     @FXML
     private ChoiceBox<String> databaseChoiceBox;
     @FXML
