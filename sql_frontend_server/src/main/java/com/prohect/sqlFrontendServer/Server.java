@@ -212,7 +212,7 @@ public class Server {
         long uuid = cInsertPacket.getUuid();
         String cmd = cInsertPacket.getCmd();
         String databaseName = cInsertPacket.getDatabaseName().toLowerCase();
-        long id = cInsertPacket.getId();
+        int id = cInsertPacket.getId();
         User user = uuid2userMap.get(uuid);
         String[] split = cmd.substring(11).split("\\(");//"INSERT INTO"->11
         String tableName = split[0].toLowerCase();

@@ -4,20 +4,20 @@ import java.io.Serializable;
 
 @SuppressWarnings("unused")
 public final class SInsertPacket extends AbstractPacket implements Serializable {
-    long theID;
+    int theID;
 
-    public SInsertPacket(long theID) {
+    public SInsertPacket(int theID) {
         this.theID = theID;
     }
 
     public SInsertPacket() {
     }
 
-    public long getTheID() {
+    public int getTheID() {
         return theID;
     }
 
-    public void setTheID(long theID) {
+    public void setTheID(int theID) {
         this.theID = theID;
     }
 }

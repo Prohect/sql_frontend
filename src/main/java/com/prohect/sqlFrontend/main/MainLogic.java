@@ -68,6 +68,18 @@ public class MainLogic implements Initializable {
             Main.channel2packetsMap.computeIfAbsent(Main.ctx.channel(), _ -> new LinkedBlockingQueue<>()).add(new CAlterPacket(Main.user.getUuid(), command, db));
     }
 
+    public void tableColumnUpdate() {
+        ObservableList<TableColumn<Object[], ?>> currentColumns = Main.mainLogic.getTableView().getColumns();
+        Main.mainLogic.getTableView().setItems(FXCollections.observableArrayList());
+        currentColumns.clear();
+        String db = Main.mainLogic.getCurrentDataBaseName();
+        String tb = Main.mainLogic.getCurrentTableName();
+        ObservableList<TableColumn<Object[], ?>> c = Main.db2tb2tableColumn.get(db).get(tb);
+        if (c != null) currentColumns.addAll(c);
+        else Main.logger.log("mainUI.tableChoiceBox.valueProperty().Listener(): c = null ", "db = ", db, " tb = ", tb);
+        Main.mainLogic.getTableView().setItems(Main.db2tb2items.get(db).get(tb));
+    }
+
     public String getCurrentDataBaseName() {
         return getDatabaseChoiceBox().getValue();
     }
