@@ -178,11 +178,11 @@ public class MainLogic implements Initializable {
                 infoLabel.setText("请先选择表并查询以获取列的元数据");
                 return;
             }
-            if (!(getDatabaseChoiceBox().getValue().equals(InsertNewRowLogic.tableName) && getDatabaseChoiceBox().getValue().equals(InsertNewRowLogic.databaseName))) {//当表名和数据库名变化时更新
+            if (!(getCurrentTableName().equals(InsertNewRowLogic.tableName) && getCurrentDataBaseName().equals(InsertNewRowLogic.databaseName))) {//当表名和数据库名变化时更新
                 updateColumnMetaDataOfInsertNewRowTable();
             }
-            InsertNewRowLogic.databaseName = getDatabaseChoiceBox().getValue();
-            InsertNewRowLogic.tableName = getTableChoiceBox().getValue();
+            InsertNewRowLogic.databaseName = getCurrentDataBaseName();
+            InsertNewRowLogic.tableName = getCurrentTableName();
             stage4InsertNewRowsWindow.show();
         } catch (RuntimeException e) {
             Main.logger.log(e);
@@ -194,7 +194,7 @@ public class MainLogic implements Initializable {
         Main.insertNewRowLogic.getTheInsertTableView().setItems(FXCollections.observableArrayList());
         ObservableList<TableColumn<Object[], ?>> columnObservableList = Main.insertNewRowLogic.getTheInsertTableView().getColumns();
         columnObservableList.clear();
-        ArrayList<ColumnMetaData> columnMetaDataList = Main.db2tb2columnMD.get(getDatabaseChoiceBox().getValue()).get(getTableChoiceBox().getValue());
+        ArrayList<ColumnMetaData> columnMetaDataList = Main.db2tb2columnMD.get(getCurrentDataBaseName()).get(getCurrentTableName());
         Main.insertNewRowLogic.setHasIdentifier(false);
         Main.insertNewRowLogic.setIdentifierIndex(-1);
         for (int i = 0; i < columnMetaDataList.size(); i++) {
@@ -232,7 +232,7 @@ public class MainLogic implements Initializable {
             }
             String cmd;
             cmd = "CREATE TABLE " + tableName + " (" + "ID INT IDENTITY(1,1) NOT NULL, " + "PRIMARY KEY (ID))";
-            sendSqlAlterCommands2targetDB(Main.mainLogic.getDatabaseChoiceBox().getValue(), cmd);
+            sendSqlAlterCommands2targetDB(Main.mainLogic.getCurrentDataBaseName(), cmd);
         });
     }
 
@@ -265,8 +265,8 @@ public class MainLogic implements Initializable {
     @FXML
     void deleteRowMenuItemOnAction() {
         if (!Main.user.isOp()) {
-            List<ColumnMetaData> columnMetaDataList = Main.db2tb2columnMD.get(getDatabaseChoiceBox().getValue()).get(getDatabaseChoiceBox().getValue());
-            HashMap<String, Boolean[]> column2permissions = Main.user.getPermissions().get(getDatabaseChoiceBox().getValue()).get(getDatabaseChoiceBox().getValue());
+            List<ColumnMetaData> columnMetaDataList = Main.db2tb2columnMD.get(getCurrentDataBaseName()).get(getCurrentTableName());
+            HashMap<String, Boolean[]> column2permissions = Main.user.getPermissions().get(getCurrentDataBaseName()).get(getCurrentTableName());
             for (ColumnMetaData columnMetaData : columnMetaDataList) {
                 if (column2permissions.containsKey(columnMetaData.getColumnName())) {
                     if (column2permissions.get(columnMetaData.getColumnName())[1]) {
@@ -284,14 +284,14 @@ public class MainLogic implements Initializable {
             if (object == null) continue;
             cmd.append(" AND [").append(tableView.getColumns().get(i).getText()).append("] = ").append(Util.convert2SqlServerContextString(object));
         }
-        CDeletePacket cDeletePacket = new CDeletePacket(Main.user.getUuid(), cmd.toString(), getDatabaseChoiceBox().getValue());
+        CDeletePacket cDeletePacket = new CDeletePacket(Main.user.getUuid(), cmd.toString(), getCurrentDataBaseName());
         Main.packetID2DeletedValueMap.put(cDeletePacket.getId(), tableView.getItems().get(selectedRowIndex));
         Main.channel2packetsMap.computeIfAbsent(Main.ctx.channel(), _ -> new LinkedBlockingQueue<>()).add(cDeletePacket);
     }
 
     private boolean cantModifyPermission(String columnName) {
-        if (getDatabaseChoiceBox().getValue().equals(Main.clientConfig.getTheUsersDatabaseName())) {
-            if (getDatabaseChoiceBox().getValue().equals(Main.clientConfig.getTheUsersTableName())) {
+        if (getCurrentDataBaseName().equals(Main.clientConfig.getTheUsersDatabaseName())) {
+            if (getCurrentTableName().equals(Main.clientConfig.getTheUsersTableName())) {
                 getInfoLabel().setText("不能为本软件的用户表设定权限,因为它只对OP可见");
                 return true;
             }
@@ -342,7 +342,7 @@ public class MainLogic implements Initializable {
         try {
             ChoiceBox<String> choiceBox = Main.mainLogic.getDatabaseChoiceBox();
             String databaseName = choiceBox.getValue() == null ? choiceBox.getItems().getFirst() : choiceBox.getValue();
-            CQueryPacket cQueryPacket = new CQueryPacket(Main.user.getUuid(), "select * from " + getTableChoiceBox().getValue(), databaseName);
+            CQueryPacket cQueryPacket = new CQueryPacket(Main.user.getUuid(), "select * from " + getCurrentTableName(), databaseName);
             Main.channel2packetsMap.computeIfAbsent(Main.ctx.channel(), _ -> new LinkedBlockingQueue<>()).add(cQueryPacket);
         } catch (Exception e) {
             Main.logger.log(e);
