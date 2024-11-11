@@ -44,11 +44,7 @@ public class Server {
     private static Connection connection2UsersDB;
 
     static {
-        try {
-            logger = new Logger("server");
-        } catch (IOException e) {
-            throw new RuntimeException(e);
-        }
+        logger = new Logger("server");
     }
 
     private final ServerConfig serverConfig;
