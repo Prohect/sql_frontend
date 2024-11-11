@@ -8,7 +8,7 @@ import java.util.concurrent.CopyOnWriteArrayList;
 public class CollectionUtil {
 
     @SuppressWarnings("unchecked")
-    public static <M extends Map<K, V>, K, V, K1, V1, T> M merge(M map, M diffMap) {
+    public static <M extends Map<K, V>, M1 extends Map<K, V>, K, V, K1, V1, T> M merge(M map, M1 diffMap) {
         for (Map.Entry<K, V> entry : diffMap.entrySet()) {
             K k1 = entry.getKey();
             V v1 = entry.getValue();
@@ -31,7 +31,7 @@ public class CollectionUtil {
      * if no old version found simply add it to the list
      */
     @SuppressWarnings("unchecked")
-    public static <L extends List<T>, T, T1, K, V> L merge(L list, L diffList) {
+    public static <L extends List<T>, L1 extends List<T>, T, T1, K, V> L merge(L list, L1 diffList) {
         for (int i = 0; i < diffList.size(); i++) {// since we kept the structure of the list when computing diffList, diffList's size would always >= list's size when it's a list containing maps
             T t1 = diffList.get(i);
             if (i < list.size()) {
@@ -67,8 +67,8 @@ public class CollectionUtil {
      * then we find what's been changed by calling equals()
      */
     @SuppressWarnings("unchecked")
-    public static <M extends Map<K, V>, K, V, K1, V1, T> M diff(M map, M map1) {
-        M diffMap = structureClone(map1);
+    public static <M extends Map<K, V>, M1 extends Map<K, V>, K, V, K1, V1, T> M1 diff(M map, M1 map1) {
+        M1 diffMap = structureClone(map1);
         for (Map.Entry<K, V> entry : map.entrySet()) {
             K k = entry.getKey();
             V v = entry.getValue();
@@ -93,8 +93,8 @@ public class CollectionUtil {
      * then we find what's been changed by calling equals()
      */
     @SuppressWarnings("unchecked")
-    public static <L extends List<T>, T, T1, K, V> L diff(L list, L list1) {
-        L diffList = structureClone(list1);
+    public static <L extends List<T>, L1 extends List<T>, T, T1, K, V> L1 diff(L list, L1 list1) {
+        L1 diffList = structureClone(list1);
         for (int i = 0; i < list.size(); i++) {
             T t = list.get(i);
             if (i < list1.size()) {
@@ -161,4 +161,5 @@ public class CollectionUtil {
     public static <L extends List<T>, T> L structureCloneAndMerge(L list) {
         return merge(structureClone(list), list);
     }
+
 }

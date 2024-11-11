@@ -36,7 +36,7 @@ public class Util {
                     Packet packet = packets.poll();
                     if (packet == null) break;
                     if (Logger.logger != null) Logger.logger.log("发送" + packet);
-                    byte[] jsonBytes = packet.toBytesWithClassInfo();
+                    byte[] jsonBytes = packet.toBytes();
                     byte[] lengthBytes = new byte[4];
                     for (int i = 1; i < 5; i++) {
                         lengthBytes[i - 1] = (byte) (jsonBytes.length >> 32 - i * 8);
@@ -107,7 +107,8 @@ public class Util {
                             } else break;//wait for chanel.read to write and call this the next time
                         } else {
                             try {
-                                byte[] bytes = new byte[Math.min(packetLength, in.readableBytes())];
+                                int readableBytes = in.readableBytes();//NegativeArraySizeException: -1837549514
+                                byte[] bytes = new byte[readableBytes < 0 ? packetLength : Math.min(packetLength, in.readableBytes())];
                                 in.readBytes(bytes);
                                 Packet packet = PacketManager.convertPacket(bytes);
                                 out.offer(packet);

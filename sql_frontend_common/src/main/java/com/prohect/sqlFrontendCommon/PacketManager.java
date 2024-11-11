@@ -19,10 +19,10 @@ public class PacketManager {
 
     public static Packet convertPacket(byte[] bytes) throws Exception {
         if (!initialized) init();
-        Object object = new Object();
+        Packet object = null;
         Exception e = null;
         try {
-            object = JSONB.parseObject(bytes, Object.class, autoTypeFilter);
+            object = JSONB.parseObject(bytes, Packet.class, autoTypeFilter);
         } catch (Exception e1) {
             e = e1;
         }
@@ -33,7 +33,7 @@ public class PacketManager {
             for (byte b : bytes) s.append((char) b);
             if (Logger.logger != null) Logger.logger.log("cant convert to packet:\t" + s);
             if (e != null) throw e;
-            throw new JSONException("parsed object is not a packet" + object);
+            throw new JSONException("parsed object is not a packet");
         }
     }
 

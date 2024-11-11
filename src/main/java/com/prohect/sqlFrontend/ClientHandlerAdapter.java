@@ -100,16 +100,19 @@ public class ClientHandlerAdapter extends ChannelInboundHandlerAdapter {
     }
 
     public static void updateTableChoiceBoxFromDB2tb2columnMD() {
-        ObservableList<String> list = FXCollections.observableArrayList();
+        ArrayList<String> list = new ArrayList<>();
         String dbChosen = Main.mainLogic.getCurrentDataBaseName();
         HashMap<String, ArrayList<ColumnMetaData>> tb2column = Main.db2tb2columnMD.get(dbChosen);
         if (tb2column != null) tb2column.forEach((tableName, _) -> list.add(tableName));
         if (Main.clientConfig.getTheUsersDatabaseName().equalsIgnoreCase(dbChosen))
             list.add(Main.clientConfig.getTheUsersTableName());
         var oldValue = Main.mainLogic.getCurrentTableName();
-        Main.mainLogic.getTableChoiceBox().setItems(list);
+        var flag = list.remove(oldValue);
+        ObservableList<String> items = Main.mainLogic.getTableChoiceBox().getItems();
+        for (int i = items.size() - 1; i >= 0; i--) if (!flag || !items.get(i).equals(oldValue)) items.remove(i);
+        items.addAll(list);
         if (!list.isEmpty())
-            Main.mainLogic.getTableChoiceBox().setValue(list.contains(oldValue) ? oldValue : list.getFirst());
+            Main.mainLogic.getTableChoiceBox().setValue(flag ? oldValue : items.getFirst());
     }
 
     private static void initEditFactory(TableColumn<Object[], Object> column) {
@@ -142,18 +145,6 @@ public class ClientHandlerAdapter extends ChannelInboundHandlerAdapter {
             Main.packetID2updatedValueMap.put(cUpdatePacket.getId(), new UpdateOfCellOfTable(targetRowIndex, targetColumnIndex, newValue));
             Main.channel2packetsMap.computeIfAbsent(Main.ctx.channel(), _ -> new LinkedBlockingQueue<>()).add(cUpdatePacket);
         });
-    }
-
-    private static void tableColumnUpdate() {
-        ObservableList<TableColumn<Object[], ?>> currentColumns = Main.mainLogic.getTableView().getColumns();
-        Main.mainLogic.getTableView().setItems(FXCollections.observableArrayList());
-        currentColumns.clear();
-        String db = Main.mainLogic.getCurrentDataBaseName();
-        String tb = Main.mainLogic.getCurrentTableName();
-        ArrayList<TableColumn<Object[], ?>> c = Main.db2tb2tableColumn.get(db).get(tb);
-        if (c != null) currentColumns.addAll(c);
-        else Main.logger.log("mainUI.tableChoiceBox.valueProperty().Listener(): c = null ", "db = ", db, " tb = ", tb);
-        Main.mainLogic.getTableView().setItems(Main.db2tb2items.get(db).get(tb));
     }
 
     @Override
@@ -246,7 +237,7 @@ public class ClientHandlerAdapter extends ChannelInboundHandlerAdapter {
     }
 
     private void processInsertPacket(SInsertPacket sInsertPacket) {
-        long id = sInsertPacket.getTheID();
+        int id = sInsertPacket.getTheID();
         Object[] objects = Main.packetID2insertedValueMap.get(id);
         Main.insertNewRowLogic.getTheInsertTableView().getItems().remove(objects);
         Main.insertNewRowLogic.setNeedUpdateMainTable(true);
@@ -276,7 +267,7 @@ public class ClientHandlerAdapter extends ChannelInboundHandlerAdapter {
                             initEditFactory(column);
                             tableView.getColumns().add(column);
                         }
-                        ArrayList<TableColumn<Object[], ?>> tableColumns = Main.db2tb2tableColumn.get(databaseName).get(tableName);
+                        ObservableList<TableColumn<Object[], ?>> tableColumns = Main.db2tb2tableColumn.get(databaseName).get(tableName);
                         tableColumns.clear();
                         tableColumns.addAll(tableView.getColumns());
                     }
@@ -365,7 +356,7 @@ public class ClientHandlerAdapter extends ChannelInboundHandlerAdapter {
                     ClientConfig.saveConfig(Main.clientConfig);
 
                     //db2tb2permittedColumn update
-                    HashMap<String, HashMap<String, ArrayList<TableColumn<Object[], ?>>>> db2tb2tcl = new HashMap<>();
+                    HashMap<String, HashMap<String, ObservableList<TableColumn<Object[], ?>>>> db2tb2tcl = new HashMap<>();
                     HashMap<String, HashMap<String, ArrayList<ColumnMetaData>>> m0;//m0 -> readable
                     HashMap<String, HashMap<String, ArrayList<ColumnMetaData>>> m1;//m1 -> writable
                     HashMap<String, HashMap<String, HashMap<String, Boolean[]>>> permissions = userFromPacket.getPermissions();
@@ -393,14 +384,14 @@ public class ClientHandlerAdapter extends ChannelInboundHandlerAdapter {
                                     initEditFactory(column);
                                 }
                             }
-                            db2tb2tcl.computeIfAbsent(db, _ -> new HashMap<>()).computeIfAbsent(tb, _ -> new ArrayList<>()).add(column);
+                            db2tb2tcl.computeIfAbsent(db, _ -> new HashMap<>()).computeIfAbsent(tb, _ -> FXCollections.observableArrayList()).add(column);
                         }
                     }));
                     merge(Main.db2tb2tableColumn, db2tb2tcl);
 
                     if (userFromPacket.isOp()) merge(Main.db2tb2tableColumn, new HashMap<>() {{
                         put(theUsersDatabaseName, new HashMap<>() {{
-                            put(theUsersTableName, new ArrayList<>());
+                            put(theUsersTableName, FXCollections.observableArrayList());
                         }});
                     }});
 
@@ -449,12 +440,12 @@ public class ClientHandlerAdapter extends ChannelInboundHandlerAdapter {
 
                         //load stuff for this UI
                         Main.mainLogic.onCustomQueryButtonClicked();
-                        tableColumnUpdate();
+                        Main.mainLogic.tableColumnUpdate();
                         databaseSourceChoiceBox.valueProperty().addListener((_, oldValue, newValue) -> ClientHandlerAdapter.updateTableChoiceBoxWhenDatabaseChoiceBoxVary(oldValue, newValue));
                         Main.mainLogic.getTableChoiceBox().valueProperty().addListener((_, oldValue, newValue) -> {
                             if (newValue != null && !newValue.equals(oldValue))
                                 Main.mainLogic.onCustomQueryButtonClicked();
-                            tableColumnUpdate();
+                            Main.mainLogic.tableColumnUpdate();
                         });
                     });
                 }
@@ -463,7 +454,7 @@ public class ClientHandlerAdapter extends ChannelInboundHandlerAdapter {
                 merge(Main.db2tb2columnMD, db2table2columnMap);
                 db2table2columnMap.forEach((db, tb2column) -> tb2column.forEach((tb, column) -> {
                     Main.db2tb2items.computeIfAbsent(db, _ -> new HashMap<>()).computeIfAbsent(tb, _ -> FXCollections.observableArrayList());
-                    var tableColumns = Main.db2tb2tableColumn.computeIfAbsent(db, _ -> new HashMap<>()).computeIfAbsent(tb, _ -> new ArrayList<>());
+                    var tableColumns = Main.db2tb2tableColumn.computeIfAbsent(db, _ -> new HashMap<>()).computeIfAbsent(tb, _ -> FXCollections.observableArrayList());
                     for (int i = 0; i < column.size(); i++) {
                         //new column, no permission setup, just check if the user it OP
                         var tableColumn = getTableColumn(column.get(i).getColumnName(), i);
@@ -473,6 +464,7 @@ public class ClientHandlerAdapter extends ChannelInboundHandlerAdapter {
                 }));
                 Platform.runLater(() -> {
                     updateTableChoiceBoxFromDB2tb2columnMD();
+                    Main.mainLogic.tableColumnUpdate();
                     Main.mainLogic.updateColumnMetaDataOfInsertNewRowTable();
                 });
             }
