@@ -50,8 +50,8 @@ public class MainUi extends Application {
     @Override
     public void stop() {
         if (Main.clientConfig != null) {
-            Main.clientConfig.setLastDB(Main.mainLogic.getDataBaseName4tableView());
-            Main.clientConfig.setLastTB(Main.mainLogic.getTableName4tableView());
+            Main.clientConfig.setLastDB(Main.mainLogic.getCurrentDataBaseName());
+            Main.clientConfig.setLastTB(Main.mainLogic.getCurrentTableName());
             ClientConfig.saveConfig(Main.clientConfig);
         }
         if (Main.client != null) Main.client.close();

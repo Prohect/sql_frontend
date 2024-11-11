@@ -65,7 +65,7 @@ public class InsertNewColumnLogic {
             Main.mainLogic.getInfoLabel().setText("请至少提供列名和类型! ");
             return;
         }
-        StringBuilder cmd = new StringBuilder("ALTER TABLE " + Main.mainLogic.getTableName4tableView() + " ADD [" + columnNameTextField.getText() + "] " + columnTypeChoiceBox.getValue());
+        StringBuilder cmd = new StringBuilder("ALTER TABLE " + Main.mainLogic.getCurrentTableName() + " ADD [" + columnNameTextField.getText() + "] " + columnTypeChoiceBox.getValue());
         if (isAutoIncrementCheckBox.isSelected()) {
             cmd.append(" IDENTITY(").append(autoIncrementHome.getText()).append(",").append(autoIncrementDelta.getText()).append(")");
         } else {
@@ -75,6 +75,6 @@ public class InsertNewColumnLogic {
             if (isUniqueCheckBox.isSelected()) cmd.append(" UNIQUE");
         }
         if (isPrimaryKeyCheckBox.isSelected()) cmd.append(" PRIMARY KEY");
-        MainLogic.sendSqlAlterCommands2targetDB(Main.mainLogic.getDataBaseName4tableView(), cmd.toString());
+        MainLogic.sendSqlAlterCommands2targetDB(Main.mainLogic.getCurrentDataBaseName(), cmd.toString());
     }
 }

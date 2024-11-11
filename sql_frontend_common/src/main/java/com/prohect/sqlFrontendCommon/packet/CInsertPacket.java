@@ -7,7 +7,7 @@ import java.io.Serializable;
  */
 
 @SuppressWarnings("unused")
-public class CInsertPacket extends AbstractPacket implements Serializable {
+public final class CInsertPacket extends AbstractPacket implements Serializable {
     long uuid;
     String cmd;
     String databaseName;

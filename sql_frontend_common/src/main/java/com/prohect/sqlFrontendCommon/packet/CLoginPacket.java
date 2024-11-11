@@ -6,7 +6,7 @@ import java.io.Serializable;
 
 
 @SuppressWarnings("unused")
-public class CLoginPacket extends AbstractPacket implements Serializable {
+public final class CLoginPacket extends AbstractPacket implements Serializable {
     User user;
 
     public CLoginPacket() {

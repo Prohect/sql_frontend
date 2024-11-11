@@ -4,18 +4,18 @@ import java.io.Serializable;
 
 
 @SuppressWarnings("unused")
-public class AbstractPacket implements Packet, Serializable {
-    private long id;
+public sealed abstract class AbstractPacket implements Packet, Serializable permits CAlterPacket, CDeletePacket, CInsertPacket, CLoginPacket, CQueryPacket, CUpdatePacket, SDeletePacket, SInfoPacket, SInsertPacket, SLoginPacket, SQueryReplyPacket, SUpdatePacket {
+    private int id;
 
     public AbstractPacket() {
-        id = (long) ((2 * Math.random() - 1) * Long.MAX_VALUE);
+        id = (int) ((2 * Math.random() - 1) * Integer.MAX_VALUE);
     }
 
-    public long getId() {
+    public int getId() {
         return id;
     }
 
-    public void setId(long id) {
+    public void setId(int id) {
         this.id = id;
     }
 

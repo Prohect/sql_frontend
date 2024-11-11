@@ -4,7 +4,7 @@ import java.io.Serializable;
 
 
 @SuppressWarnings("unused")
-public class CQueryPacket extends AbstractPacket implements Serializable {
+public final class CQueryPacket extends AbstractPacket implements Serializable {
     long uuid;
     String query;
     String databaseName;

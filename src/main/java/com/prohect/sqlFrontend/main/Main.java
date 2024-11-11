@@ -15,7 +15,6 @@ import io.netty.channel.nio.NioEventLoopGroup;
 import javafx.collections.ObservableList;
 import javafx.scene.control.TableColumn;
 
-import java.io.IOException;
 import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.concurrent.ConcurrentHashMap;
@@ -40,16 +39,12 @@ public class Main {
     public static ChannelHandlerContext ctx;
     public static NettyClient client;
     public static LinkedBlockingQueue<Packet> packetReceivedQueue = new LinkedBlockingQueue<>();
-    public static HashMap<Long, UpdateOfCellOfTable> packetID2updatedValueMap = new HashMap<>();
-    public static HashMap<Long, Object[]> packetID2insertedValueMap = new HashMap<>();
-    public static HashMap<Long, Object[]> packetID2DeletedValueMap = new HashMap<>();
+    public static HashMap<Integer, UpdateOfCellOfTable> packetID2updatedValueMap = new HashMap<>();
+    public static HashMap<Integer, Object[]> packetID2insertedValueMap = new HashMap<>();
+    public static HashMap<Integer, Object[]> packetID2DeletedValueMap = new HashMap<>();
 
     static {
-        try {
-            logger = new Logger("client");
-        } catch (IOException e) {
-            throw new RuntimeException(e);
-        }
+        logger = new Logger("client");
     }
 
     public static void setAndRunNewNettyClient(NettyClient client) {

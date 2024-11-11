@@ -13,21 +13,32 @@ import java.time.format.DateTimeFormatter;
 
 public class Logger {
     public static final String logFileSuffix = MessageFormat.format("{0}.log", datetime());
+    public static final File logRoot = new File("log");
     private static final String logFileName = "Log-";
-    private final FileChannel logFileChannel;
+    public static Logger logger;
+    public final String logFilePrefix;
+    private FileChannel logFileChannel;
+    private boolean initialized = false;
 
-    public Logger(String logFilePrefix) throws IOException {
-        File logRoot = new File("log");
-        if (!logRoot.exists()) {
-            @SuppressWarnings("unused") boolean mkdir = logRoot.mkdir();
-        }
-        File logFile = new File(logRoot, logFilePrefix + logFileName + logFileSuffix);
-        @SuppressWarnings("unused") boolean newFile = logFile.createNewFile();
-        logFileChannel = FileChannel.open(logFile.toPath(), StandardOpenOption.WRITE);
+    public Logger(String logFilePrefix) {
+        this.logFilePrefix = logFilePrefix;
+        logger = this;
     }
 
     public static String datetime() {
         return LocalDateTime.now().format(DateTimeFormatter.ofPattern("yyyyMMdd.HHmmss"));
+    }
+
+    private void init() throws IOException {
+        if (!initialized) {
+            if (!logRoot.exists()) {
+                @SuppressWarnings("unused") boolean mkdir = logRoot.mkdir();
+            }
+            File logFile = new File(logRoot, logFilePrefix + logFileName + logFileSuffix);
+            @SuppressWarnings("unused") boolean newFile = logFile.createNewFile();
+            logFileChannel = FileChannel.open(logFile.toPath(), StandardOpenOption.WRITE);
+            initialized = true;
+        }
     }
 
     /**
@@ -43,6 +54,7 @@ public class Logger {
         builder.append("\r\n");
         System.out.print(builder);
         try {
+            init();
             @SuppressWarnings("unused") int write = logFileChannel.write(ByteBuffer.wrap(builder.toString().getBytes()));
             logFileChannel.force(false);
         } catch (IOException e) {

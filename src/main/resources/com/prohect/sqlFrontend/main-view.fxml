@@ -32,42 +32,44 @@
   OF THIS SOFTWARE, EVEN IF ADVISED OF THE POSSIBILITY OF SUCH DAMAGE.
 -->
 
-<?import javafx.geometry.Insets?>
-<?import javafx.scene.control.Button?>
-<?import javafx.scene.control.ChoiceBox?>
-<?import javafx.scene.control.ContextMenu?>
-<?import javafx.scene.control.Label?>
-<?import javafx.scene.control.Menu?>
-<?import javafx.scene.control.MenuBar?>
-<?import javafx.scene.control.MenuItem?>
-<?import javafx.scene.control.TableView?>
-<?import javafx.scene.layout.AnchorPane?>
-<?import javafx.scene.layout.HBox?>
-<?import javafx.scene.layout.Pane?>
-<?import javafx.scene.layout.VBox?>
-
-<VBox prefHeight="720.0" prefWidth="1280.0" xmlns="http://javafx.com/javafx/23.0.1" xmlns:fx="http://javafx.com/fxml/1" fx:controller="com.prohect.sqlFrontend.main.MainLogic">
+<?import javafx.geometry.*?>
+<?import javafx.scene.control.*?>
+<?import javafx.scene.layout.*?>
+<VBox xmlns:fx="http://javafx.com/fxml/1" prefHeight="720.0" prefWidth="1280.0" xmlns="http://javafx.com/javafx/23.0.1"
+      fx:controller="com.prohect.sqlFrontend.main.MainLogic">
     <children>
         <MenuBar VBox.vgrow="NEVER">
             <menus>
                 <Menu mnemonicParsing="false" text="数据库">
                     <items>
-                        <MenuItem mnemonicParsing="false" onAction="#insertNewTableMenuItemOnAction" text="新建表" />
+                        <MenuItem mnemonicParsing="false" onAction="#insertNewTableMenuItemOnAction" text="新建表"/>
                     </items>
                 </Menu>
             </menus>
         </MenuBar>
         <AnchorPane maxHeight="-1.0" maxWidth="-1.0" style="-fx-background-color: gray;" VBox.vgrow="ALWAYS">
-            <TableView fx:id="tableView" editable="true" onDragDropped="#onDragDropped" onDragOver="#onDragOver" onMouseClicked="#mainTableOnMouseClicked" AnchorPane.bottomAnchor="0.0" AnchorPane.leftAnchor="0.0" AnchorPane.rightAnchor="0.0" AnchorPane.topAnchor="0.0">
+            <TableView fx:id="tableView" editable="true" onDragDropped="#onDragDropped" onDragOver="#onDragOver"
+                       onMouseClicked="#mainTableOnMouseClicked" AnchorPane.bottomAnchor="0.0"
+                       AnchorPane.leftAnchor="0.0" AnchorPane.rightAnchor="0.0" AnchorPane.topAnchor="0.0">
                 <contextMenu>
                     <ContextMenu>
                         <items>
-                            <MenuItem mnemonicParsing="false" onAction="#insertNewRowMenuItemOnAction" text="插入新行" />
-                            <MenuItem mnemonicParsing="false" onAction="#insertNewColumnMenuItemOnAction" text="插入新列" />
-                            <MenuItem mnemonicParsing="false" onAction="#deleteRowMenuItemOnAction" text="删除选中行" />
-                            <MenuItem fx:id="setThisColumnNoInspectNoChangePermissionAsDefaultMenuItem" mnemonicParsing="false" onAction="#setThisColumnNoInspectNoChangePermissionAsDefault" text="设该列为默认不可查询不可修改" visible="false" />
-                            <MenuItem fx:id="setThisColumnCouldInspectNoChangePermissionAsDefaultMenuItem" mnemonicParsing="false" onAction="#setThisColumnCouldInspectNoChangePermissionAsDefault" text="设该列为默认可查询不可修改" visible="false" />
-                            <MenuItem fx:id="setThisColumnCouldInspectCouldChangePermissionAsDefaultMenuItem" mnemonicParsing="false" onAction="#setThisColumnCouldInspectCouldChangePermissionAsDefault" text="设该列为默认可查询可修改" visible="false" />
+                            <MenuItem mnemonicParsing="false" onAction="#insertNewRowMenuItemOnAction" text="插入新行"/>
+                            <MenuItem mnemonicParsing="false" onAction="#insertNewColumnMenuItemOnAction"
+                                      text="插入新列"/>
+                            <MenuItem mnemonicParsing="false" onAction="#deleteRowMenuItemOnAction" text="删除选中行"/>
+                            <MenuItem fx:id="setThisColumnNoInspectNoChangePermissionAsDefaultMenuItem"
+                                      mnemonicParsing="false"
+                                      onAction="#setThisColumnNoInspectNoChangePermissionAsDefault"
+                                      text="设该列为默认不可查询不可修改" visible="false"/>
+                            <MenuItem fx:id="setThisColumnCouldInspectNoChangePermissionAsDefaultMenuItem"
+                                      mnemonicParsing="false"
+                                      onAction="#setThisColumnCouldInspectNoChangePermissionAsDefault"
+                                      text="设该列为默认可查询不可修改" visible="false"/>
+                            <MenuItem fx:id="setThisColumnCouldInspectCouldChangePermissionAsDefaultMenuItem"
+                                      mnemonicParsing="false"
+                                      onAction="#setThisColumnCouldInspectCouldChangePermissionAsDefault"
+                                      text="设该列为默认可查询可修改" visible="false"/>
                         </items>
                     </ContextMenu>
                 </contextMenu>
@@ -75,29 +77,31 @@
         </AnchorPane>
         <HBox>
             <children>
-            <Pane prefHeight="25.0" prefWidth="10.0" />
-                <Button mnemonicParsing="false" onMouseClicked="#onCustomQueryButtonClicked" prefHeight="25.0" text="查询">
-               <opaqueInsets>
-                  <Insets />
-               </opaqueInsets></Button>
-                <Pane HBox.hgrow="ALWAYS" />
+                <Pane prefHeight="25.0" prefWidth="10.0"/>
+                <Button mnemonicParsing="false" onMouseClicked="#onCustomQueryButtonClicked" prefHeight="25.0"
+                        text="查询">
+                    <opaqueInsets>
+                        <Insets/>
+                    </opaqueInsets>
+                </Button>
+                <Pane HBox.hgrow="ALWAYS"/>
                 <Label prefHeight="25.0" text="表名: ">
                     <HBox.margin>
-                        <Insets left="10.0" />
+                        <Insets left="10.0"/>
                     </HBox.margin>
                 </Label>
-                <ChoiceBox fx:id="tableChoiceBox" prefHeight="25.0" prefWidth="150.0" />
+                <ChoiceBox fx:id="tableChoiceBox" prefHeight="25.0" prefWidth="150.0"/>
                 <Label alignment="CENTER_RIGHT" prefHeight="25.0" text="数据库名: ">
                     <HBox.margin>
-                        <Insets left="10.0" />
+                        <Insets left="10.0"/>
                     </HBox.margin>
                 </Label>
                 <ChoiceBox fx:id="databaseChoiceBox" prefHeight="25.0" prefWidth="150.0">
                     <opaqueInsets>
-                        <Insets />
+                        <Insets/>
                     </opaqueInsets>
                     <HBox.margin>
-                        <Insets />
+                        <Insets/>
                     </HBox.margin>
                 </ChoiceBox>
             </children>
@@ -106,18 +110,14 @@
             <children>
                 <Label prefHeight="15.0" text="info:">
                     <HBox.margin>
-                        <Insets left="5.0" />
+                        <Insets left="5.0"/>
                     </HBox.margin>
                 </Label>
-            <Pane fx:id="pane4infoLabel" prefHeight="15.0">
-               <children>
-                      <Label fx:id="infoLabel" prefHeight="15.0" text="informations here">
-                          <padding>
-                              <Insets left="10.0" />
-                          </padding>
-                      </Label>
-               </children>
-            </Pane>
+                <Label fx:id="infoLabel" prefHeight="15.0" text="informations here">
+                    <padding>
+                        <Insets left="10.0"/>
+                    </padding>
+                </Label>
             </children>
         </HBox>
     </children>

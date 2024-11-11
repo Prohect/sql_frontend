@@ -1,6 +1,5 @@
 package com.prohect.sqlFrontendCommon;
 
-import com.alibaba.fastjson2.JSONException;
 import com.prohect.sqlFrontendCommon.packet.Packet;
 import io.netty.buffer.ByteBuf;
 import io.netty.buffer.Unpooled;
@@ -16,6 +15,16 @@ import java.util.concurrent.locks.ReentrantLock;
 public class Util {
 
     /**
+     * note: only be used when the buf of NIO 's size is lower than the packet size!
+     */
+    public static int packetSize = -1;
+    /**
+     * note: only be used when the buf of NIO 's size is lower than the packet size!
+     */
+    public static byte[] packetBytes;
+    public static int index = 0;
+
+    /**
      * @return a future for u to close this infinite run loop
      * @apiNote this loop do not shut itself down from inside
      */
@@ -26,6 +35,7 @@ public class Util {
                 for (; ; ) {
                     Packet packet = packets.poll();
                     if (packet == null) break;
+                    if (Logger.logger != null) Logger.logger.log("发送" + packet);
                     byte[] jsonBytes = packet.toBytesWithClassInfo();
                     byte[] lengthBytes = new byte[4];
                     for (int i = 1; i < 5; i++) {
@@ -33,8 +43,8 @@ public class Util {
                     }
                     ctx.write(Unpooled.copiedBuffer(lengthBytes));
                     ctx.write(Unpooled.copiedBuffer(jsonBytes));
+                    ctx.flush();
                 }
-                ctx.flush();
             } catch (Exception ignored) {
             }
         }, 0, period, TimeUnit.MILLISECONDS);
@@ -50,34 +60,73 @@ public class Util {
         in.writeBytes(msg);
         msg.release();
         return workerGroup.submit(() -> {
-            if (future != null) future.addListener(_ -> processInIntoPackets2Out_concurrent(lock, in, out));
-            else processInIntoPackets2Out_concurrent(lock, in, out);
+            if (future != null)
+                future.addListener(_ -> processInIntoPackets2Out_concurrent(workerGroup, lock, in, out));
+            else processInIntoPackets2Out_concurrent(workerGroup, lock, in, out);
         });
     }
 
-    private static void processInIntoPackets2Out_concurrent(ReentrantLock lock, ByteBuf in, LinkedBlockingQueue<Packet> out) {
+    private static void processInIntoPackets2Out_concurrent(EventLoopGroup workerGroup, ReentrantLock lock, ByteBuf in, LinkedBlockingQueue<Packet> out) {
         if (in.readableBytes() < 4) return;
-        int lastSuccessReaderIndex = in.readerIndex();
+        int lastReaderIndex = in.readerIndex();
         if (lock.tryLock()) {
             try {
                 while (in.readableBytes() >= 4) {
-                    int packetLength = 0;
-                    for (int i = 1; i < 5; i++) packetLength |= ((in.readByte() & 0xFF) << 32 - i * 8);
-                    try {
-                        byte[] bytes = new byte[packetLength];
-                        in.readBytes(bytes);
-                        Packet packet = PacketManager.convertPacket(bytes);
-                        out.offer(packet);
-                        lastSuccessReaderIndex = in.readerIndex();
-                    } catch (IndexOutOfBoundsException | JSONException ignored) {
-                        break;
+                    if (packetSize != -1) {//meaning there is a packet on receiving whose size is larger than the size of ByteBuf of NIO, so keep reading to a byte array
+                        byte[] bytes = new byte[Math.min(in.readableBytes(), packetSize - index)];
+                        in.readBytes(bytes);//1
+                        int read = (in.readerIndex() - lastReaderIndex);
+                        lastReaderIndex = in.readerIndex();
+                        System.arraycopy(bytes, 0, packetBytes, index, read);
+                        index += read;//5
+                        if (index == packetSize) {
+                            try {
+                                Packet packet = PacketManager.convertPacket(packetBytes);
+                                out.offer(packet);
+                            } catch (Exception e) {
+                                if (Logger.logger != null) Logger.logger.log(e);
+                            }
+                            index = 0;
+                            packetSize = -1;
+                            packetBytes = null;
+                        }
+                    } else {
+                        int packetLength = 0;
+                        for (int i = 1; i < 5; i++) packetLength |= ((in.readByte() & 0xFF) << 32 - i * 8);
+                        if (in.readableBytes() < packetLength) {
+                            if (!in.isWritable()) {
+                                packetSize = packetLength;
+                                packetBytes = new byte[packetLength];
+                                index = 0;
+                                byte[] bytes = new byte[Math.min(packetLength, in.readableBytes())];
+                                in.readBytes(bytes);//1
+                                int read = (in.readerIndex() - lastReaderIndex - 4);//-4 for the length header
+                                lastReaderIndex = in.readerIndex();
+                                System.arraycopy(bytes, 0, packetBytes, index, read);
+                                index += read;//5
+                            } else break;//wait for chanel.read to write and call this the next time
+                        } else {
+                            try {
+                                byte[] bytes = new byte[Math.min(packetLength, in.readableBytes())];
+                                in.readBytes(bytes);
+                                Packet packet = PacketManager.convertPacket(bytes);
+                                out.offer(packet);
+                            } catch (Exception e) {
+                                if (Logger.logger != null) Logger.logger.log(e);
+                                break;
+                            } finally {
+                                lastReaderIndex = in.readerIndex();
+                            }
+                        }
                     }
                 }
-                in.readerIndex(lastSuccessReaderIndex);
+                in.readerIndex(lastReaderIndex);
                 in.discardReadBytes();
             } finally {
                 lock.unlock();
             }
+        } else {
+            workerGroup.schedule(() -> processInIntoPackets2Out_concurrent(workerGroup, lock, in, out), 50, TimeUnit.MILLISECONDS);
         }
     }
 

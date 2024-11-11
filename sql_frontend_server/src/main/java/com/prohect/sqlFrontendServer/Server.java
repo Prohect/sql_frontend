@@ -44,11 +44,7 @@ public class Server {
     private static Connection connection2UsersDB;
 
     static {
-        try {
-            logger = new Logger("server");
-        } catch (IOException e) {
-            throw new RuntimeException(e);
-        }
+        logger = new Logger("server");
     }
 
     private final ServerConfig serverConfig;
@@ -273,7 +269,7 @@ public class Server {
     }
 
     private void processUpdatePacket(ChannelHandlerContext ctx, CUpdatePacket cUpdatePacket) throws SQLException {
-        long id = cUpdatePacket.getId();
+        int id = cUpdatePacket.getId();
         User user = uuid2userMap.get(cUpdatePacket.getUuid());
         String databaseName = cUpdatePacket.getDatabaseName();
         String updateCMD = cUpdatePacket.getUpdateCMD();

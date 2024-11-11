@@ -3,21 +3,21 @@ package com.prohect.sqlFrontendCommon.packet;
 import java.io.Serializable;
 
 @SuppressWarnings("unused")
-public class SUpdatePacket extends AbstractPacket implements Serializable {
-    long theID;
+public final class SUpdatePacket extends AbstractPacket implements Serializable {
+    int theID;
 
     public SUpdatePacket() {
     }
 
-    public SUpdatePacket(long theID) {
+    public SUpdatePacket(int theID) {
         this.theID = theID;
     }
 
-    public long getTheID() {
+    public int getTheID() {
         return theID;
     }
 
-    public void setTheID(long theID) {
+    public void setTheID(int theID) {
         this.theID = theID;
     }
 }
