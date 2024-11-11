@@ -17,12 +17,24 @@ public class PacketManager {
         init();
     }
 
-    public static Packet convertPacket(byte[] bytes) throws JSONException {
+    public static Packet convertPacket(byte[] bytes) throws Exception {
         if (!initialized) init();
-        Object object = JSONB.parseObject(bytes, Object.class, autoTypeFilter);
+        Object object = new Object();
+        Exception e = null;
+        try {
+            object = JSONB.parseObject(bytes, Object.class, autoTypeFilter);
+        } catch (Exception e1) {
+            e = e1;
+        }
         if (object instanceof Packet packet)
             return packet;
-        else throw new JSONException("nonSupported packet type");
+        else {
+            StringBuilder s = new StringBuilder();
+            for (byte b : bytes) s.append((char) b);
+            if (Logger.logger != null) Logger.logger.log("cant convert to packet:\t" + s);
+            if (e != null) throw e;
+            throw new JSONException("parsed object is not a packet" + object);
+        }
     }
 
     private static void init() {

@@ -15,12 +15,14 @@ public class Logger {
     public static final String logFileSuffix = MessageFormat.format("{0}.log", datetime());
     public static final File logRoot = new File("log");
     private static final String logFileName = "Log-";
+    public static Logger logger;
     public final String logFilePrefix;
     private FileChannel logFileChannel;
     private boolean initialized = false;
 
     public Logger(String logFilePrefix) {
         this.logFilePrefix = logFilePrefix;
+        logger = this;
     }
 
     public static String datetime() {

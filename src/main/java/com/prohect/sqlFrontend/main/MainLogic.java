@@ -68,11 +68,11 @@ public class MainLogic implements Initializable {
             Main.channel2packetsMap.computeIfAbsent(Main.ctx.channel(), _ -> new LinkedBlockingQueue<>()).add(new CAlterPacket(Main.user.getUuid(), command, db));
     }
 
-    public String getDataBaseName4tableView() {
+    public String getCurrentDataBaseName() {
         return getDatabaseChoiceBox().getValue();
     }
 
-    public String getTableName4tableView() {
+    public String getCurrentTableName() {
         return getTableChoiceBox().getValue();
     }
 
@@ -278,7 +278,7 @@ public class MainLogic implements Initializable {
         }
         Object o = tableView.getItems().get(selectedRowIndex)[0];
         assert o != null;//第一个一般是主键，断言不为null
-        StringBuilder cmd = new StringBuilder("DELETE FROM " + getDatabaseChoiceBox().getValue() + " WHERE [" + tableView.getColumns().getFirst().getText() + "] = " + Util.convert2SqlServerContextString(o));
+        StringBuilder cmd = new StringBuilder("DELETE FROM " + getCurrentTableName() + " WHERE [" + tableView.getColumns().getFirst().getText() + "] = " + Util.convert2SqlServerContextString(o));
         for (int i = 1; i < tableView.getColumns().size(); i++) {
             Object object = tableView.getItems().get(selectedRowIndex)[i];
             if (object == null) continue;
@@ -296,7 +296,7 @@ public class MainLogic implements Initializable {
                 return true;
             }
         } else {
-            Optional<ColumnMetaData> columnMetaData = Main.db2tb2columnMD.get(getDatabaseChoiceBox().getValue()).get(getDatabaseChoiceBox().getValue()).stream().filter(c -> c.getColumnName().equals(columnName)).findFirst();
+            Optional<ColumnMetaData> columnMetaData = Main.db2tb2columnMD.get(getCurrentDataBaseName()).get(getCurrentTableName()).stream().filter(c -> c.getColumnName().equals(columnName)).findFirst();
             if (columnMetaData.isPresent()) {
                 if (columnMetaData.get().isAutoIncrement()) {
                     getInfoLabel().setText("不能为标识列设定权限, 因为它由sqlServer自动生成管理");
@@ -304,7 +304,7 @@ public class MainLogic implements Initializable {
                 }
             }
         }
-        if (Main.user.getPermissions().getOrDefault(getDatabaseChoiceBox().getValue(), new HashMap<>()).getOrDefault(getDatabaseChoiceBox().getValue(), new HashMap<>()).get(columnName) != null) {
+        if (Main.user.getPermissions().getOrDefault(getCurrentDataBaseName(), new HashMap<>()).getOrDefault(getCurrentTableName(), new HashMap<>()).get(columnName) != null) {
             getInfoLabel().setText("不能为标识列设定权限, 因为已经设置过");
             return true;
         } else return false;
@@ -314,8 +314,8 @@ public class MainLogic implements Initializable {
     void setThisColumnCouldInspectCouldChangePermissionAsDefault() {
         String columnName = selectedColumn.getText().toLowerCase();
         if (cantModifyPermission(columnName)) return;
-        String sql1 = String.format("ALTER TABLE " + Main.clientConfig.getTheUsersTableName() + " ADD %s BIT NOT NULL DEFAULT 1", Util.permissionColumnNameEncode(getDatabaseChoiceBox().getValue(), getDatabaseChoiceBox().getValue(), columnName, false));
-        String sql2 = String.format("ALTER TABLE " + Main.clientConfig.getTheUsersTableName() + " ADD %s BIT NOT NULL DEFAULT 1", Util.permissionColumnNameEncode(getDatabaseChoiceBox().getValue(), getDatabaseChoiceBox().getValue(), columnName, true));
+        String sql1 = String.format("ALTER TABLE " + Main.clientConfig.getTheUsersTableName() + " ADD %s BIT NOT NULL DEFAULT 1", Util.permissionColumnNameEncode(getCurrentDataBaseName(), getCurrentTableName(), columnName, false));
+        String sql2 = String.format("ALTER TABLE " + Main.clientConfig.getTheUsersTableName() + " ADD %s BIT NOT NULL DEFAULT 1", Util.permissionColumnNameEncode(getCurrentDataBaseName(), getCurrentTableName(), columnName, true));
         sendSqlAlterCommands2targetDB(Main.clientConfig.getTheUsersDatabaseName(), sql1, sql2);
     }
 
@@ -323,8 +323,8 @@ public class MainLogic implements Initializable {
     void setThisColumnCouldInspectNoChangePermissionAsDefault() {
         String columnName = selectedColumn.getText().toLowerCase();
         if (cantModifyPermission(columnName)) return;
-        String sql1 = String.format("ALTER TABLE " + Main.clientConfig.getTheUsersTableName() + " ADD %s BIT NOT NULL DEFAULT 1", Util.permissionColumnNameEncode(getDatabaseChoiceBox().getValue(), getDatabaseChoiceBox().getValue(), columnName, false));
-        String sql2 = String.format("ALTER TABLE " + Main.clientConfig.getTheUsersTableName() + " ADD %s BIT NOT NULL DEFAULT 0", Util.permissionColumnNameEncode(getDatabaseChoiceBox().getValue(), getDatabaseChoiceBox().getValue(), columnName, true));
+        String sql1 = String.format("ALTER TABLE " + Main.clientConfig.getTheUsersTableName() + " ADD %s BIT NOT NULL DEFAULT 1", Util.permissionColumnNameEncode(getCurrentDataBaseName(), getCurrentTableName(), columnName, false));
+        String sql2 = String.format("ALTER TABLE " + Main.clientConfig.getTheUsersTableName() + " ADD %s BIT NOT NULL DEFAULT 0", Util.permissionColumnNameEncode(getCurrentDataBaseName(), getCurrentTableName(), columnName, true));
         sendSqlAlterCommands2targetDB(Main.clientConfig.getTheUsersDatabaseName(), sql1, sql2);
     }
 
@@ -332,8 +332,8 @@ public class MainLogic implements Initializable {
     void setThisColumnNoInspectNoChangePermissionAsDefault() {
         String columnName = selectedColumn.getText().toLowerCase();
         if (cantModifyPermission(columnName)) return;
-        String sql1 = String.format("ALTER TABLE " + Main.clientConfig.getTheUsersTableName() + " ADD %s BIT NOT NULL DEFAULT 0", Util.permissionColumnNameEncode(getDatabaseChoiceBox().getValue(), getDatabaseChoiceBox().getValue(), columnName, false));
-        String sql2 = String.format("ALTER TABLE " + Main.clientConfig.getTheUsersTableName() + " ADD %s BIT NOT NULL DEFAULT 0", Util.permissionColumnNameEncode(getDatabaseChoiceBox().getValue(), getDatabaseChoiceBox().getValue(), columnName, true));
+        String sql1 = String.format("ALTER TABLE " + Main.clientConfig.getTheUsersTableName() + " ADD %s BIT NOT NULL DEFAULT 0", Util.permissionColumnNameEncode(getCurrentDataBaseName(), getCurrentTableName(), columnName, false));
+        String sql2 = String.format("ALTER TABLE " + Main.clientConfig.getTheUsersTableName() + " ADD %s BIT NOT NULL DEFAULT 0", Util.permissionColumnNameEncode(getCurrentDataBaseName(), getCurrentTableName(), columnName, true));
         sendSqlAlterCommands2targetDB(Main.clientConfig.getTheUsersDatabaseName(), sql1, sql2);
     }
 

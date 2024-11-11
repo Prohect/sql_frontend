@@ -90,15 +90,26 @@ public class ClientHandlerAdapter extends ChannelInboundHandlerAdapter {
         return column;
     }
 
-    public static void updateTableChoiceBox(String oldValue, String newValue) {
+    /**
+     * @param oldValue old db choice box's value
+     * @param newValue new db choice box's value
+     */
+    public static void updateTableChoiceBoxWhenDatabaseChoiceBoxVary(String oldValue, String newValue) {
         if (newValue != null && newValue.equals(oldValue)) return;
+        updateTableChoiceBoxFromDB2tb2columnMD();
+    }
+
+    public static void updateTableChoiceBoxFromDB2tb2columnMD() {
         ObservableList<String> list = FXCollections.observableArrayList();
-        HashMap<String, ArrayList<ColumnMetaData>> tb2column = Main.db2tb2columnMD.get(Main.mainLogic.getDatabaseChoiceBox().getValue());
+        String dbChosen = Main.mainLogic.getCurrentDataBaseName();
+        HashMap<String, ArrayList<ColumnMetaData>> tb2column = Main.db2tb2columnMD.get(dbChosen);
         if (tb2column != null) tb2column.forEach((tableName, _) -> list.add(tableName));
-        if (Main.clientConfig.getTheUsersDatabaseName().equalsIgnoreCase(newValue))
+        if (Main.clientConfig.getTheUsersDatabaseName().equalsIgnoreCase(dbChosen))
             list.add(Main.clientConfig.getTheUsersTableName());
+        var oldValue = Main.mainLogic.getCurrentTableName();
         Main.mainLogic.getTableChoiceBox().setItems(list);
-        if (!list.isEmpty()) Main.mainLogic.getTableChoiceBox().setValue(list.getFirst());
+        if (!list.isEmpty())
+            Main.mainLogic.getTableChoiceBox().setValue(list.contains(oldValue) ? oldValue : list.getFirst());
     }
 
     private static void initEditFactory(TableColumn<Object[], Object> column) {
@@ -116,7 +127,7 @@ public class ClientHandlerAdapter extends ChannelInboundHandlerAdapter {
             }
             Object o1 = row[(targetColumnIndex == 0) ? 1 : 0];
             ObservableList<TableColumn<Object[], ?>> columns = Main.mainLogic.getTableView().getColumns();
-            StringBuilder condition = new StringBuilder("UPDATE " + Main.mainLogic.getTableName4tableView() + " SET [" + columns.get(targetColumnIndex).getText() + "] = " + (newValueAsNumber != null ? newValue : "'" + newValue + "'") + " WHERE [" + (columns.get(targetColumnIndex == 0 ? 1 : 0)).getText() + "] = " + Util.convert2SqlServerContextString(o1));
+            StringBuilder condition = new StringBuilder("UPDATE " + Main.mainLogic.getCurrentTableName() + " SET [" + columns.get(targetColumnIndex).getText() + "] = " + (newValueAsNumber != null ? newValue : "'" + newValue + "'") + " WHERE [" + (columns.get(targetColumnIndex == 0 ? 1 : 0)).getText() + "] = " + Util.convert2SqlServerContextString(o1));
             for (int i = 1; i < row.length; i++) {
                 if (i == targetColumnIndex) continue;
                 if (row[i] == null) continue;
@@ -127,7 +138,7 @@ public class ClientHandlerAdapter extends ChannelInboundHandlerAdapter {
                 }
                 condition.append(" AND [").append(columnName).append("] = ").append(convert2SqlServerContextString);
             }
-            CUpdatePacket cUpdatePacket = new CUpdatePacket(Main.user.getUuid(), condition.toString(), Main.mainLogic.getDataBaseName4tableView());
+            CUpdatePacket cUpdatePacket = new CUpdatePacket(Main.user.getUuid(), condition.toString(), Main.mainLogic.getCurrentDataBaseName());
             Main.packetID2updatedValueMap.put(cUpdatePacket.getId(), new UpdateOfCellOfTable(targetRowIndex, targetColumnIndex, newValue));
             Main.channel2packetsMap.computeIfAbsent(Main.ctx.channel(), _ -> new LinkedBlockingQueue<>()).add(cUpdatePacket);
         });
@@ -137,8 +148,8 @@ public class ClientHandlerAdapter extends ChannelInboundHandlerAdapter {
         ObservableList<TableColumn<Object[], ?>> currentColumns = Main.mainLogic.getTableView().getColumns();
         Main.mainLogic.getTableView().setItems(FXCollections.observableArrayList());
         currentColumns.clear();
-        String db = Main.mainLogic.getDatabaseChoiceBox().getValue();
-        String tb = Main.mainLogic.getTableChoiceBox().getValue();
+        String db = Main.mainLogic.getCurrentDataBaseName();
+        String tb = Main.mainLogic.getCurrentTableName();
         ArrayList<TableColumn<Object[], ?>> c = Main.db2tb2tableColumn.get(db).get(tb);
         if (c != null) currentColumns.addAll(c);
         else Main.logger.log("mainUI.tableChoiceBox.valueProperty().Listener(): c = null ", "db = ", db, " tb = ", tb);
@@ -190,12 +201,15 @@ public class ClientHandlerAdapter extends ChannelInboundHandlerAdapter {
             return;
         }
         alreadyOnReconnecting.set(true);
-        Future<Void> connect = b.connect(host, port);
         try {
+            Future<Void> connect = b.connect(host, port);
             connect.sync();
         } catch (Exception e) {
-            alreadyOnReconnecting.set(false);
-            workerGroup.schedule(this::reconnect, 5, TimeUnit.SECONDS);
+            try {
+                alreadyOnReconnecting.set(false);
+                workerGroup.schedule(this::reconnect, 5, TimeUnit.SECONDS);
+            } catch (Exception ignored) {//maybe RejectedExecutionException when event executor terminated
+            }
         }
     }
 
@@ -286,7 +300,7 @@ public class ClientHandlerAdapter extends ChannelInboundHandlerAdapter {
     }
 
     private void processUpdatePacket(SUpdatePacket sUpdatePacket) {
-        long id = sUpdatePacket.getTheID();
+        int id = sUpdatePacket.getTheID();
         UpdateOfCellOfTable update = Main.packetID2updatedValueMap.get(id);
         int targetRowIndex = update.getTargetRowIndex();
         int targetColumnIndex = update.getTargetColumnIndex();
@@ -436,7 +450,7 @@ public class ClientHandlerAdapter extends ChannelInboundHandlerAdapter {
                         //load stuff for this UI
                         Main.mainLogic.onCustomQueryButtonClicked();
                         tableColumnUpdate();
-                        databaseSourceChoiceBox.valueProperty().addListener((_, oldValue, newValue) -> ClientHandlerAdapter.updateTableChoiceBox(oldValue, newValue));
+                        databaseSourceChoiceBox.valueProperty().addListener((_, oldValue, newValue) -> ClientHandlerAdapter.updateTableChoiceBoxWhenDatabaseChoiceBoxVary(oldValue, newValue));
                         Main.mainLogic.getTableChoiceBox().valueProperty().addListener((_, oldValue, newValue) -> {
                             if (newValue != null && !newValue.equals(oldValue))
                                 Main.mainLogic.onCustomQueryButtonClicked();
@@ -446,14 +460,23 @@ public class ClientHandlerAdapter extends ChannelInboundHandlerAdapter {
                 }
             }
             case UM -> {
-                String value = Main.mainLogic.getTableChoiceBox().getValue();
                 merge(Main.db2tb2columnMD, db2table2columnMap);
+                db2table2columnMap.forEach((db, tb2column) -> tb2column.forEach((tb, column) -> {
+                    Main.db2tb2items.computeIfAbsent(db, _ -> new HashMap<>()).computeIfAbsent(tb, _ -> FXCollections.observableArrayList());
+                    var tableColumns = Main.db2tb2tableColumn.computeIfAbsent(db, _ -> new HashMap<>()).computeIfAbsent(tb, _ -> new ArrayList<>());
+                    for (int i = 0; i < column.size(); i++) {
+                        //new column, no permission setup, just check if the user it OP
+                        var tableColumn = getTableColumn(column.get(i).getColumnName(), i);
+                        if (Main.user.isOp()) initEditFactory(tableColumn);
+                        tableColumns.add(tableColumn);
+                    }
+                }));
                 Platform.runLater(() -> {
-                    updateTableChoiceBox(value, value);
+                    updateTableChoiceBoxFromDB2tb2columnMD();
                     Main.mainLogic.updateColumnMetaDataOfInsertNewRowTable();
                 });
             }
-            case UP -> merge(Main.user.getPermissions(), userFromPacket.getPermissions());
+            case UP -> merge(Main.user.getPermissions(), userFromPacket.getPermissions());//TODO:
             case W, N -> Main.loginLogic.getLoginInfo().setText(SLoginPacket.toString(info));
         }
     }

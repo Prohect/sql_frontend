@@ -58,7 +58,7 @@ public class InsertNewRowLogic implements Initializable {
 
     /**
      * if the tableData's first row contains something same(ignore case) with the column name of columns of tableView, map them.
-     * if nothing matches, return an empty map
+     * if nothing matches, return an empty map"﻿"
      */
     private static HashMap<Integer, Integer> mapColumnIndex(List<String[]> tableData, TableView<Object[]> tableView, int identifierIndex) {
         String[] columnsFromCsv = tableData.getFirst();
@@ -125,8 +125,13 @@ public class InsertNewRowLogic implements Initializable {
         List<String[]> objs = new ArrayList<>();
         if (file.exists()) {//file directly exported from Excel use utf-8 bom, which add a header to the file
             BufferedReader br = new BufferedReader(new FileReader(file, StandardCharsets.UTF_8));
+            boolean firstLine = true;
             while (br.ready()) {
                 String line = br.readLine();
+                if (firstLine) {//"\uFEFF -> ﻿, which is the header of UTF-8 BOM"
+                    if (line.startsWith("\uFEFF")) line = line.substring(1);
+                    firstLine = false;
+                }
                 String[] values = line.split(",");
                 objs.add(values);
             }
@@ -189,7 +194,7 @@ public class InsertNewRowLogic implements Initializable {
 
     private String[] getNewItem() {
         String[] strings = new String[this.theInsertTableView.getColumns().size()];
-        ArrayList<ColumnMetaData> columnMetaDataList = Main.db2tb2columnMD.get(Main.mainLogic.getDataBaseName4tableView()).get(Main.mainLogic.getTableName4tableView());
+        ArrayList<ColumnMetaData> columnMetaDataList = Main.db2tb2columnMD.get(Main.mainLogic.getCurrentDataBaseName()).get(Main.mainLogic.getCurrentTableName());
         for (int i = 0; i < strings.length; i++) {
             ColumnMetaData columnMetaData = columnMetaDataList.get(i);
             strings[i] = getPromptOfColumn(columnMetaData);
@@ -219,7 +224,7 @@ public class InsertNewRowLogic implements Initializable {
     @FXML
     void submitTheChanges() {
         try {
-            ArrayList<ColumnMetaData> columnMetaDataList = Main.db2tb2columnMD.get(Main.mainLogic.getDataBaseName4tableView()).get(Main.mainLogic.getTableName4tableView());
+            ArrayList<ColumnMetaData> columnMetaDataList = Main.db2tb2columnMD.get(Main.mainLogic.getCurrentDataBaseName()).get(Main.mainLogic.getCurrentTableName());
             ObservableList<Object[]> items = this.getTheInsertTableView().getItems();
             List<Packet> packets = new ArrayList<>();
             for (Object[] item : items) {
@@ -266,7 +271,7 @@ public class InsertNewRowLogic implements Initializable {
                     nonNullCounter++;
                     if (first) {
                         first = false;
-                        cmd = new StringBuilder("INSERT INTO ").append(Main.mainLogic.getTableName4tableView()).append(" ([").append(cData.getColumnName()).append("]");
+                        cmd = new StringBuilder("INSERT INTO ").append(Main.mainLogic.getCurrentTableName()).append(" ([").append(cData.getColumnName()).append("]");
                     } else {
                         cmd.append(",[").append(cData.getColumnName()).append("]");
                     }
@@ -284,7 +289,7 @@ public class InsertNewRowLogic implements Initializable {
                 }
                 assert cmd != null;
                 cmd.append(")");
-                CInsertPacket cInsertPacket = new CInsertPacket(Main.user.getUuid(), cmd.toString(), Main.mainLogic.getDataBaseName4tableView());
+                CInsertPacket cInsertPacket = new CInsertPacket(Main.user.getUuid(), cmd.toString(), Main.mainLogic.getCurrentDataBaseName());
                 Main.packetID2insertedValueMap.put(cInsertPacket.getId(), item);
                 packets.add(cInsertPacket);
 
@@ -329,16 +334,17 @@ public class InsertNewRowLogic implements Initializable {
                         break;
                     }
                 }
-                List<String[]> listFromCsv = new ArrayList<>();//load and format it to match the column numbers
-                for (String[] strings : loadListFromCsv(selectedFile)) {
+                List<String[]> listFromCsvFinal = new ArrayList<>();//load and format it to match the column numbers
+                List<String[]> listFromCsv = loadListFromCsv(selectedFile);
+                for (String[] strings : listFromCsv) {
                     String[] newRow = new String[columns];
                     for (int i = 0; i < strings.length; i++) {
                         String string = strings[i];
                         newRow[identifierIndex == -1 ? i : i < identifierIndex ? i : i + 1] = string;
                     }
-                    listFromCsv.add(newRow);
+                    listFromCsvFinal.add(newRow);
                 }
-                tableView.getItems().addAll(getFormattedItems(listFromCsv, tableView, identifierIndex));
+                tableView.getItems().addAll(getFormattedItems(listFromCsvFinal, tableView, identifierIndex));
             } catch (Exception e) {
                 Main.mainLogic.getInfoLabel().setText(e.getMessage());
                 Main.logger.log(e);

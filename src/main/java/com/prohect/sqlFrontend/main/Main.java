@@ -39,9 +39,9 @@ public class Main {
     public static ChannelHandlerContext ctx;
     public static NettyClient client;
     public static LinkedBlockingQueue<Packet> packetReceivedQueue = new LinkedBlockingQueue<>();
-    public static HashMap<Long, UpdateOfCellOfTable> packetID2updatedValueMap = new HashMap<>();
-    public static HashMap<Long, Object[]> packetID2insertedValueMap = new HashMap<>();
-    public static HashMap<Long, Object[]> packetID2DeletedValueMap = new HashMap<>();
+    public static HashMap<Integer, UpdateOfCellOfTable> packetID2updatedValueMap = new HashMap<>();
+    public static HashMap<Integer, Object[]> packetID2insertedValueMap = new HashMap<>();
+    public static HashMap<Integer, Object[]> packetID2DeletedValueMap = new HashMap<>();
 
     static {
         logger = new Logger("client");

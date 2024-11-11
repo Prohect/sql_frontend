@@ -269,7 +269,7 @@ public class Server {
     }
 
     private void processUpdatePacket(ChannelHandlerContext ctx, CUpdatePacket cUpdatePacket) throws SQLException {
-        long id = cUpdatePacket.getId();
+        int id = cUpdatePacket.getId();
         User user = uuid2userMap.get(cUpdatePacket.getUuid());
         String databaseName = cUpdatePacket.getDatabaseName();
         String updateCMD = cUpdatePacket.getUpdateCMD();
