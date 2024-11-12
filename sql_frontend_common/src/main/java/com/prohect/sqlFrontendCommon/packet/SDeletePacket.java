@@ -4,20 +4,20 @@ import java.io.Serializable;
 
 @SuppressWarnings("unused")
 public final class SDeletePacket extends AbstractPacket implements Serializable {
-    long theID;
+    int theID;
 
-    public SDeletePacket(long theID) {
+    public SDeletePacket(int theID) {
         this.theID = theID;
     }
 
     public SDeletePacket() {
     }
 
-    public long getTheID() {
+    public int getTheID() {
         return theID;
     }
 
-    public void setTheID(long theID) {
+    public void setTheID(int theID) {
         this.theID = theID;
     }
 }
