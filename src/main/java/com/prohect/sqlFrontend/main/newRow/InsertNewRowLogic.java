@@ -60,7 +60,7 @@ public class InsertNewRowLogic implements Initializable {
      * if the tableData's first row contains something same(ignore case) with the column name of columns of tableView, map them.
      * if nothing matches, return an empty map"﻿"
      */
-    private static HashMap<Integer, Integer> mapColumnIndex(List<String[]> tableData, TableView<Object[]> tableView, int identifierIndex) {
+    private HashMap<Integer, Integer> mapColumnIndex(List<String[]> tableData, TableView<Object[]> tableView, int identifierIndex) {
         String[] columnsFromCsv = tableData.getFirst();
         HashMap<Integer, Integer> listFromCsv2columnMap = new HashMap<>();
         ObservableList<TableColumn<Object[], ?>> columnsFromTableView = tableView.getColumns();
@@ -74,6 +74,12 @@ public class InsertNewRowLogic implements Initializable {
                     break;
                 }
             }
+        }
+        int delta = tableData.size() - listFromCsv2columnMap.size();
+        if (delta > 0) {
+            String info = "存在无法识别的列,共" + delta + "列";
+            Main.logger.log(info);
+            this.infoLabel.setText(info);
         }
         return listFromCsv2columnMap;
     }
@@ -335,8 +341,7 @@ public class InsertNewRowLogic implements Initializable {
                     }
                 }
                 List<String[]> listFromCsvFinal = new ArrayList<>();//load and format it to match the column numbers
-                List<String[]> listFromCsv = loadListFromCsv(selectedFile);
-                for (String[] strings : listFromCsv) {
+                for (String[] strings : loadListFromCsv(selectedFile)) {
                     String[] newRow = new String[columns];
                     for (int i = 0; i < strings.length; i++) {
                         String string = strings[i];

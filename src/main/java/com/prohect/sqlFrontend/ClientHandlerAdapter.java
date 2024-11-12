@@ -244,7 +244,7 @@ public class ClientHandlerAdapter extends ChannelInboundHandlerAdapter {
     }
 
     private void processDeletePacket(SDeletePacket sDeletePacket) {
-        long id = sDeletePacket.getTheID();
+        int id = sDeletePacket.getTheID();
         Object[] object = Main.packetID2DeletedValueMap.get(id);
         Main.mainLogic.getTableView().getItems().remove(object);
     }
@@ -267,7 +267,7 @@ public class ClientHandlerAdapter extends ChannelInboundHandlerAdapter {
                             initEditFactory(column);
                             tableView.getColumns().add(column);
                         }
-                        ObservableList<TableColumn<Object[], ?>> tableColumns = Main.db2tb2tableColumn.get(databaseName).get(tableName);
+                        ArrayList<TableColumn<Object[], ?>> tableColumns = Main.db2tb2tableColumn.get(databaseName).get(tableName);
                         tableColumns.clear();
                         tableColumns.addAll(tableView.getColumns());
                     }
@@ -356,7 +356,7 @@ public class ClientHandlerAdapter extends ChannelInboundHandlerAdapter {
                     ClientConfig.saveConfig(Main.clientConfig);
 
                     //db2tb2permittedColumn update
-                    HashMap<String, HashMap<String, ObservableList<TableColumn<Object[], ?>>>> db2tb2tcl = new HashMap<>();
+                    HashMap<String, HashMap<String, ArrayList<TableColumn<Object[], ?>>>> db2tb2tcl = new HashMap<>();
                     HashMap<String, HashMap<String, ArrayList<ColumnMetaData>>> m0;//m0 -> readable
                     HashMap<String, HashMap<String, ArrayList<ColumnMetaData>>> m1;//m1 -> writable
                     HashMap<String, HashMap<String, HashMap<String, Boolean[]>>> permissions = userFromPacket.getPermissions();
@@ -384,14 +384,14 @@ public class ClientHandlerAdapter extends ChannelInboundHandlerAdapter {
                                     initEditFactory(column);
                                 }
                             }
-                            db2tb2tcl.computeIfAbsent(db, _ -> new HashMap<>()).computeIfAbsent(tb, _ -> FXCollections.observableArrayList()).add(column);
+                            db2tb2tcl.computeIfAbsent(db, _ -> new HashMap<>()).computeIfAbsent(tb, _ -> new ArrayList<>()).add(column);
                         }
                     }));
                     merge(Main.db2tb2tableColumn, db2tb2tcl);
 
                     if (userFromPacket.isOp()) merge(Main.db2tb2tableColumn, new HashMap<>() {{
                         put(theUsersDatabaseName, new HashMap<>() {{
-                            put(theUsersTableName, FXCollections.observableArrayList());
+                            put(theUsersTableName, new ArrayList<>());
                         }});
                     }});
 
@@ -454,10 +454,10 @@ public class ClientHandlerAdapter extends ChannelInboundHandlerAdapter {
                 merge(Main.db2tb2columnMD, db2table2columnMap);
                 db2table2columnMap.forEach((db, tb2column) -> tb2column.forEach((tb, column) -> {
                     Main.db2tb2items.computeIfAbsent(db, _ -> new HashMap<>()).computeIfAbsent(tb, _ -> FXCollections.observableArrayList());
-                    var tableColumns = Main.db2tb2tableColumn.computeIfAbsent(db, _ -> new HashMap<>()).computeIfAbsent(tb, _ -> FXCollections.observableArrayList());
-                    for (int i = 0; i < column.size(); i++) {
+                    var tableColumns = Main.db2tb2tableColumn.computeIfAbsent(db, _ -> new HashMap<>()).computeIfAbsent(tb, _ -> new ArrayList<>());
+                    for (ColumnMetaData columnMetaData : column) {
                         //new column, no permission setup, just check if the user it OP
-                        var tableColumn = getTableColumn(column.get(i).getColumnName(), i);
+                        var tableColumn = getTableColumn(columnMetaData.getColumnName(), tableColumns.size());
                         if (Main.user.isOp()) initEditFactory(tableColumn);
                         tableColumns.add(tableColumn);
                     }

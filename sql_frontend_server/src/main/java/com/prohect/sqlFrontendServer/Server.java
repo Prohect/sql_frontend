@@ -195,7 +195,7 @@ public class Server {
         User user = uuid2userMap.get(cDeletePacket.getUuid());
         String cmd = cDeletePacket.getCmd();
         String databaseName = cDeletePacket.getDatabaseName().toLowerCase();
-        long id = cDeletePacket.getId();
+        int id = cDeletePacket.getId();
         String tableName = cmd.substring(12).split(" ")[0].toLowerCase();//"DELETE FROM "->12
         if (!user.isOp())
             for (ColumnMetaData columnMetaData : database2Table2ColumnMap.get(databaseName).get(tableName))
