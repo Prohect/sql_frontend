@@ -244,7 +244,7 @@ public class ClientHandlerAdapter extends ChannelInboundHandlerAdapter {
     }
 
     private void processDeletePacket(SDeletePacket sDeletePacket) {
-        long id = sDeletePacket.getTheID();
+        int id = sDeletePacket.getTheID();
         Object[] object = Main.packetID2DeletedValueMap.get(id);
         Main.mainLogic.getTableView().getItems().remove(object);
     }
