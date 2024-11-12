@@ -3,7 +3,7 @@ package com.prohect.sqlFrontend.main.newRow;
 import com.prohect.sqlFrontend.main.Main;
 import com.prohect.sqlFrontend.main.MainLogic;
 import com.prohect.sqlFrontendCommon.ColumnMetaData;
-import com.prohect.sqlFrontendCommon.Util;
+import com.prohect.sqlFrontendCommon.Utils;
 import com.prohect.sqlFrontendCommon.packet.CInsertPacket;
 import com.prohect.sqlFrontendCommon.packet.Packet;
 import javafx.collections.ObservableList;
@@ -22,13 +22,10 @@ import java.io.FileNotFoundException;
 import java.io.FileReader;
 import java.net.URL;
 import java.nio.charset.StandardCharsets;
-import java.util.ArrayList;
-import java.util.HashMap;
-import java.util.List;
-import java.util.ResourceBundle;
+import java.util.*;
 import java.util.concurrent.LinkedBlockingQueue;
 
-import static com.prohect.sqlFrontendCommon.CollectionUtil.structureCloneAndMerge;
+import static com.prohect.sqlFrontendCommon.Collections.structureCloneAndMerge;
 
 public class InsertNewRowLogic implements Initializable {
 
@@ -57,11 +54,12 @@ public class InsertNewRowLogic implements Initializable {
     }
 
     /**
-     * if the tableData's first row contains something same(ignore case) with the column name of columns of tableView, map them.
+     * if the data's first row contains something same(ignore case) with the column name of columns of tableView, map them.
      * if nothing matches, return an empty map"﻿"
      */
-    private HashMap<Integer, Integer> mapColumnIndex(List<String[]> tableData, TableView<Object[]> tableView, int identifierIndex) {
-        String[] columnsFromCsv = tableData.getFirst();
+    private HashMap<Integer, Integer> mapColumnIndex(List<String[]> data, TableView<Object[]> tableView, int identifierIndex) {
+        String[] columnsFromCsv = data.getFirst();
+        int nulls = (int) Arrays.stream(columnsFromCsv).filter(Objects::isNull).count();
         HashMap<Integer, Integer> listFromCsv2columnMap = new HashMap<>();
         ObservableList<TableColumn<Object[], ?>> columnsFromTableView = tableView.getColumns();
         for (int i = 0; i < columnsFromTableView.size(); i++) {
@@ -75,7 +73,7 @@ public class InsertNewRowLogic implements Initializable {
                 }
             }
         }
-        int delta = tableData.size() - listFromCsv2columnMap.size();
+        int delta = columnsFromCsv.length - listFromCsv2columnMap.size() - nulls;
         if (delta > 0) {
             String info = "存在无法识别的列,共" + delta + "列";
             Main.logger.log(info);
@@ -287,10 +285,10 @@ public class InsertNewRowLogic implements Initializable {
                     if (first) {
                         first = false;
                         assert cmd != null;
-                        cmd.append(") VALUES (").append(Util.isNumber((String) object) != null ? (String) object : Util.convert2SqlServerContextString(object));
+                        cmd.append(") VALUES (").append(Utils.isNumber((String) object) != null ? (String) object : Utils.convert2SqlServerContextString(object));
                     } else {
                         if (bitString.equals(object)) object = "0";
-                        cmd.append(",").append(Util.isNumber((String) object) != null ? (String) object : Util.convert2SqlServerContextString(object));
+                        cmd.append(",").append(Utils.isNumber((String) object) != null ? (String) object : Utils.convert2SqlServerContextString(object));
                     }
                 }
                 assert cmd != null;

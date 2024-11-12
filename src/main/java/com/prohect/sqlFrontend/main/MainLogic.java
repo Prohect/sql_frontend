@@ -4,7 +4,7 @@ import com.prohect.sqlFrontend.ClientHandlerAdapter;
 import com.prohect.sqlFrontend.MainUi;
 import com.prohect.sqlFrontend.main.newRow.InsertNewRowLogic;
 import com.prohect.sqlFrontendCommon.ColumnMetaData;
-import com.prohect.sqlFrontendCommon.Util;
+import com.prohect.sqlFrontendCommon.Utils;
 import com.prohect.sqlFrontendCommon.packet.CAlterPacket;
 import com.prohect.sqlFrontendCommon.packet.CDeletePacket;
 import com.prohect.sqlFrontendCommon.packet.CQueryPacket;
@@ -138,7 +138,7 @@ public class MainLogic implements Initializable {
                 Main.insertNewColumnLogic.getHasDefaultCheckBox().selectedProperty().addListener((_, _, newValue) -> {
                     if (newValue) Main.insertNewColumnLogic.getNotNullCheckBox().selectedProperty().set(true);
                 });
-                ObservableList<String> list = FXCollections.observableArrayList(List.of("int", "bigint", "decimal(38, 15)", "float(8)", "REAL", "nchar(20)", "varchar(50)", "nvarchar(max)", "bit", "money", "date", "time", "datetime2", "datetimeOffset"));
+                ObservableList<String> list = FXCollections.observableArrayList(List.of("int", "bigint", "REAL", "float", "nchar(20)", "varchar(50)", "nvarchar(max)", "bit", "money", "date", "time", "datetime2", "datetimeOffset"));
                 Main.insertNewColumnLogic.getColumnTypeChoiceBox().setItems(list);
                 stage4InsertNewColumnWindow.setOnCloseRequest(_ -> {
                     if (Main.insertNewColumnLogic.isNeedUpdateMainTable()) {
@@ -290,11 +290,11 @@ public class MainLogic implements Initializable {
         }
         Object o = tableView.getItems().get(selectedRowIndex)[0];
         assert o != null;//第一个一般是主键，断言不为null
-        StringBuilder cmd = new StringBuilder("DELETE FROM " + getCurrentTableName() + " WHERE [" + tableView.getColumns().getFirst().getText() + "] = " + Util.convert2SqlServerContextString(o));
+        StringBuilder cmd = new StringBuilder("DELETE FROM " + getCurrentTableName() + " WHERE [" + tableView.getColumns().getFirst().getText() + "] = " + Utils.convert2SqlServerContextString(o));
         for (int i = 1; i < tableView.getColumns().size(); i++) {
             Object object = tableView.getItems().get(selectedRowIndex)[i];
             if (object == null) continue;
-            cmd.append(" AND [").append(tableView.getColumns().get(i).getText()).append("] = ").append(Util.convert2SqlServerContextString(object));
+            cmd.append(" AND [").append(tableView.getColumns().get(i).getText()).append("] = ").append(Utils.convert2SqlServerContextString(object));
         }
         CDeletePacket cDeletePacket = new CDeletePacket(Main.user.getUuid(), cmd.toString(), getCurrentDataBaseName());
         Main.packetID2DeletedValueMap.put(cDeletePacket.getId(), tableView.getItems().get(selectedRowIndex));
@@ -326,8 +326,8 @@ public class MainLogic implements Initializable {
     void setThisColumnCouldInspectCouldChangePermissionAsDefault() {
         String columnName = selectedColumn.getText().toLowerCase();
         if (cantModifyPermission(columnName)) return;
-        String sql1 = String.format("ALTER TABLE " + Main.clientConfig.getTheUsersTableName() + " ADD %s BIT NOT NULL DEFAULT 1", Util.permissionColumnNameEncode(getCurrentDataBaseName(), getCurrentTableName(), columnName, false));
-        String sql2 = String.format("ALTER TABLE " + Main.clientConfig.getTheUsersTableName() + " ADD %s BIT NOT NULL DEFAULT 1", Util.permissionColumnNameEncode(getCurrentDataBaseName(), getCurrentTableName(), columnName, true));
+        String sql1 = String.format("ALTER TABLE " + Main.clientConfig.getTheUsersTableName() + " ADD %s BIT NOT NULL DEFAULT 1", Utils.permissionColumnNameEncode(getCurrentDataBaseName(), getCurrentTableName(), columnName, false));
+        String sql2 = String.format("ALTER TABLE " + Main.clientConfig.getTheUsersTableName() + " ADD %s BIT NOT NULL DEFAULT 1", Utils.permissionColumnNameEncode(getCurrentDataBaseName(), getCurrentTableName(), columnName, true));
         sendSqlAlterCommands2targetDB(Main.clientConfig.getTheUsersDatabaseName(), sql1, sql2);
     }
 
@@ -335,8 +335,8 @@ public class MainLogic implements Initializable {
     void setThisColumnCouldInspectNoChangePermissionAsDefault() {
         String columnName = selectedColumn.getText().toLowerCase();
         if (cantModifyPermission(columnName)) return;
-        String sql1 = String.format("ALTER TABLE " + Main.clientConfig.getTheUsersTableName() + " ADD %s BIT NOT NULL DEFAULT 1", Util.permissionColumnNameEncode(getCurrentDataBaseName(), getCurrentTableName(), columnName, false));
-        String sql2 = String.format("ALTER TABLE " + Main.clientConfig.getTheUsersTableName() + " ADD %s BIT NOT NULL DEFAULT 0", Util.permissionColumnNameEncode(getCurrentDataBaseName(), getCurrentTableName(), columnName, true));
+        String sql1 = String.format("ALTER TABLE " + Main.clientConfig.getTheUsersTableName() + " ADD %s BIT NOT NULL DEFAULT 1", Utils.permissionColumnNameEncode(getCurrentDataBaseName(), getCurrentTableName(), columnName, false));
+        String sql2 = String.format("ALTER TABLE " + Main.clientConfig.getTheUsersTableName() + " ADD %s BIT NOT NULL DEFAULT 0", Utils.permissionColumnNameEncode(getCurrentDataBaseName(), getCurrentTableName(), columnName, true));
         sendSqlAlterCommands2targetDB(Main.clientConfig.getTheUsersDatabaseName(), sql1, sql2);
     }
 
@@ -344,8 +344,8 @@ public class MainLogic implements Initializable {
     void setThisColumnNoInspectNoChangePermissionAsDefault() {
         String columnName = selectedColumn.getText().toLowerCase();
         if (cantModifyPermission(columnName)) return;
-        String sql1 = String.format("ALTER TABLE " + Main.clientConfig.getTheUsersTableName() + " ADD %s BIT NOT NULL DEFAULT 0", Util.permissionColumnNameEncode(getCurrentDataBaseName(), getCurrentTableName(), columnName, false));
-        String sql2 = String.format("ALTER TABLE " + Main.clientConfig.getTheUsersTableName() + " ADD %s BIT NOT NULL DEFAULT 0", Util.permissionColumnNameEncode(getCurrentDataBaseName(), getCurrentTableName(), columnName, true));
+        String sql1 = String.format("ALTER TABLE " + Main.clientConfig.getTheUsersTableName() + " ADD %s BIT NOT NULL DEFAULT 0", Utils.permissionColumnNameEncode(getCurrentDataBaseName(), getCurrentTableName(), columnName, false));
+        String sql2 = String.format("ALTER TABLE " + Main.clientConfig.getTheUsersTableName() + " ADD %s BIT NOT NULL DEFAULT 0", Utils.permissionColumnNameEncode(getCurrentDataBaseName(), getCurrentTableName(), columnName, true));
         sendSqlAlterCommands2targetDB(Main.clientConfig.getTheUsersDatabaseName(), sql1, sql2);
     }
 

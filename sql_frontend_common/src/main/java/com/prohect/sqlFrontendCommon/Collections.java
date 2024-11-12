@@ -5,7 +5,7 @@ import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.ConcurrentSkipListMap;
 import java.util.concurrent.CopyOnWriteArrayList;
 
-public class CollectionUtil {
+public class Collections {
 
     @SuppressWarnings("unchecked")
     public static <M extends Map<K, V>, M1 extends Map<K, V>, K, V, K1, V1, T> M merge(M map, M1 diffMap) {

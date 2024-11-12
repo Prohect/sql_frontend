@@ -1,6 +1,7 @@
 package com.prohect.sqlFrontendServer;
 
-import com.prohect.sqlFrontendCommon.Util;
+import com.prohect.sqlFrontendCommon.SynchronizedByteBuf;
+import com.prohect.sqlFrontendCommon.Utils;
 import com.prohect.sqlFrontendCommon.packet.Packet;
 import io.netty.buffer.ByteBuf;
 import io.netty.channel.*;
@@ -20,7 +21,7 @@ public class ServerHandlerAdapter extends ChannelInboundHandlerAdapter {
     /**
      * each inBuffer for a specified ctx, should be final once created, don't replace it with new one
      */
-    Map<Channel, ByteBuf> channel2in;
+    Map<Channel, SynchronizedByteBuf> channel2in;
     Map<Channel, ReentrantLock> channel2lockOfIn;
     Map<Channel, ScheduledFuture<?>> channel2packetsEncoder;
     Map<Channel, Future<?>> channel2packetDecoderFuture;
@@ -54,14 +55,14 @@ public class ServerHandlerAdapter extends ChannelInboundHandlerAdapter {
     @Override
     public void channelActive(ChannelHandlerContext ctx) {
         LinkedBlockingQueue<Packet> packets = new LinkedBlockingQueue<>();
-        channel2packetsEncoder.put(ctx.channel(), Util.encoderRegister(workerGroup, ctx, packets, 25));
+        channel2packetsEncoder.put(ctx.channel(), Utils.encoderRegister(workerGroup, ctx, packets, 25));
         Server.ctx2packetToBeSentMap.put(ctx, packets);
         Server.ctx2packetReceivedMap.put(ctx, new LinkedBlockingQueue<>());
     }
 
     @Override
     public void channelRead(ChannelHandlerContext ctx, Object msg) {
-        channel2packetDecoderFuture.put(ctx.channel(), Util.getPackets_concurrent(workerGroup, channel2packetDecoderFuture.get(ctx.channel()), (ByteBuf) msg, channel2lockOfIn.computeIfAbsent(ctx.channel(), _ -> new ReentrantLock()), channel2in.computeIfAbsent(ctx.channel(), _ -> ctx.alloc().buffer(1048576)), Server.ctx2packetReceivedMap.get(ctx)));
+        Utils.getPackets_concurrent(workerGroup, (ByteBuf) msg, channel2lockOfIn.computeIfAbsent(ctx.channel(), _ -> new ReentrantLock()), channel2in.computeIfAbsent(ctx.channel(), _ -> new SynchronizedByteBuf(ctx.alloc().buffer(16384))), Server.ctx2packetReceivedMap.get(ctx));
     }
 
 }

@@ -7,8 +7,9 @@ import com.prohect.sqlFrontend.main.UpdateOfCellOfTable;
 import com.prohect.sqlFrontend.main.login.ClientConfig;
 import com.prohect.sqlFrontend.main.login.LoginLogic;
 import com.prohect.sqlFrontendCommon.ColumnMetaData;
+import com.prohect.sqlFrontendCommon.SynchronizedByteBuf;
 import com.prohect.sqlFrontendCommon.User;
-import com.prohect.sqlFrontendCommon.Util;
+import com.prohect.sqlFrontendCommon.Utils;
 import com.prohect.sqlFrontendCommon.packet.*;
 import io.netty.bootstrap.Bootstrap;
 import io.netty.buffer.ByteBuf;
@@ -35,8 +36,8 @@ import java.util.concurrent.TimeUnit;
 import java.util.concurrent.atomic.AtomicBoolean;
 import java.util.concurrent.locks.ReentrantLock;
 
-import static com.prohect.sqlFrontendCommon.CollectionUtil.merge;
-import static com.prohect.sqlFrontendCommon.CollectionUtil.structureCloneAndMerge;
+import static com.prohect.sqlFrontendCommon.Collections.merge;
+import static com.prohect.sqlFrontendCommon.Collections.structureCloneAndMerge;
 
 @ChannelHandler.Sharable
 public class ClientHandlerAdapter extends ChannelInboundHandlerAdapter {
@@ -50,7 +51,7 @@ public class ClientHandlerAdapter extends ChannelInboundHandlerAdapter {
     /**
      * should be final once created, don't replace it with new one
      */
-    Map<Channel, ByteBuf> channel2in;
+    Map<Channel, SynchronizedByteBuf> channel2in;
     Map<Channel, ReentrantLock> channel2lockOfIn;
     Map<Channel, ScheduledFuture<?>> channel2packetsEncoder;
     Map<Channel, Future<?>> channel2packetDecoderFuture;
@@ -123,18 +124,18 @@ public class ClientHandlerAdapter extends ChannelInboundHandlerAdapter {
             int targetColumnIndex = event.getTablePosition().getColumn();
             Object[] row = event.getTableView().getItems().get(targetRowIndex);
             String newValue = (String) event.getNewValue();
-            Object newValueAsNumber = Util.isNumber(newValue);
+            Object newValueAsNumber = Utils.isNumber(newValue);
             if (newValue != null) {
                 if (newValue.equals(row[targetColumnIndex].toString())) return;
                 else if (row[targetColumnIndex] instanceof Number number && number.equals(newValueAsNumber)) return;
             }
             Object o1 = row[(targetColumnIndex == 0) ? 1 : 0];
             ObservableList<TableColumn<Object[], ?>> columns = Main.mainLogic.getTableView().getColumns();
-            StringBuilder condition = new StringBuilder("UPDATE " + Main.mainLogic.getCurrentTableName() + " SET [" + columns.get(targetColumnIndex).getText() + "] = " + (newValueAsNumber != null ? newValue : "'" + newValue + "'") + " WHERE [" + (columns.get(targetColumnIndex == 0 ? 1 : 0)).getText() + "] = " + Util.convert2SqlServerContextString(o1));
+            StringBuilder condition = new StringBuilder("UPDATE " + Main.mainLogic.getCurrentTableName() + " SET [" + columns.get(targetColumnIndex).getText() + "] = " + (newValueAsNumber != null ? newValue : "'" + newValue + "'") + " WHERE [" + (columns.get(targetColumnIndex == 0 ? 1 : 0)).getText() + "] = " + Utils.convert2SqlServerContextString(o1));
             for (int i = 1; i < row.length; i++) {
                 if (i == targetColumnIndex) continue;
                 if (row[i] == null) continue;
-                String convert2SqlServerContextString = Util.convert2SqlServerContextString(row[i]);
+                String convert2SqlServerContextString = Utils.convert2SqlServerContextString(row[i]);
                 String columnName = columns.get(i).getText();
                 if (convert2SqlServerContextString == null || convert2SqlServerContextString.isEmpty()) {
                     continue;
@@ -151,7 +152,7 @@ public class ClientHandlerAdapter extends ChannelInboundHandlerAdapter {
     public void channelActive(ChannelHandlerContext ctx) {
         Main.ctx = ctx;
         LinkedBlockingQueue<Packet> packets = new LinkedBlockingQueue<>();
-        channel2packetsEncoder.put(ctx.channel(), Util.encoderRegister(workerGroup, ctx, packets, 25));
+        channel2packetsEncoder.put(ctx.channel(), Utils.encoderRegister(workerGroup, ctx, packets, 25));
         Main.channel2packetsMap.put(ctx.channel(), packets);
         //Json:8种基本数据类型,只有char用双引号为"a", 数字直接为1.2, Boolean为true | false, 引用类型字符串为"string..."
         //JSON.toJSONBytes(new SInfoPacket("}[]{0}[]{"));//result: stringBuilder = {"id":-212632573705707520,"info":"}[]{0}[]{","prefix":"SInfoPacket\\"}
@@ -184,7 +185,7 @@ public class ClientHandlerAdapter extends ChannelInboundHandlerAdapter {
 
     @Override
     public void channelRead(ChannelHandlerContext ctx, Object msg) {
-        channel2packetDecoderFuture.put(ctx.channel(), Util.getPackets_concurrent(workerGroup, channel2packetDecoderFuture.get(ctx.channel()), (ByteBuf) msg, channel2lockOfIn.computeIfAbsent(ctx.channel(), _ -> new ReentrantLock()), channel2in.computeIfAbsent(ctx.channel(), _ -> ctx.alloc().buffer(1048576)), Main.packetReceivedQueue));
+        Utils.getPackets_concurrent(workerGroup, (ByteBuf) msg, channel2lockOfIn.computeIfAbsent(ctx.channel(), _ -> new ReentrantLock()), channel2in.computeIfAbsent(ctx.channel(), _ -> new SynchronizedByteBuf(ctx.alloc().buffer(16384))), Main.packetReceivedQueue);
     }
 
     public void reconnect() {
@@ -305,7 +306,7 @@ public class ClientHandlerAdapter extends ChannelInboundHandlerAdapter {
             if (oldValue != null) {
                 String clazzName = oldValue.getClass().getSimpleName();
                 Main.logger.log("oldValue.getClass().getSimpleName() = " + clazzName);
-                Object numObject = Util.isNumber((String) newValue);
+                Object numObject = Utils.isNumber((String) newValue);
                 switch (clazzName) {
                     case "Integer":
                         if (numObject != null) newValue = Integer.parseInt((String) newValue);

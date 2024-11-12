@@ -26,7 +26,7 @@ import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.LinkedBlockingQueue;
 import java.util.concurrent.TimeUnit;
 
-import static com.prohect.sqlFrontendCommon.CollectionUtil.diff;
+import static com.prohect.sqlFrontendCommon.Collections.diff;
 
 
 public class Server {

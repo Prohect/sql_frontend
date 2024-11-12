@@ -9,7 +9,7 @@ import java.io.Serializable;
  */
 
 @SuppressWarnings("unused")
-public final class CAlterPacket extends AbstractPacket implements Serializable {//new column and new table both require OP, so the server logic is same
+public final class CAlterPacket extends Packet implements Serializable {//new column and new table both require OP, so the server logic is same
     long uuid;
     String cmd;
     String databaseName;

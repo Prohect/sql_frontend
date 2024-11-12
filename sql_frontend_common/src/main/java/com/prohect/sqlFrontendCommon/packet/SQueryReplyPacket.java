@@ -4,7 +4,7 @@ import java.io.Serializable;
 import java.util.ArrayList;
 
 @SuppressWarnings("unused")
-public final class SQueryReplyPacket extends AbstractPacket implements Serializable {
+public final class SQueryReplyPacket extends Packet implements Serializable {
 
     private String databaseName;
     private String tableName;
