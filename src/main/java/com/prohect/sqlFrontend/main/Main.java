@@ -28,7 +28,7 @@ public class Main {
     /**
      * notice: this contains the user db's db name and table name but, that columnMetadata list would be empty
      */
-    public static final HashMap<String, HashMap<String, ObservableList<TableColumn<Object[], ?>>>> db2tb2tableColumn = new HashMap<>();
+    public static final HashMap<String, HashMap<String, ArrayList<TableColumn<Object[], ?>>>> db2tb2tableColumn = new HashMap<>();
     public static final HashMap<String, HashMap<String, ObservableList<Object[]>>> db2tb2items = new HashMap<>();
     public static ClientConfig clientConfig;
     public static LoginLogic loginLogic;

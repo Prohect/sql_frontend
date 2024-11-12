@@ -74,7 +74,7 @@ public class MainLogic implements Initializable {
         currentColumns.clear();
         String db = Main.mainLogic.getCurrentDataBaseName();
         String tb = Main.mainLogic.getCurrentTableName();
-        ObservableList<TableColumn<Object[], ?>> c = Main.db2tb2tableColumn.get(db).get(tb);
+        ArrayList<TableColumn<Object[], ?>> c = Main.db2tb2tableColumn.get(db).get(tb);
         if (c != null) currentColumns.addAll(c);
         else Main.logger.log("mainUI.tableChoiceBox.valueProperty().Listener(): c = null ", "db = ", db, " tb = ", tb);
         Main.mainLogic.getTableView().setItems(Main.db2tb2items.get(db).get(tb));
