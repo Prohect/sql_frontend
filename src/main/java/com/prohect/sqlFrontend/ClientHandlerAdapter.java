@@ -451,13 +451,13 @@ public class ClientHandlerAdapter extends ChannelInboundHandlerAdapter {
                 }
             }
             case UM -> {
-                var db2tb2columnMD = merge(Main.db2tb2columnMD, db2table2columnMap);
+                merge(Main.db2tb2columnMD, db2table2columnMap);
                 db2table2columnMap.forEach((db, tb2column) -> tb2column.forEach((tb, column) -> {
                     Main.db2tb2items.computeIfAbsent(db, _ -> new HashMap<>()).computeIfAbsent(tb, _ -> FXCollections.observableArrayList());
                     var tableColumns = Main.db2tb2tableColumn.computeIfAbsent(db, _ -> new HashMap<>()).computeIfAbsent(tb, _ -> new ArrayList<>());
-                    for (int i = 0; i < column.size(); i++) {
+                    for (ColumnMetaData columnMetaData : column) {
                         //new column, no permission setup, just check if the user it OP
-                        var tableColumn = getTableColumn(column.get(i).getColumnName(), i);
+                        var tableColumn = getTableColumn(columnMetaData.getColumnName(), tableColumns.size());
                         if (Main.user.isOp()) initEditFactory(tableColumn);
                         tableColumns.add(tableColumn);
                     }
