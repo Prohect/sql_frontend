@@ -41,9 +41,8 @@ public sealed abstract class Packet implements Serializable permits CAlterPacket
             return Optional.empty();
         } catch (Exception e) {
             try {
-                StringBuilder s = new StringBuilder();
-                for (byte b : bytes) s.append((char) b);
-                Logger.logger.log("cant convert to packet:\t" + s);
+                Logger.logger.log2fileLn("cant convert to packet:\t" + new String(bytes));
+                Logger.logger.log2consoleLn("cant convert to packet, check log for more information");
                 Logger.logger.log(e);
             } catch (Exception ignored) {
             }

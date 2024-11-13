@@ -7,13 +7,17 @@ import io.netty.channel.ChannelHandlerContext;
 import io.netty.channel.EventLoopGroup;
 import io.netty.util.concurrent.ScheduledFuture;
 
+import java.util.ArrayList;
 import java.util.concurrent.LinkedBlockingQueue;
 import java.util.concurrent.TimeUnit;
 import java.util.concurrent.locks.ReentrantLock;
 
 public class Utils {
+    private static final ArrayList<byte[]> sentPackets = new ArrayList<>();
     public static int packetSizeOverCapacityOfByteBuf = -1;
     public static ByteBuf packetBytes;
+    private static int lastPacketID = 0;
+    private static int sent = 0;
 
     /**
      * this loop do not shut itself down from inside
@@ -23,17 +27,28 @@ public class Utils {
     public static ScheduledFuture<?> encoderRegister(final EventLoopGroup workerGroup, final ChannelHandlerContext ctx, final LinkedBlockingQueue<Packet> packets, final long period) {
         return workerGroup.scheduleAtFixedRate(() -> {
             try {
-                for (; ; ) {
-                    Packet packet = packets.poll();
-                    if (packet == null) break;
-                    byte[] lengthBytes = new byte[4];
-                    byte[] jsonBytes = packet.toBytes();
+                Packet packet = packets.poll();
+                if (packet == null) return;
+                ArrayList<String> logs = new ArrayList<>();
+                long time = System.nanoTime();
+                long time1;
+                byte[] lengthBytes = new byte[4];
+                byte[] jsonBytes;
+                do {
+                    jsonBytes = packet.toBytes();
                     for (int i = 1; i < 5; i++) lengthBytes[i - 1] = (byte) (jsonBytes.length >> 32 - i * 8);
-                    ctx.write(Unpooled.copiedBuffer(lengthBytes));
-                    ctx.write(Unpooled.copiedBuffer(jsonBytes));
-                    ctx.flush();
-                    if (Logger.logger != null) Logger.logger.log("发送" + packet + "\tsize = " + jsonBytes.length);
-                }
+                    ctx.writeAndFlush(Unpooled.copiedBuffer(lengthBytes));
+                    ctx.writeAndFlush(Unpooled.copiedBuffer(jsonBytes));
+                    time1 = System.nanoTime();
+                    logs.add("发送第" + sent + "个\t" + packet + "\tsize = " + jsonBytes.length + "\t耗时" + (time1 - time) + "ns");
+                    sent++;
+                    sentPackets.add(jsonBytes);
+                    time = time1;
+                    packet = packets.poll();
+                } while (packet != null);
+                int size = logs.size();
+                Logger.logger.log(logs);
+                if (size > 3) Logger.logger.log(size + " logs take " + (System.nanoTime() - time) + "ns");
             } catch (Exception e) {
                 if (Logger.logger != null) Logger.logger.log(e);
             }
@@ -91,7 +106,10 @@ public class Utils {
 
             byte[] bytes = new byte[packetLength];
             in.readBytes(bytes);
-            Packet.fromBytes(bytes).ifPresent(out::offer);
+            Packet.fromBytes(bytes).ifPresent((packet) -> {
+                out.offer(packet);
+                lastPacketID = packet.getId();
+            });
             lastReaderIndex = in.readerIndex();
         }
         in.readerIndex(lastReaderIndex);
