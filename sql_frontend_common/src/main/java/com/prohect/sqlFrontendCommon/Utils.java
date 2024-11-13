@@ -59,14 +59,18 @@ public class Utils {
      * copy the msg to in and submit decode mission to a new thread of the threadGroup.
      */
     public static void getPackets_concurrent(EventLoopGroup workerGroup, ByteBuf msg, ReentrantLock lock, SynchronizedByteBuf in, LinkedBlockingQueue<Packet> out) {
-        ByteBuf copy = msg.copy();
+        ByteBuf copy = msg.alloc().buffer(msg.capacity());
+        copy.writeBytes(msg);
         msg.release();
         workerGroup.submit(() -> {
             in.writeBytes(copy);
-            if (!lock.tryLock()) return;
+            if (!lock.tryLock()) {
+                workerGroup.schedule(() -> processByteBufIntoPackets2Out_concurrent(workerGroup, lock, in, out), 50, TimeUnit.MILLISECONDS);
+                return;
+            }
             try {
                 try {
-                    processByteBufIntoPackets2Out(in, out);
+                    processByteBufIntoPackets2Out_concurrent(workerGroup, lock, in, out);
                 } catch (Exception e) {
                     if (Logger.logger != null) Logger.logger.log(e);
                 }
@@ -76,44 +80,52 @@ public class Utils {
         });
     }
 
-    private static void processByteBufIntoPackets2Out(SynchronizedByteBuf in, LinkedBlockingQueue<Packet> out) {
-        int lastReaderIndex = in.readerIndex();
-        while (in.readableBytes() > 0) {
-            if (packetSizeOverCapacityOfByteBuf != -1) {
-                in.readBytes(packetBytes, Math.min(packetBytes.writableBytes(), in.readableBytes()));
-                lastReaderIndex = in.readerIndex();
-                if (packetBytes.isWritable()) continue;
-                byte[] array = new byte[packetSizeOverCapacityOfByteBuf];
-                packetBytes.readBytes(array);
-                Packet.fromBytes(array).ifPresent(out::offer);
-                packetSizeOverCapacityOfByteBuf = -1;
-                packetBytes.release();
-                packetBytes = null;
-                continue;
-            }
-
-            int packetLength = 0;
-            for (int i = 1; i < 5; i++) packetLength |= ((in.readByte() & 0xFF) << 32 - i * 8);
-            int readable = in.readableBytes();
-            if (readable < packetLength) {
-                if (in.isWritable()) break;
-                packetSizeOverCapacityOfByteBuf = packetLength;
-                packetBytes = in.alloc().buffer(packetLength);
-                in.readBytes(packetBytes, readable);
-                lastReaderIndex = in.readerIndex();
-                continue;
-            }
-
-            byte[] bytes = new byte[packetLength];
-            in.readBytes(bytes);
-            Packet.fromBytes(bytes).ifPresent((packet) -> {
-                out.offer(packet);
-                lastPacketID = packet.getId();
-            });
-            lastReaderIndex = in.readerIndex();
+    private static void processByteBufIntoPackets2Out_concurrent(EventLoopGroup workerGroup, ReentrantLock lock, SynchronizedByteBuf in, LinkedBlockingQueue<Packet> out) {
+        if (!lock.tryLock()) {
+            workerGroup.schedule(() -> processByteBufIntoPackets2Out_concurrent(workerGroup, lock, in, out), 50, TimeUnit.MILLISECONDS);
+            return;
         }
-        in.readerIndex(lastReaderIndex);
-        in.discardReadBytes();
+        try {
+            int lastReaderIndex = in.readerIndex();
+            while (in.readableBytes() > 0) {
+                if (packetSizeOverCapacityOfByteBuf != -1) {
+                    in.readBytes(packetBytes, Math.min(packetBytes.writableBytes(), in.readableBytes()));
+                    lastReaderIndex = in.readerIndex();
+                    if (packetBytes.isWritable()) break;
+                    byte[] array = new byte[packetSizeOverCapacityOfByteBuf];
+                    packetBytes.readBytes(array);
+                    Packet.fromBytes(array).ifPresent(out::offer);
+                    packetSizeOverCapacityOfByteBuf = -1;
+                    packetBytes.release();
+                    packetBytes = null;
+                    continue;
+                }
+
+                if (in.readableBytes() < 4) break;
+                int packetLength = 0;
+                for (int i = 1; i < 5; i++) packetLength |= ((in.readByte() & 0xFF) << 32 - i * 8);
+                int readable = in.readableBytes();
+                if (readable < packetLength) {
+                    packetSizeOverCapacityOfByteBuf = packetLength;
+                    packetBytes = in.alloc().buffer(packetLength);
+                    in.readBytes(packetBytes, readable);
+                    lastReaderIndex = in.readerIndex();
+                    break;
+                }
+
+                byte[] bytes = new byte[packetLength];
+                in.readBytes(bytes);
+                Packet.fromBytes(bytes).ifPresent((packet) -> {
+                    out.offer(packet);
+                    lastPacketID = packet.getId();
+                });
+                lastReaderIndex = in.readerIndex();
+            }
+            in.readerIndex(lastReaderIndex);
+            in.discardReadBytes();
+        } finally {
+            lock.unlock();
+        }
     }
 
     @SuppressWarnings("unused")
