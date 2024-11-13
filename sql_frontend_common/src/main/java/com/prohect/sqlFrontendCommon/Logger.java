@@ -16,6 +16,11 @@ public class Logger {
     public static final File logRoot = new File("log");
     private static final String logFileName = "Log-";
     public static Logger logger;
+
+    static {
+        logger = new Logger("basic");
+    }
+
     public final String logFilePrefix;
     private FileChannel logFileChannel;
     private boolean initialized = false;
