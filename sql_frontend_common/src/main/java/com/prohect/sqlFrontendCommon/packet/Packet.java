@@ -8,6 +8,7 @@ import com.prohect.sqlFrontendCommon.Logger;
 
 import java.io.Serializable;
 import java.util.ArrayList;
+import java.util.List;
 import java.util.Optional;
 
 
@@ -41,6 +42,7 @@ public sealed abstract class Packet implements Serializable permits CAlterPacket
             return Optional.empty();
         } catch (Exception e) {
             try {
+                //bytes转为string可能太长干扰日志，所以只在文件里记录完整的bytes
                 Logger.logger.log2fileLn("cant convert to packet:\t" + new String(bytes));
                 Logger.logger.log2consoleLn("cant convert to packet, check log for more information");
                 Logger.logger.log(e);
@@ -53,6 +55,15 @@ public sealed abstract class Packet implements Serializable permits CAlterPacket
     public final byte[] toBytes() {
         return JSONB.toBytes(this, JSONWriter.Feature.WriteClassName);
     }
+
+
+    public final List<byte[]> toBytesWithLength() {
+        byte[] bytes = toBytes();
+        byte[] lengthBytes = new byte[4];
+        for (int i = 1; i < 5; i++) lengthBytes[i - 1] = ((byte) (bytes.length >> 32 - i * 8));
+        return List.of(lengthBytes, bytes);
+    }
+
 
     public final int getId() {
         return id;
