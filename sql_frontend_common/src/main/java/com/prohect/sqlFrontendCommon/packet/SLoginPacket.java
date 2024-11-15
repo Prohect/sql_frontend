@@ -84,6 +84,6 @@ public final class SLoginPacket extends Packet implements Serializable {
         W,//wrong password
         N,//no such one
         UM,//update metadata
-        UP,//update permission //TODO:
+        UP,//update permission
     }
 }
